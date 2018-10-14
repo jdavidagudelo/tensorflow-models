@@ -19,8 +19,8 @@ import sys
 from tensorflow.python.platform import flags
 import logging
 
-import datasets
-import model
+from . import datasets
+from . import model
 
 FLAGS = flags.FLAGS
 

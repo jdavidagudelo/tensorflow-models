@@ -18,10 +18,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from datasets import cifar10
-from datasets import flowers
-from datasets import imagenet
-from datasets import mnist
+from research.slim.datasets import cifar10
+from research.slim.datasets import flowers
+from research.slim.datasets import imagenet
+from research.slim.datasets import mnist
 
 datasets_map = {
     'cifar10': cifar10,
@@ -32,7 +32,7 @@ datasets_map = {
 
 
 def get_dataset(name, split_name, dataset_dir, file_pattern=None, reader=None):
-  """Given a dataset name and a split_name returns a Dataset.
+    """Given a dataset name and a split_name returns a Dataset.
 
   Args:
     name: String, the name of the dataset.
@@ -48,10 +48,10 @@ def get_dataset(name, split_name, dataset_dir, file_pattern=None, reader=None):
   Raises:
     ValueError: If the dataset `name` is unknown.
   """
-  if name not in datasets_map:
-    raise ValueError('Name of dataset unknown %s' % name)
-  return datasets_map[name].get_split(
-      split_name,
-      dataset_dir,
-      file_pattern,
-      reader)
+    if name not in datasets_map:
+        raise ValueError('Name of dataset unknown %s' % name)
+    return datasets_map[name].get_split(
+        split_name,
+        dataset_dir,
+        file_pattern,
+        reader)

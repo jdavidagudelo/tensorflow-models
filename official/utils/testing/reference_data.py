@@ -60,32 +60,32 @@ from tensorflow.python import pywrap_tensorflow
 
 
 class BaseTest(tf.test.TestCase):
-  """TestCase subclass for performing reference data tests."""
+    """TestCase subclass for performing reference data tests."""
 
-  def regenerate(self):
-    """Subclasses should override this function to generate a new reference."""
-    raise NotImplementedError
+    def regenerate(self):
+        """Subclasses should override this function to generate a new reference."""
+        raise NotImplementedError
 
-  @property
-  def test_name(self):
-    """Subclass should define its own name."""
-    raise NotImplementedError
+    @property
+    def test_name(self):
+        """Subclass should define its own name."""
+        raise NotImplementedError
 
-  @property
-  def data_root(self):
-    """Use the subclass directory rather than the parent directory.
+    @property
+    def data_root(self):
+        """Use the subclass directory rather than the parent directory.
 
     Returns:
       The path prefix for reference data.
     """
-    return os.path.join(os.path.split(
-        os.path.abspath(__file__))[0], "reference_data", self.test_name)
+        return os.path.join(os.path.split(
+            os.path.abspath(__file__))[0], "reference_data", self.test_name)
 
-  ckpt_prefix = "model.ckpt"
+    ckpt_prefix = "model.ckpt"
 
-  @staticmethod
-  def name_to_seed(name):
-    """Convert a string into a 32 bit integer.
+    @staticmethod
+    def name_to_seed(name):
+        """Convert a string into a 32 bit integer.
 
     This function allows test cases to easily generate random fixed seeds by
     hashing the name of the test. The hash string is in hex rather than base 10
@@ -98,12 +98,12 @@ class BaseTest(tf.test.TestCase):
     Returns:
       A pseudo-random 32 bit integer derived from name.
     """
-    seed = hashlib.md5(name.encode("utf-8")).hexdigest()
-    return int(seed, 16) % (2**32 - 1)
+        seed = hashlib.md5(name.encode("utf-8")).hexdigest()
+        return int(seed, 16) % (2 ** 32 - 1)
 
-  @staticmethod
-  def common_tensor_properties(input_array):
-    """Convenience function for matrix testing.
+    @staticmethod
+    def common_tensor_properties(input_array):
+        """Convenience function for matrix testing.
 
     In tests we wish to determine whether a result has changed. However storing
     an entire n-dimensional array is impractical. A better approach is to
@@ -117,14 +117,14 @@ class BaseTest(tf.test.TestCase):
     Returns:
       A list of values derived from the input_array for equality tests.
     """
-    output = list(input_array.shape)
-    flat_array = input_array.flatten()
-    output.extend([float(i) for i in
-                   [flat_array[0], flat_array[-1], np.sum(flat_array)]])
-    return output
+        output = list(input_array.shape)
+        flat_array = input_array.flatten()
+        output.extend([float(i) for i in
+                       [flat_array[0], flat_array[-1], np.sum(flat_array)]])
+        return output
 
-  def default_correctness_function(self, *args):
-    """Returns a vector with the concatenation of common properties.
+    def default_correctness_function(self, *args):
+        """Returns a vector with the concatenation of common properties.
 
     This function simply calls common_tensor_properties() for every element.
     It is useful as it allows one to easily construct tests of layers without
@@ -137,14 +137,14 @@ class BaseTest(tf.test.TestCase):
     Returns:
       A list of values containing properties for every element in args.
     """
-    output = []
-    for arg in args:
-      output.extend(self.common_tensor_properties(arg))
-    return output
+        output = []
+        for arg in args:
+            output.extend(self.common_tensor_properties(arg))
+        return output
 
-  def _construct_and_save_reference_files(
-      self, name, graph, ops_to_eval, correctness_function):
-    """Save reference data files.
+    def _construct_and_save_reference_files(
+            self, name, graph, ops_to_eval, correctness_function):
+        """Save reference data files.
 
     Constructs a serialized graph_def, layer weights, and computation results.
     It then saves them to files which are read at test time.
@@ -160,45 +160,45 @@ class BaseTest(tf.test.TestCase):
         serializable; in particular it is up to the user to convert numpy
         dtypes into builtin dtypes.
     """
-    data_dir = os.path.join(self.data_root, name)
+        data_dir = os.path.join(self.data_root, name)
 
-    # Make sure there is a clean space for results.
-    if os.path.exists(data_dir):
-      shutil.rmtree(data_dir)
-    os.makedirs(data_dir)
+        # Make sure there is a clean space for results.
+        if os.path.exists(data_dir):
+            shutil.rmtree(data_dir)
+        os.makedirs(data_dir)
 
-    # Serialize graph for comparison.
-    graph_bytes = graph.as_graph_def().SerializeToString()
-    expected_file = os.path.join(data_dir, "expected_graph")
-    with tf.gfile.Open(expected_file, "wb") as f:
-      f.write(graph_bytes)
+        # Serialize graph for comparison.
+        graph_bytes = graph.as_graph_def().SerializeToString()
+        expected_file = os.path.join(data_dir, "expected_graph")
+        with tf.gfile.Open(expected_file, "wb") as f:
+            f.write(graph_bytes)
 
-    with graph.as_default():
-      init = tf.global_variables_initializer()
-      saver = tf.train.Saver()
+        with graph.as_default():
+            init = tf.global_variables_initializer()
+            saver = tf.train.Saver()
 
-    with self.test_session(graph=graph) as sess:
-      sess.run(init)
-      saver.save(sess=sess, save_path=os.path.join(data_dir, self.ckpt_prefix))
+        with self.test_session(graph=graph) as sess:
+            sess.run(init)
+            saver.save(sess=sess, save_path=os.path.join(data_dir, self.ckpt_prefix))
 
-      # These files are not needed for this test.
-      os.remove(os.path.join(data_dir, "checkpoint"))
-      os.remove(os.path.join(data_dir, self.ckpt_prefix + ".meta"))
+            # These files are not needed for this test.
+            os.remove(os.path.join(data_dir, "checkpoint"))
+            os.remove(os.path.join(data_dir, self.ckpt_prefix + ".meta"))
 
-      # ops are evaluated even if there is no correctness function to ensure
-      # that they can be evaluated.
-      eval_results = [op.eval() for op in ops_to_eval]
+            # ops are evaluated even if there is no correctness function to ensure
+            # that they can be evaluated.
+            eval_results = [op.eval() for op in ops_to_eval]
 
-      if correctness_function is not None:
-        results = correctness_function(*eval_results)
-        with tf.gfile.Open(os.path.join(data_dir, "results.json"), "w") as f:
-          json.dump(results, f)
+            if correctness_function is not None:
+                results = correctness_function(*eval_results)
+                with tf.gfile.Open(os.path.join(data_dir, "results.json"), "w") as f:
+                    json.dump(results, f)
 
-      with tf.gfile.Open(os.path.join(data_dir, "tf_version.json"), "w") as f:
-        json.dump([tf.VERSION, tf.GIT_VERSION], f)
+            with tf.gfile.Open(os.path.join(data_dir, "tf_version.json"), "w") as f:
+                json.dump([tf.VERSION, tf.GIT_VERSION], f)
 
-  def _evaluate_test_case(self, name, graph, ops_to_eval, correctness_function):
-    """Determine if a graph agrees with the reference data.
+    def _evaluate_test_case(self, name, graph, ops_to_eval, correctness_function):
+        """Determine if a graph agrees with the reference data.
 
     Args:
       name: String defining the run. This will be used to define folder names
@@ -211,64 +211,64 @@ class BaseTest(tf.test.TestCase):
         serializable; in particular it is up to the user to convert numpy
         dtypes into builtin dtypes.
     """
-    data_dir = os.path.join(self.data_root, name)
+        data_dir = os.path.join(self.data_root, name)
 
-    # Serialize graph for comparison.
-    graph_bytes = graph.as_graph_def().SerializeToString()
-    expected_file = os.path.join(data_dir, "expected_graph")
-    with tf.gfile.Open(expected_file, "rb") as f:
-      expected_graph_bytes = f.read()
-      # The serialization is non-deterministic byte-for-byte. Instead there is
-      # a utility which evaluates the semantics of the two graphs to test for
-      # equality. This has the added benefit of providing some information on
-      # what changed.
-      #   Note: The summary only show the first difference detected. It is not
-      #         an exhaustive summary of differences.
-    differences = pywrap_tensorflow.EqualGraphDefWrapper(
-        graph_bytes, expected_graph_bytes).decode("utf-8")
+        # Serialize graph for comparison.
+        graph_bytes = graph.as_graph_def().SerializeToString()
+        expected_file = os.path.join(data_dir, "expected_graph")
+        with tf.gfile.Open(expected_file, "rb") as f:
+            expected_graph_bytes = f.read()
+            # The serialization is non-deterministic byte-for-byte. Instead there is
+            # a utility which evaluates the semantics of the two graphs to test for
+            # equality. This has the added benefit of providing some information on
+            # what changed.
+            #   Note: The summary only show the first difference detected. It is not
+            #         an exhaustive summary of differences.
+        differences = pywrap_tensorflow.EqualGraphDefWrapper(
+            graph_bytes, expected_graph_bytes).decode("utf-8")
 
-    with graph.as_default():
-      init = tf.global_variables_initializer()
-      saver = tf.train.Saver()
+        with graph.as_default():
+            init = tf.global_variables_initializer()
+            saver = tf.train.Saver()
 
-    with tf.gfile.Open(os.path.join(data_dir, "tf_version.json"), "r") as f:
-      tf_version_reference, tf_git_version_reference = json.load(f)  # pylint: disable=unpacking-non-sequence
+        with tf.gfile.Open(os.path.join(data_dir, "tf_version.json"), "r") as f:
+            tf_version_reference, tf_git_version_reference = json.load(f)  # pylint: disable=unpacking-non-sequence
 
-    tf_version_comparison = ""
-    if tf.GIT_VERSION != tf_git_version_reference:
-      tf_version_comparison = (
-          "Test was built using:     {} (git = {})\n"
-          "Local TensorFlow version: {} (git = {})"
-          .format(tf_version_reference, tf_git_version_reference,
-                  tf.VERSION, tf.GIT_VERSION)
-      )
+        tf_version_comparison = ""
+        if tf.GIT_VERSION != tf_git_version_reference:
+            tf_version_comparison = (
+                "Test was built using:     {} (git = {})\n"
+                "Local TensorFlow version: {} (git = {})"
+                    .format(tf_version_reference, tf_git_version_reference,
+                            tf.VERSION, tf.GIT_VERSION)
+            )
 
-    with self.test_session(graph=graph) as sess:
-      sess.run(init)
-      try:
-        saver.restore(sess=sess, save_path=os.path.join(
-            data_dir, self.ckpt_prefix))
-        if differences:
-          tf.logging.warn(
-              "The provided graph is different than expected:\n  {}\n"
-              "However the weights were still able to be loaded.\n{}".format(
-                  differences, tf_version_comparison)
-          )
-      except:  # pylint: disable=bare-except
-        raise self.failureException(
-            "Weight load failed. Graph comparison:\n  {}{}"
-            .format(differences, tf_version_comparison))
+        with self.test_session(graph=graph) as sess:
+            sess.run(init)
+            try:
+                saver.restore(sess=sess, save_path=os.path.join(
+                    data_dir, self.ckpt_prefix))
+                if differences:
+                    tf.logging.warn(
+                        "The provided graph is different than expected:\n  {}\n"
+                        "However the weights were still able to be loaded.\n{}".format(
+                            differences, tf_version_comparison)
+                    )
+            except:  # pylint: disable=bare-except
+                raise self.failureException(
+                    "Weight load failed. Graph comparison:\n  {}{}"
+                        .format(differences, tf_version_comparison))
 
-      eval_results = [op.eval() for op in ops_to_eval]
-      if correctness_function is not None:
-        results = correctness_function(*eval_results)
-        with tf.gfile.Open(os.path.join(data_dir, "results.json"), "r") as f:
-          expected_results = json.load(f)
-        self.assertAllClose(results, expected_results)
+            eval_results = [op.eval() for op in ops_to_eval]
+            if correctness_function is not None:
+                results = correctness_function(*eval_results)
+                with tf.gfile.Open(os.path.join(data_dir, "results.json"), "r") as f:
+                    expected_results = json.load(f)
+                self.assertAllClose(results, expected_results)
 
-  def _save_or_test_ops(self, name, graph, ops_to_eval=None, test=True,
-                        correctness_function=None):
-    """Utility function to automate repeated work of graph checking and saving.
+    def _save_or_test_ops(self, name, graph, ops_to_eval=None, test=True,
+                          correctness_function=None):
+        """Utility function to automate repeated work of graph checking and saving.
 
     The philosophy of this function is that the user need only define ops on
     a graph and specify which results should be validated. The actual work of
@@ -289,46 +289,46 @@ class BaseTest(tf.test.TestCase):
         dtypes into builtin dtypes.
     """
 
-    ops_to_eval = ops_to_eval or []
+        ops_to_eval = ops_to_eval or []
 
-    if test:
-      try:
-        self._evaluate_test_case(
-            name=name, graph=graph, ops_to_eval=ops_to_eval,
-            correctness_function=correctness_function
-        )
-      except:
-        tf.logging.error("Failed unittest {}".format(name))
-        raise
-    else:
-      self._construct_and_save_reference_files(
-          name=name, graph=graph, ops_to_eval=ops_to_eval,
-          correctness_function=correctness_function
-      )
+        if test:
+            try:
+                self._evaluate_test_case(
+                    name=name, graph=graph, ops_to_eval=ops_to_eval,
+                    correctness_function=correctness_function
+                )
+            except:
+                tf.logging.error("Failed unittest {}".format(name))
+                raise
+        else:
+            self._construct_and_save_reference_files(
+                name=name, graph=graph, ops_to_eval=ops_to_eval,
+                correctness_function=correctness_function
+            )
 
 
 class ReferenceDataActionParser(argparse.ArgumentParser):
-  """Minimal arg parser so that test regeneration can be called from the CLI."""
+    """Minimal arg parser so that test regeneration can be called from the CLI."""
 
-  def __init__(self):
-    super(ReferenceDataActionParser, self).__init__()
-    self.add_argument(
-        "--regenerate", "-regen",
-        action="store_true",
-        help="Enable this flag to regenerate test data. If not set unit tests"
-             "will be run."
-    )
+    def __init__(self):
+        super(ReferenceDataActionParser, self).__init__()
+        self.add_argument(
+            "--regenerate", "-regen",
+            action="store_true",
+            help="Enable this flag to regenerate test data. If not set unit tests"
+                 "will be run."
+        )
 
 
 def main(argv, test_class):
-  """Simple switch function to allow test regeneration from the CLI."""
-  flags = ReferenceDataActionParser().parse_args(argv[1:])
-  if flags.regenerate:
-    if sys.version_info[0] == 2:
-      raise NameError("\nPython2 unittest does not support being run as a "
-                      "standalone class.\nAs a result tests must be "
-                      "regenerated using Python3.\n"
-                      "Tests can be run under 2 or 3.")
-    test_class().regenerate()
-  else:
-    tf.test.main()
+    """Simple switch function to allow test regeneration from the CLI."""
+    flags = ReferenceDataActionParser().parse_args(argv[1:])
+    if flags.regenerate:
+        if sys.version_info[0] == 2:
+            raise NameError("\nPython2 unittest does not support being run as a "
+                            "standalone class.\nAs a result tests must be "
+                            "regenerated using Python3.\n"
+                            "Tests can be run under 2 or 3.")
+        test_class().regenerate()
+    else:
+        tf.test.main()

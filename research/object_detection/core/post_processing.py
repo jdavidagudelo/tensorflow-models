@@ -17,10 +17,10 @@
 
 import tensorflow as tf
 
-from object_detection.core import box_list
-from object_detection.core import box_list_ops
-from object_detection.core import standard_fields as fields
-from object_detection.utils import shape_utils
+from research.object_detection.core import box_list
+from research.object_detection.core import box_list_ops
+from research.object_detection.core import standard_fields as fields
+from research.object_detection.utils import shape_utils
 
 
 def multiclass_non_max_suppression(boxes,
@@ -36,7 +36,7 @@ def multiclass_non_max_suppression(boxes,
                                    pad_to_max_output_size=False,
                                    additional_fields=None,
                                    scope=None):
-  """Multi-class version of non maximum suppression.
+    """Multi-class version of non maximum suppression.
 
   This op greedily selects a subset of detection bounding boxes, pruning
   away boxes that have high IOU (intersection over union) overlap (> thresh)
@@ -96,137 +96,137 @@ def multiclass_non_max_suppression(boxes,
     ValueError: if iou_thresh is not in [0, 1] or if input boxlist does not have
       a valid scores field.
   """
-  if not 0 <= iou_thresh <= 1.0:
-    raise ValueError('iou_thresh must be between 0 and 1')
-  if scores.shape.ndims != 2:
-    raise ValueError('scores field must be of rank 2')
-  if scores.shape[1].value is None:
-    raise ValueError('scores must have statically defined second '
-                     'dimension')
-  if boxes.shape.ndims != 3:
-    raise ValueError('boxes must be of rank 3.')
-  if not (boxes.shape[1].value == scores.shape[1].value or
-          boxes.shape[1].value == 1):
-    raise ValueError('second dimension of boxes must be either 1 or equal '
-                     'to the second dimension of scores')
-  if boxes.shape[2].value != 4:
-    raise ValueError('last dimension of boxes must be of size 4.')
-  if change_coordinate_frame and clip_window is None:
-    raise ValueError('if change_coordinate_frame is True, then a clip_window'
-                     'must be specified.')
+    if not 0 <= iou_thresh <= 1.0:
+        raise ValueError('iou_thresh must be between 0 and 1')
+    if scores.shape.ndims != 2:
+        raise ValueError('scores field must be of rank 2')
+    if scores.shape[1].value is None:
+        raise ValueError('scores must have statically defined second '
+                         'dimension')
+    if boxes.shape.ndims != 3:
+        raise ValueError('boxes must be of rank 3.')
+    if not (boxes.shape[1].value == scores.shape[1].value or
+            boxes.shape[1].value == 1):
+        raise ValueError('second dimension of boxes must be either 1 or equal '
+                         'to the second dimension of scores')
+    if boxes.shape[2].value != 4:
+        raise ValueError('last dimension of boxes must be of size 4.')
+    if change_coordinate_frame and clip_window is None:
+        raise ValueError('if change_coordinate_frame is True, then a clip_window'
+                         'must be specified.')
 
-  with tf.name_scope(scope, 'MultiClassNonMaxSuppression'):
-    num_scores = tf.shape(scores)[0]
-    num_classes = scores.get_shape()[1]
+    with tf.name_scope(scope, 'MultiClassNonMaxSuppression'):
+        num_scores = tf.shape(scores)[0]
+        num_classes = scores.get_shape()[1]
 
-    selected_boxes_list = []
-    num_valid_nms_boxes_cumulative = tf.constant(0)
-    per_class_boxes_list = tf.unstack(boxes, axis=1)
-    if masks is not None:
-      per_class_masks_list = tf.unstack(masks, axis=1)
-    if boundaries is not None:
-      per_class_boundaries_list = tf.unstack(boundaries, axis=1)
-    boxes_ids = (range(num_classes) if len(per_class_boxes_list) > 1
-                 else [0] * num_classes.value)
-    for class_idx, boxes_idx in zip(range(num_classes), boxes_ids):
-      per_class_boxes = per_class_boxes_list[boxes_idx]
-      boxlist_and_class_scores = box_list.BoxList(per_class_boxes)
-      class_scores = tf.reshape(
-          tf.slice(scores, [0, class_idx], tf.stack([num_scores, 1])), [-1])
+        selected_boxes_list = []
+        num_valid_nms_boxes_cumulative = tf.constant(0)
+        per_class_boxes_list = tf.unstack(boxes, axis=1)
+        if masks is not None:
+            per_class_masks_list = tf.unstack(masks, axis=1)
+        if boundaries is not None:
+            per_class_boundaries_list = tf.unstack(boundaries, axis=1)
+        boxes_ids = (range(num_classes) if len(per_class_boxes_list) > 1
+                     else [0] * num_classes.value)
+        for class_idx, boxes_idx in zip(range(num_classes), boxes_ids):
+            per_class_boxes = per_class_boxes_list[boxes_idx]
+            boxlist_and_class_scores = box_list.BoxList(per_class_boxes)
+            class_scores = tf.reshape(
+                tf.slice(scores, [0, class_idx], tf.stack([num_scores, 1])), [-1])
 
-      boxlist_and_class_scores.add_field(fields.BoxListFields.scores,
-                                         class_scores)
-      if masks is not None:
-        per_class_masks = per_class_masks_list[boxes_idx]
-        boxlist_and_class_scores.add_field(fields.BoxListFields.masks,
-                                           per_class_masks)
-      if boundaries is not None:
-        per_class_boundaries = per_class_boundaries_list[boxes_idx]
-        boxlist_and_class_scores.add_field(fields.BoxListFields.boundaries,
-                                           per_class_boundaries)
-      if additional_fields is not None:
-        for key, tensor in additional_fields.items():
-          boxlist_and_class_scores.add_field(key, tensor)
+            boxlist_and_class_scores.add_field(fields.BoxListFields.scores,
+                                               class_scores)
+            if masks is not None:
+                per_class_masks = per_class_masks_list[boxes_idx]
+                boxlist_and_class_scores.add_field(fields.BoxListFields.masks,
+                                                   per_class_masks)
+            if boundaries is not None:
+                per_class_boundaries = per_class_boundaries_list[boxes_idx]
+                boxlist_and_class_scores.add_field(fields.BoxListFields.boundaries,
+                                                   per_class_boundaries)
+            if additional_fields is not None:
+                for key, tensor in additional_fields.items():
+                    boxlist_and_class_scores.add_field(key, tensor)
 
-      if pad_to_max_output_size:
-        max_selection_size = max_size_per_class
-        selected_indices, num_valid_nms_boxes = (
-            tf.image.non_max_suppression_padded(
-                boxlist_and_class_scores.get(),
-                boxlist_and_class_scores.get_field(fields.BoxListFields.scores),
-                max_selection_size,
-                iou_threshold=iou_thresh,
-                score_threshold=score_thresh,
-                pad_to_max_output_size=True))
-      else:
-        max_selection_size = tf.minimum(max_size_per_class,
-                                        boxlist_and_class_scores.num_boxes())
-        selected_indices = tf.image.non_max_suppression(
-            boxlist_and_class_scores.get(),
-            boxlist_and_class_scores.get_field(fields.BoxListFields.scores),
-            max_selection_size,
-            iou_threshold=iou_thresh,
-            score_threshold=score_thresh)
-        num_valid_nms_boxes = tf.shape(selected_indices)[0]
-        selected_indices = tf.concat(
-            [selected_indices,
-             tf.zeros(max_selection_size-num_valid_nms_boxes, tf.int32)], 0)
-      nms_result = box_list_ops.gather(boxlist_and_class_scores,
-                                       selected_indices)
-      # Make the scores -1 for invalid boxes.
-      valid_nms_boxes_indx = tf.less(
-          tf.range(max_selection_size), num_valid_nms_boxes)
-      nms_scores = nms_result.get_field(fields.BoxListFields.scores)
-      nms_result.add_field(fields.BoxListFields.scores,
-                           tf.where(valid_nms_boxes_indx,
-                                    nms_scores, -1*tf.ones(max_selection_size)))
-      num_valid_nms_boxes_cumulative += num_valid_nms_boxes
+            if pad_to_max_output_size:
+                max_selection_size = max_size_per_class
+                selected_indices, num_valid_nms_boxes = (
+                    tf.image.non_max_suppression_padded(
+                        boxlist_and_class_scores.get(),
+                        boxlist_and_class_scores.get_field(fields.BoxListFields.scores),
+                        max_selection_size,
+                        iou_threshold=iou_thresh,
+                        score_threshold=score_thresh,
+                        pad_to_max_output_size=True))
+            else:
+                max_selection_size = tf.minimum(max_size_per_class,
+                                                boxlist_and_class_scores.num_boxes())
+                selected_indices = tf.image.non_max_suppression(
+                    boxlist_and_class_scores.get(),
+                    boxlist_and_class_scores.get_field(fields.BoxListFields.scores),
+                    max_selection_size,
+                    iou_threshold=iou_thresh,
+                    score_threshold=score_thresh)
+                num_valid_nms_boxes = tf.shape(selected_indices)[0]
+                selected_indices = tf.concat(
+                    [selected_indices,
+                     tf.zeros(max_selection_size - num_valid_nms_boxes, tf.int32)], 0)
+            nms_result = box_list_ops.gather(boxlist_and_class_scores,
+                                             selected_indices)
+            # Make the scores -1 for invalid boxes.
+            valid_nms_boxes_indx = tf.less(
+                tf.range(max_selection_size), num_valid_nms_boxes)
+            nms_scores = nms_result.get_field(fields.BoxListFields.scores)
+            nms_result.add_field(fields.BoxListFields.scores,
+                                 tf.where(valid_nms_boxes_indx,
+                                          nms_scores, -1 * tf.ones(max_selection_size)))
+            num_valid_nms_boxes_cumulative += num_valid_nms_boxes
 
-      nms_result.add_field(
-          fields.BoxListFields.classes, (tf.zeros_like(
-              nms_result.get_field(fields.BoxListFields.scores)) + class_idx))
-      selected_boxes_list.append(nms_result)
-    selected_boxes = box_list_ops.concatenate(selected_boxes_list)
-    sorted_boxes = box_list_ops.sort_by_field(selected_boxes,
-                                              fields.BoxListFields.scores)
-    if clip_window is not None:
-      # When pad_to_max_output_size is False, it prunes the boxes with zero
-      # area.
-      sorted_boxes = box_list_ops.clip_to_window(
-          sorted_boxes,
-          clip_window,
-          filter_nonoverlapping=not pad_to_max_output_size)
-      # Set the scores of boxes with zero area to -1 to keep the default
-      # behaviour of pruning out zero area boxes.
-      sorted_boxes_size = tf.shape(sorted_boxes.get())[0]
-      non_zero_box_area = tf.cast(box_list_ops.area(sorted_boxes), tf.bool)
-      sorted_boxes_scores = tf.where(
-          non_zero_box_area,
-          sorted_boxes.get_field(fields.BoxListFields.scores),
-          -1*tf.ones(sorted_boxes_size))
-      sorted_boxes.add_field(fields.BoxListFields.scores, sorted_boxes_scores)
-      num_valid_nms_boxes_cumulative = tf.reduce_sum(
-          tf.cast(tf.greater_equal(sorted_boxes_scores, 0), tf.int32))
-      sorted_boxes = box_list_ops.sort_by_field(sorted_boxes,
-                                                fields.BoxListFields.scores)
-      if change_coordinate_frame:
-        sorted_boxes = box_list_ops.change_coordinate_frame(
-            sorted_boxes, clip_window)
+            nms_result.add_field(
+                fields.BoxListFields.classes, (tf.zeros_like(
+                    nms_result.get_field(fields.BoxListFields.scores)) + class_idx))
+            selected_boxes_list.append(nms_result)
+        selected_boxes = box_list_ops.concatenate(selected_boxes_list)
+        sorted_boxes = box_list_ops.sort_by_field(selected_boxes,
+                                                  fields.BoxListFields.scores)
+        if clip_window is not None:
+            # When pad_to_max_output_size is False, it prunes the boxes with zero
+            # area.
+            sorted_boxes = box_list_ops.clip_to_window(
+                sorted_boxes,
+                clip_window,
+                filter_nonoverlapping=not pad_to_max_output_size)
+            # Set the scores of boxes with zero area to -1 to keep the default
+            # behaviour of pruning out zero area boxes.
+            sorted_boxes_size = tf.shape(sorted_boxes.get())[0]
+            non_zero_box_area = tf.cast(box_list_ops.area(sorted_boxes), tf.bool)
+            sorted_boxes_scores = tf.where(
+                non_zero_box_area,
+                sorted_boxes.get_field(fields.BoxListFields.scores),
+                -1 * tf.ones(sorted_boxes_size))
+            sorted_boxes.add_field(fields.BoxListFields.scores, sorted_boxes_scores)
+            num_valid_nms_boxes_cumulative = tf.reduce_sum(
+                tf.cast(tf.greater_equal(sorted_boxes_scores, 0), tf.int32))
+            sorted_boxes = box_list_ops.sort_by_field(sorted_boxes,
+                                                      fields.BoxListFields.scores)
+            if change_coordinate_frame:
+                sorted_boxes = box_list_ops.change_coordinate_frame(
+                    sorted_boxes, clip_window)
 
-    if max_total_size:
-      max_total_size = tf.minimum(max_total_size,
-                                  sorted_boxes.num_boxes())
-      sorted_boxes = box_list_ops.gather(sorted_boxes,
-                                         tf.range(max_total_size))
-      num_valid_nms_boxes_cumulative = tf.where(
-          max_total_size > num_valid_nms_boxes_cumulative,
-          num_valid_nms_boxes_cumulative, max_total_size)
-    # Select only the valid boxes if pad_to_max_output_size is False.
-    if not pad_to_max_output_size:
-      sorted_boxes = box_list_ops.gather(
-          sorted_boxes, tf.range(num_valid_nms_boxes_cumulative))
+        if max_total_size:
+            max_total_size = tf.minimum(max_total_size,
+                                        sorted_boxes.num_boxes())
+            sorted_boxes = box_list_ops.gather(sorted_boxes,
+                                               tf.range(max_total_size))
+            num_valid_nms_boxes_cumulative = tf.where(
+                max_total_size > num_valid_nms_boxes_cumulative,
+                num_valid_nms_boxes_cumulative, max_total_size)
+        # Select only the valid boxes if pad_to_max_output_size is False.
+        if not pad_to_max_output_size:
+            sorted_boxes = box_list_ops.gather(
+                sorted_boxes, tf.range(num_valid_nms_boxes_cumulative))
 
-    return sorted_boxes, num_valid_nms_boxes_cumulative
+        return sorted_boxes, num_valid_nms_boxes_cumulative
 
 
 def batch_multiclass_non_max_suppression(boxes,
@@ -243,7 +243,7 @@ def batch_multiclass_non_max_suppression(boxes,
                                          scope=None,
                                          use_static_shapes=False,
                                          parallel_iterations=32):
-  """Multi-class version of non maximum suppression that operates on a batch.
+    """Multi-class version of non maximum suppression that operates on a batch.
 
   This op is similar to `multiclass_non_max_suppression` but operates on a batch
   of boxes and scores. See documentation for `multiclass_non_max_suppression`
@@ -312,52 +312,52 @@ def batch_multiclass_non_max_suppression(boxes,
     ValueError: if `q` in boxes.shape is not 1 or not equal to number of
       classes as inferred from scores.shape.
   """
-  q = boxes.shape[2].value
-  num_classes = scores.shape[2].value
-  if q != 1 and q != num_classes:
-    raise ValueError('third dimension of boxes must be either 1 or equal '
-                     'to the third dimension of scores')
-  if change_coordinate_frame and clip_window is None:
-    raise ValueError('if change_coordinate_frame is True, then a clip_window'
-                     'must be specified.')
-  original_masks = masks
-  original_additional_fields = additional_fields
-  with tf.name_scope(scope, 'BatchMultiClassNonMaxSuppression'):
-    boxes_shape = boxes.shape
-    batch_size = boxes_shape[0].value
-    num_anchors = boxes_shape[1].value
+    q = boxes.shape[2].value
+    num_classes = scores.shape[2].value
+    if q != 1 and q != num_classes:
+        raise ValueError('third dimension of boxes must be either 1 or equal '
+                         'to the third dimension of scores')
+    if change_coordinate_frame and clip_window is None:
+        raise ValueError('if change_coordinate_frame is True, then a clip_window'
+                         'must be specified.')
+    original_masks = masks
+    original_additional_fields = additional_fields
+    with tf.name_scope(scope, 'BatchMultiClassNonMaxSuppression'):
+        boxes_shape = boxes.shape
+        batch_size = boxes_shape[0].value
+        num_anchors = boxes_shape[1].value
 
-    if batch_size is None:
-      batch_size = tf.shape(boxes)[0]
-    if num_anchors is None:
-      num_anchors = tf.shape(boxes)[1]
+        if batch_size is None:
+            batch_size = tf.shape(boxes)[0]
+        if num_anchors is None:
+            num_anchors = tf.shape(boxes)[1]
 
-    # If num valid boxes aren't provided, create one and mark all boxes as
-    # valid.
-    if num_valid_boxes is None:
-      num_valid_boxes = tf.ones([batch_size], dtype=tf.int32) * num_anchors
+        # If num valid boxes aren't provided, create one and mark all boxes as
+        # valid.
+        if num_valid_boxes is None:
+            num_valid_boxes = tf.ones([batch_size], dtype=tf.int32) * num_anchors
 
-    # If masks aren't provided, create dummy masks so we can only have one copy
-    # of _single_image_nms_fn and discard the dummy masks after map_fn.
-    if masks is None:
-      masks_shape = tf.stack([batch_size, num_anchors, q, 1, 1])
-      masks = tf.zeros(masks_shape)
+        # If masks aren't provided, create dummy masks so we can only have one copy
+        # of _single_image_nms_fn and discard the dummy masks after map_fn.
+        if masks is None:
+            masks_shape = tf.stack([batch_size, num_anchors, q, 1, 1])
+            masks = tf.zeros(masks_shape)
 
-    if clip_window is None:
-      clip_window = tf.stack([
-          tf.reduce_min(boxes[:, :, :, 0]),
-          tf.reduce_min(boxes[:, :, :, 1]),
-          tf.reduce_max(boxes[:, :, :, 2]),
-          tf.reduce_max(boxes[:, :, :, 3])
-      ])
-    if clip_window.shape.ndims == 1:
-      clip_window = tf.tile(tf.expand_dims(clip_window, 0), [batch_size, 1])
+        if clip_window is None:
+            clip_window = tf.stack([
+                tf.reduce_min(boxes[:, :, :, 0]),
+                tf.reduce_min(boxes[:, :, :, 1]),
+                tf.reduce_max(boxes[:, :, :, 2]),
+                tf.reduce_max(boxes[:, :, :, 3])
+            ])
+        if clip_window.shape.ndims == 1:
+            clip_window = tf.tile(tf.expand_dims(clip_window, 0), [batch_size, 1])
 
-    if additional_fields is None:
-      additional_fields = {}
+        if additional_fields is None:
+            additional_fields = {}
 
-    def _single_image_nms_fn(args):
-      """Runs NMS on a single image and returns padded output.
+        def _single_image_nms_fn(args):
+            """Runs NMS on a single image and returns padded output.
 
       Args:
         args: A list of tensors consisting of the following:
@@ -398,92 +398,92 @@ def batch_multiclass_non_max_suppression(boxes,
           entries in nms_boxes[i], nms_scores[i] and nms_class[i] are valid. The
           rest of the entries are zero paddings.
       """
-      per_image_boxes = args[0]
-      per_image_scores = args[1]
-      per_image_masks = args[2]
-      per_image_clip_window = args[3]
-      per_image_additional_fields = {
-          key: value
-          for key, value in zip(additional_fields, args[4:-1])
-      }
-      per_image_num_valid_boxes = args[-1]
-      per_image_boxes = tf.reshape(
-          tf.slice(per_image_boxes, 3 * [0],
-                   tf.stack([per_image_num_valid_boxes, -1, -1])), [-1, q, 4])
-      per_image_scores = tf.reshape(
-          tf.slice(per_image_scores, [0, 0],
-                   tf.stack([per_image_num_valid_boxes, -1])),
-          [-1, num_classes])
-      per_image_masks = tf.reshape(
-          tf.slice(per_image_masks, 4 * [0],
-                   tf.stack([per_image_num_valid_boxes, -1, -1, -1])),
-          [-1, q, per_image_masks.shape[2].value,
-           per_image_masks.shape[3].value])
-      if per_image_additional_fields is not None:
-        for key, tensor in per_image_additional_fields.items():
-          additional_field_shape = tensor.get_shape()
-          additional_field_dim = len(additional_field_shape)
-          per_image_additional_fields[key] = tf.reshape(
-              tf.slice(per_image_additional_fields[key],
-                       additional_field_dim * [0],
-                       tf.stack([per_image_num_valid_boxes] +
-                                (additional_field_dim - 1) * [-1])),
-              [-1] + [dim.value for dim in additional_field_shape[1:]])
-      nmsed_boxlist, num_valid_nms_boxes = multiclass_non_max_suppression(
-          per_image_boxes,
-          per_image_scores,
-          score_thresh,
-          iou_thresh,
-          max_size_per_class,
-          max_total_size,
-          clip_window=per_image_clip_window,
-          change_coordinate_frame=change_coordinate_frame,
-          masks=per_image_masks,
-          pad_to_max_output_size=use_static_shapes,
-          additional_fields=per_image_additional_fields)
+            per_image_boxes = args[0]
+            per_image_scores = args[1]
+            per_image_masks = args[2]
+            per_image_clip_window = args[3]
+            per_image_additional_fields = {
+                key: value
+                for key, value in zip(additional_fields, args[4:-1])
+            }
+            per_image_num_valid_boxes = args[-1]
+            per_image_boxes = tf.reshape(
+                tf.slice(per_image_boxes, 3 * [0],
+                         tf.stack([per_image_num_valid_boxes, -1, -1])), [-1, q, 4])
+            per_image_scores = tf.reshape(
+                tf.slice(per_image_scores, [0, 0],
+                         tf.stack([per_image_num_valid_boxes, -1])),
+                [-1, num_classes])
+            per_image_masks = tf.reshape(
+                tf.slice(per_image_masks, 4 * [0],
+                         tf.stack([per_image_num_valid_boxes, -1, -1, -1])),
+                [-1, q, per_image_masks.shape[2].value,
+                 per_image_masks.shape[3].value])
+            if per_image_additional_fields is not None:
+                for key, tensor in per_image_additional_fields.items():
+                    additional_field_shape = tensor.get_shape()
+                    additional_field_dim = len(additional_field_shape)
+                    per_image_additional_fields[key] = tf.reshape(
+                        tf.slice(per_image_additional_fields[key],
+                                 additional_field_dim * [0],
+                                 tf.stack([per_image_num_valid_boxes] +
+                                          (additional_field_dim - 1) * [-1])),
+                        [-1] + [dim.value for dim in additional_field_shape[1:]])
+            nmsed_boxlist, num_valid_nms_boxes = multiclass_non_max_suppression(
+                per_image_boxes,
+                per_image_scores,
+                score_thresh,
+                iou_thresh,
+                max_size_per_class,
+                max_total_size,
+                clip_window=per_image_clip_window,
+                change_coordinate_frame=change_coordinate_frame,
+                masks=per_image_masks,
+                pad_to_max_output_size=use_static_shapes,
+                additional_fields=per_image_additional_fields)
 
-      if not use_static_shapes:
-        nmsed_boxlist = box_list_ops.pad_or_clip_box_list(
-            nmsed_boxlist, max_total_size)
-      num_detections = num_valid_nms_boxes
-      nmsed_boxes = nmsed_boxlist.get()
-      nmsed_scores = nmsed_boxlist.get_field(fields.BoxListFields.scores)
-      nmsed_classes = nmsed_boxlist.get_field(fields.BoxListFields.classes)
-      nmsed_masks = nmsed_boxlist.get_field(fields.BoxListFields.masks)
-      nmsed_additional_fields = [
-          nmsed_boxlist.get_field(key) for key in per_image_additional_fields
-      ]
-      return ([nmsed_boxes, nmsed_scores, nmsed_classes, nmsed_masks] +
-              nmsed_additional_fields + [num_detections])
+            if not use_static_shapes:
+                nmsed_boxlist = box_list_ops.pad_or_clip_box_list(
+                    nmsed_boxlist, max_total_size)
+            num_detections = num_valid_nms_boxes
+            nmsed_boxes = nmsed_boxlist.get()
+            nmsed_scores = nmsed_boxlist.get_field(fields.BoxListFields.scores)
+            nmsed_classes = nmsed_boxlist.get_field(fields.BoxListFields.classes)
+            nmsed_masks = nmsed_boxlist.get_field(fields.BoxListFields.masks)
+            nmsed_additional_fields = [
+                nmsed_boxlist.get_field(key) for key in per_image_additional_fields
+            ]
+            return ([nmsed_boxes, nmsed_scores, nmsed_classes, nmsed_masks] +
+                    nmsed_additional_fields + [num_detections])
 
-    num_additional_fields = 0
-    if additional_fields is not None:
-      num_additional_fields = len(additional_fields)
-    num_nmsed_outputs = 4 + num_additional_fields
+        num_additional_fields = 0
+        if additional_fields is not None:
+            num_additional_fields = len(additional_fields)
+        num_nmsed_outputs = 4 + num_additional_fields
 
-    batch_outputs = shape_utils.static_or_dynamic_map_fn(
-        _single_image_nms_fn,
-        elems=([boxes, scores, masks, clip_window] +
-               list(additional_fields.values()) + [num_valid_boxes]),
-        dtype=(num_nmsed_outputs * [tf.float32] + [tf.int32]),
-        parallel_iterations=parallel_iterations)
+        batch_outputs = shape_utils.static_or_dynamic_map_fn(
+            _single_image_nms_fn,
+            elems=([boxes, scores, masks, clip_window] +
+                   list(additional_fields.values()) + [num_valid_boxes]),
+            dtype=(num_nmsed_outputs * [tf.float32] + [tf.int32]),
+            parallel_iterations=parallel_iterations)
 
-    batch_nmsed_boxes = batch_outputs[0]
-    batch_nmsed_scores = batch_outputs[1]
-    batch_nmsed_classes = batch_outputs[2]
-    batch_nmsed_masks = batch_outputs[3]
-    batch_nmsed_additional_fields = {
-        key: value
-        for key, value in zip(additional_fields, batch_outputs[4:-1])
-    }
-    batch_num_detections = batch_outputs[-1]
+        batch_nmsed_boxes = batch_outputs[0]
+        batch_nmsed_scores = batch_outputs[1]
+        batch_nmsed_classes = batch_outputs[2]
+        batch_nmsed_masks = batch_outputs[3]
+        batch_nmsed_additional_fields = {
+            key: value
+            for key, value in zip(additional_fields, batch_outputs[4:-1])
+        }
+        batch_num_detections = batch_outputs[-1]
 
-    if original_masks is None:
-      batch_nmsed_masks = None
+        if original_masks is None:
+            batch_nmsed_masks = None
 
-    if original_additional_fields is None:
-      batch_nmsed_additional_fields = None
+        if original_additional_fields is None:
+            batch_nmsed_additional_fields = None
 
-    return (batch_nmsed_boxes, batch_nmsed_scores, batch_nmsed_classes,
-            batch_nmsed_masks, batch_nmsed_additional_fields,
-            batch_num_detections)
+        return (batch_nmsed_boxes, batch_nmsed_scores, batch_nmsed_classes,
+                batch_nmsed_masks, batch_nmsed_additional_fields,
+                batch_num_detections)

@@ -19,13 +19,13 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from object_detection.core import standard_fields
-from object_detection.utils import vrd_evaluation
+from research.object_detection.core import standard_fields
+from research.object_detection.utils import vrd_evaluation
 
 
 def build_groundtruth_vrd_dictionary(data, class_label_map,
                                      relationship_label_map):
-  """Builds a groundtruth dictionary from groundtruth data in CSV file.
+    """Builds a groundtruth dictionary from groundtruth data in CSV file.
 
   Args:
     data: Pandas DataFrame with the groundtruth data for a single image.
@@ -48,36 +48,35 @@ def build_groundtruth_vrd_dictionary(data, class_label_map,
         standard_fields.InputDataFields.verified_labels: numpy array
           of shape [K] containing verified labels.
   """
-  data_boxes = data[data.LabelName.isnull()]
-  data_labels = data[data.LabelName1.isnull()]
+    data_boxes = data[data.LabelName.isnull()]
+    data_labels = data[data.LabelName1.isnull()]
 
-  boxes = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.vrd_box_data_type)
-  boxes['subject'] = data_boxes[['YMin1', 'XMin1', 'YMax1',
-                                 'XMax1']].as_matrix()
-  boxes['object'] = data_boxes[['YMin2', 'XMin2', 'YMax2', 'XMax2']].as_matrix()
+    boxes = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.vrd_box_data_type)
+    boxes['subject'] = data_boxes[['YMin1', 'XMin1', 'YMax1',
+                                   'XMax1']].values
+    boxes['object'] = data_boxes[['YMin2', 'XMin2', 'YMax2', 'XMax2']].values
 
-  labels = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.label_data_type)
-  labels['subject'] = data_boxes['LabelName1'].map(
-      lambda x: class_label_map[x]).as_matrix()
-  labels['object'] = data_boxes['LabelName2'].map(
-      lambda x: class_label_map[x]).as_matrix()
-  labels['relation'] = data_boxes['RelationshipLabel'].map(
-      lambda x: relationship_label_map[x]).as_matrix()
+    labels = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.label_data_type)
+    labels['subject'] = data_boxes['LabelName1'].map(
+        lambda x: class_label_map[x]).values
+    labels['object'] = data_boxes['LabelName2'].map(
+        lambda x: class_label_map[x]).values
+    labels['relation'] = data_boxes['RelationshipLabel'].map(
+        lambda x: relationship_label_map[x]).values
 
-  return {
-      standard_fields.InputDataFields.groundtruth_boxes:
-          boxes,
-      standard_fields.InputDataFields.groundtruth_classes:
-          labels,
-      standard_fields.InputDataFields.groundtruth_image_classes:
-          data_labels['LabelName'].map(lambda x: class_label_map[x])
-          .as_matrix(),
-  }
+    return {
+        standard_fields.InputDataFields.groundtruth_boxes:
+            boxes,
+        standard_fields.InputDataFields.groundtruth_classes:
+            labels,
+        standard_fields.InputDataFields.groundtruth_image_classes:
+            data_labels['LabelName'].map(lambda x: class_label_map[x]).values,
+    }
 
 
 def build_predictions_vrd_dictionary(data, class_label_map,
                                      relationship_label_map):
-  """Builds a predictions dictionary from predictions data in CSV file.
+    """Builds a predictions dictionary from predictions data in CSV file.
 
   Args:
     data: Pandas DataFrame with the predictions data for a single image.
@@ -100,26 +99,26 @@ def build_predictions_vrd_dictionary(data, class_label_map,
           corresponding bounding boxes and possibly additional classes (see
           datatype label_data_type above).
   """
-  data_boxes = data
+    data_boxes = data
 
-  boxes = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.vrd_box_data_type)
-  boxes['subject'] = data_boxes[['YMin1', 'XMin1', 'YMax1',
-                                 'XMax1']].as_matrix()
-  boxes['object'] = data_boxes[['YMin2', 'XMin2', 'YMax2', 'XMax2']].as_matrix()
+    boxes = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.vrd_box_data_type)
+    boxes['subject'] = data_boxes[['YMin1', 'XMin1', 'YMax1',
+                                   'XMax1']].values
+    boxes['object'] = data_boxes[['YMin2', 'XMin2', 'YMax2', 'XMax2']].values
 
-  labels = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.label_data_type)
-  labels['subject'] = data_boxes['LabelName1'].map(
-      lambda x: class_label_map[x]).as_matrix()
-  labels['object'] = data_boxes['LabelName2'].map(
-      lambda x: class_label_map[x]).as_matrix()
-  labels['relation'] = data_boxes['RelationshipLabel'].map(
-      lambda x: relationship_label_map[x]).as_matrix()
+    labels = np.zeros(data_boxes.shape[0], dtype=vrd_evaluation.label_data_type)
+    labels['subject'] = data_boxes['LabelName1'].map(
+        lambda x: class_label_map[x]).values
+    labels['object'] = data_boxes['LabelName2'].map(
+        lambda x: class_label_map[x]).values
+    labels['relation'] = data_boxes['RelationshipLabel'].map(
+        lambda x: relationship_label_map[x]).values
 
-  return {
-      standard_fields.DetectionResultFields.detection_boxes:
-          boxes,
-      standard_fields.DetectionResultFields.detection_classes:
-          labels,
-      standard_fields.DetectionResultFields.detection_scores:
-          data_boxes['Score'].as_matrix()
-  }
+    return {
+        standard_fields.DetectionResultFields.detection_boxes:
+            boxes,
+        standard_fields.DetectionResultFields.detection_classes:
+            labels,
+        standard_fields.DetectionResultFields.detection_scores:
+            data_boxes['Score'].values
+    }

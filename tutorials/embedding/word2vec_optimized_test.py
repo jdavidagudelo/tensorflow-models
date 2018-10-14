@@ -23,7 +23,7 @@ import os
 
 import tensorflow as tf
 
-import word2vec_optimized
+from . import word2vec_optimized
 
 flags = tf.app.flags
 

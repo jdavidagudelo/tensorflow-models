@@ -26,12 +26,13 @@ of final feature maps.
 import collections
 import functools
 import tensorflow as tf
-from object_detection.utils import ops
+from research.object_detection.utils import ops
+
 slim = tf.contrib.slim
 
 
 def get_depth_fn(depth_multiplier, min_depth):
-  """Builds a callable to compute depth (output channels) of conv filters.
+    """Builds a callable to compute depth (output channels) of conv filters.
 
   Args:
     depth_multiplier: a multiplier for the nominal depth.
@@ -40,14 +41,16 @@ def get_depth_fn(depth_multiplier, min_depth):
   Returns:
     A callable that takes in a nominal depth and returns the depth to use.
   """
-  def multiply_depth(depth):
-    new_depth = int(depth * depth_multiplier)
-    return max(new_depth, min_depth)
-  return multiply_depth
+
+    def multiply_depth(depth):
+        new_depth = int(depth * depth_multiplier)
+        return max(new_depth, min_depth)
+
+    return multiply_depth
 
 
 class KerasMultiResolutionFeatureMaps(tf.keras.Model):
-  """Generates multi resolution feature maps from input image features.
+    """Generates multi resolution feature maps from input image features.
 
   A Keras model that generates multi-scale feature maps for detection as in the
   SSD papers by Liu et al: https://arxiv.org/pdf/1512.02325v2.pdf, See Sec 2.1.
@@ -78,16 +81,16 @@ class KerasMultiResolutionFeatureMaps(tf.keras.Model):
         tensors where each tensor has shape [batch, height_i, width_i, depth_i].
   """
 
-  def __init__(self,
-               feature_map_layout,
-               depth_multiplier,
-               min_depth,
-               insert_1x1_conv,
-               is_training,
-               conv_hyperparams,
-               freeze_batchnorm,
-               name=None):
-    """Constructor.
+    def __init__(self,
+                 feature_map_layout,
+                 depth_multiplier,
+                 min_depth,
+                 insert_1x1_conv,
+                 is_training,
+                 conv_hyperparams,
+                 freeze_batchnorm,
+                 name=None):
+        """Constructor.
 
     Args:
       feature_map_layout: Dictionary of specifications for the feature map
@@ -130,109 +133,111 @@ class KerasMultiResolutionFeatureMaps(tf.keras.Model):
       name: A string name scope to assign to the model. If 'None', Keras
         will auto-generate one from the class name.
     """
-    super(KerasMultiResolutionFeatureMaps, self).__init__(name=name)
+        super(KerasMultiResolutionFeatureMaps, self).__init__(name=name)
 
-    self.feature_map_layout = feature_map_layout
-    self.convolutions = []
+        self.feature_map_layout = feature_map_layout
+        self.convolutions = []
 
-    depth_fn = get_depth_fn(depth_multiplier, min_depth)
+        depth_fn = get_depth_fn(depth_multiplier, min_depth)
 
-    base_from_layer = ''
-    use_explicit_padding = False
-    if 'use_explicit_padding' in feature_map_layout:
-      use_explicit_padding = feature_map_layout['use_explicit_padding']
-    use_depthwise = False
-    if 'use_depthwise' in feature_map_layout:
-      use_depthwise = feature_map_layout['use_depthwise']
-    for index, from_layer in enumerate(feature_map_layout['from_layer']):
-      net = []
-      self.convolutions.append(net)
-      layer_depth = feature_map_layout['layer_depth'][index]
-      conv_kernel_size = 3
-      if 'conv_kernel_size' in feature_map_layout:
-        conv_kernel_size = feature_map_layout['conv_kernel_size'][index]
-      if from_layer:
-        base_from_layer = from_layer
-      else:
-        if insert_1x1_conv:
-          layer_name = '{}_1_Conv2d_{}_1x1_{}'.format(
-              base_from_layer, index, depth_fn(layer_depth / 2))
-          net.append(tf.keras.layers.Conv2D(depth_fn(layer_depth / 2),
-                                            [1, 1],
-                                            padding='SAME',
-                                            strides=1,
-                                            name=layer_name + '_conv',
-                                            **conv_hyperparams.params()))
-          net.append(
-              conv_hyperparams.build_batch_norm(
-                  training=(is_training and not freeze_batchnorm),
-                  name=layer_name + '_batchnorm'))
-          net.append(
-              conv_hyperparams.build_activation_layer(
-                  name=layer_name))
+        base_from_layer = ''
+        use_explicit_padding = False
+        if 'use_explicit_padding' in feature_map_layout:
+            use_explicit_padding = feature_map_layout['use_explicit_padding']
+        use_depthwise = False
+        if 'use_depthwise' in feature_map_layout:
+            use_depthwise = feature_map_layout['use_depthwise']
+        for index, from_layer in enumerate(feature_map_layout['from_layer']):
+            net = []
+            self.convolutions.append(net)
+            layer_depth = feature_map_layout['layer_depth'][index]
+            conv_kernel_size = 3
+            if 'conv_kernel_size' in feature_map_layout:
+                conv_kernel_size = feature_map_layout['conv_kernel_size'][index]
+            if from_layer:
+                base_from_layer = from_layer
+            else:
+                if insert_1x1_conv:
+                    layer_name = '{}_1_Conv2d_{}_1x1_{}'.format(
+                        base_from_layer, index, depth_fn(layer_depth / 2))
+                    net.append(tf.keras.layers.Conv2D(depth_fn(layer_depth / 2),
+                                                      [1, 1],
+                                                      padding='SAME',
+                                                      strides=1,
+                                                      name=layer_name + '_conv',
+                                                      **conv_hyperparams.params()))
+                    net.append(
+                        conv_hyperparams.build_batch_norm(
+                            training=(is_training and not freeze_batchnorm),
+                            name=layer_name + '_batchnorm'))
+                    net.append(
+                        conv_hyperparams.build_activation_layer(
+                            name=layer_name))
 
-        layer_name = '{}_2_Conv2d_{}_{}x{}_s2_{}'.format(
-            base_from_layer, index, conv_kernel_size, conv_kernel_size,
-            depth_fn(layer_depth))
-        stride = 2
-        padding = 'SAME'
-        if use_explicit_padding:
-          padding = 'VALID'
-          # We define this function here while capturing the value of
-          # conv_kernel_size, to avoid holding a reference to the loop variable
-          # conv_kernel_size inside of a lambda function
-          def fixed_padding(features, kernel_size=conv_kernel_size):
-            return ops.fixed_padding(features, kernel_size)
-          net.append(tf.keras.layers.Lambda(fixed_padding))
-        # TODO(rathodv): Add some utilities to simplify the creation of
-        # Depthwise & non-depthwise convolutions w/ normalization & activations
-        if use_depthwise:
-          net.append(tf.keras.layers.DepthwiseConv2D(
-              [conv_kernel_size, conv_kernel_size],
-              depth_multiplier=1,
-              padding=padding,
-              strides=stride,
-              name=layer_name + '_depthwise_conv',
-              **conv_hyperparams.params()))
-          net.append(
-              conv_hyperparams.build_batch_norm(
-                  training=(is_training and not freeze_batchnorm),
-                  name=layer_name + '_depthwise_batchnorm'))
-          net.append(
-              conv_hyperparams.build_activation_layer(
-                  name=layer_name + '_depthwise'))
+                layer_name = '{}_2_Conv2d_{}_{}x{}_s2_{}'.format(
+                    base_from_layer, index, conv_kernel_size, conv_kernel_size,
+                    depth_fn(layer_depth))
+                stride = 2
+                padding = 'SAME'
+                if use_explicit_padding:
+                    padding = 'VALID'
 
-          net.append(tf.keras.layers.Conv2D(depth_fn(layer_depth), [1, 1],
-                                            padding='SAME',
-                                            strides=1,
-                                            name=layer_name + '_conv',
-                                            **conv_hyperparams.params()))
-          net.append(
-              conv_hyperparams.build_batch_norm(
-                  training=(is_training and not freeze_batchnorm),
-                  name=layer_name + '_batchnorm'))
-          net.append(
-              conv_hyperparams.build_activation_layer(
-                  name=layer_name))
+                    # We define this function here while capturing the value of
+                    # conv_kernel_size, to avoid holding a reference to the loop variable
+                    # conv_kernel_size inside of a lambda function
+                    def fixed_padding(features, kernel_size=conv_kernel_size):
+                        return ops.fixed_padding(features, kernel_size)
 
-        else:
-          net.append(tf.keras.layers.Conv2D(
-              depth_fn(layer_depth),
-              [conv_kernel_size, conv_kernel_size],
-              padding=padding,
-              strides=stride,
-              name=layer_name + '_conv',
-              **conv_hyperparams.params()))
-          net.append(
-              conv_hyperparams.build_batch_norm(
-                  training=(is_training and not freeze_batchnorm),
-                  name=layer_name + '_batchnorm'))
-          net.append(
-              conv_hyperparams.build_activation_layer(
-                  name=layer_name))
+                    net.append(tf.keras.layers.Lambda(fixed_padding))
+                # TODO(rathodv): Add some utilities to simplify the creation of
+                # Depthwise & non-depthwise convolutions w/ normalization & activations
+                if use_depthwise:
+                    net.append(tf.keras.layers.DepthwiseConv2D(
+                        [conv_kernel_size, conv_kernel_size],
+                        depth_multiplier=1,
+                        padding=padding,
+                        strides=stride,
+                        name=layer_name + '_depthwise_conv',
+                        **conv_hyperparams.params()))
+                    net.append(
+                        conv_hyperparams.build_batch_norm(
+                            training=(is_training and not freeze_batchnorm),
+                            name=layer_name + '_depthwise_batchnorm'))
+                    net.append(
+                        conv_hyperparams.build_activation_layer(
+                            name=layer_name + '_depthwise'))
 
-  def call(self, image_features):
-    """Generate the multi-resolution feature maps.
+                    net.append(tf.keras.layers.Conv2D(depth_fn(layer_depth), [1, 1],
+                                                      padding='SAME',
+                                                      strides=1,
+                                                      name=layer_name + '_conv',
+                                                      **conv_hyperparams.params()))
+                    net.append(
+                        conv_hyperparams.build_batch_norm(
+                            training=(is_training and not freeze_batchnorm),
+                            name=layer_name + '_batchnorm'))
+                    net.append(
+                        conv_hyperparams.build_activation_layer(
+                            name=layer_name))
+
+                else:
+                    net.append(tf.keras.layers.Conv2D(
+                        depth_fn(layer_depth),
+                        [conv_kernel_size, conv_kernel_size],
+                        padding=padding,
+                        strides=stride,
+                        name=layer_name + '_conv',
+                        **conv_hyperparams.params()))
+                    net.append(
+                        conv_hyperparams.build_batch_norm(
+                            training=(is_training and not freeze_batchnorm),
+                            name=layer_name + '_batchnorm'))
+                    net.append(
+                        conv_hyperparams.build_activation_layer(
+                            name=layer_name))
+
+    def call(self, image_features, **kwargs):
+        """Generate the multi-resolution feature maps.
 
     Executed when calling the `.__call__` method on input.
 
@@ -243,28 +248,30 @@ class KerasMultiResolutionFeatureMaps(tf.keras.Model):
     Returns:
       feature_maps: an OrderedDict mapping keys (feature map names) to
         tensors where each tensor has shape [batch, height_i, width_i, depth_i].
+        :param image_features:
+        :param **kwargs:
     """
-    feature_maps = []
-    feature_map_keys = []
+        feature_maps = []
+        feature_map_keys = []
 
-    for index, from_layer in enumerate(self.feature_map_layout['from_layer']):
-      if from_layer:
-        feature_map = image_features[from_layer]
-        feature_map_keys.append(from_layer)
-      else:
-        feature_map = feature_maps[-1]
-        for layer in self.convolutions[index]:
-          feature_map = layer(feature_map)
-        layer_name = self.convolutions[index][-1].name
-        feature_map_keys.append(layer_name)
-      feature_maps.append(feature_map)
-    return collections.OrderedDict(
-        [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])
+        for index, from_layer in enumerate(self.feature_map_layout['from_layer']):
+            if from_layer:
+                feature_map = image_features[from_layer]
+                feature_map_keys.append(from_layer)
+            else:
+                feature_map = feature_maps[-1]
+                for layer in self.convolutions[index]:
+                    feature_map = layer(feature_map)
+                layer_name = self.convolutions[index][-1].name
+                feature_map_keys.append(layer_name)
+            feature_maps.append(feature_map)
+        return collections.OrderedDict(
+            [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])
 
 
 def multi_resolution_feature_maps(feature_map_layout, depth_multiplier,
                                   min_depth, insert_1x1_conv, image_features):
-  """Generates multi resolution feature maps from input image features.
+    """Generates multi resolution feature maps from input image features.
 
   Generates multi-scale feature maps for detection as in the SSD papers by
   Liu et al: https://arxiv.org/pdf/1512.02325v2.pdf, See Sec 2.1.
@@ -328,79 +335,79 @@ def multi_resolution_feature_maps(feature_map_layout, depth_multiplier,
     ValueError: if the generated layer does not have the same resolution
       as specified.
   """
-  depth_fn = get_depth_fn(depth_multiplier, min_depth)
+    depth_fn = get_depth_fn(depth_multiplier, min_depth)
 
-  feature_map_keys = []
-  feature_maps = []
-  base_from_layer = ''
-  use_explicit_padding = False
-  if 'use_explicit_padding' in feature_map_layout:
-    use_explicit_padding = feature_map_layout['use_explicit_padding']
-  use_depthwise = False
-  if 'use_depthwise' in feature_map_layout:
-    use_depthwise = feature_map_layout['use_depthwise']
-  for index, from_layer in enumerate(feature_map_layout['from_layer']):
-    layer_depth = feature_map_layout['layer_depth'][index]
-    conv_kernel_size = 3
-    if 'conv_kernel_size' in feature_map_layout:
-      conv_kernel_size = feature_map_layout['conv_kernel_size'][index]
-    if from_layer:
-      feature_map = image_features[from_layer]
-      base_from_layer = from_layer
-      feature_map_keys.append(from_layer)
-    else:
-      pre_layer = feature_maps[-1]
-      intermediate_layer = pre_layer
-      if insert_1x1_conv:
-        layer_name = '{}_1_Conv2d_{}_1x1_{}'.format(
-            base_from_layer, index, depth_fn(layer_depth / 2))
-        intermediate_layer = slim.conv2d(
-            pre_layer,
-            depth_fn(layer_depth / 2), [1, 1],
-            padding='SAME',
-            stride=1,
-            scope=layer_name)
-      layer_name = '{}_2_Conv2d_{}_{}x{}_s2_{}'.format(
-          base_from_layer, index, conv_kernel_size, conv_kernel_size,
-          depth_fn(layer_depth))
-      stride = 2
-      padding = 'SAME'
-      if use_explicit_padding:
-        padding = 'VALID'
-        intermediate_layer = ops.fixed_padding(
-            intermediate_layer, conv_kernel_size)
-      if use_depthwise:
-        feature_map = slim.separable_conv2d(
-            intermediate_layer,
-            None, [conv_kernel_size, conv_kernel_size],
-            depth_multiplier=1,
-            padding=padding,
-            stride=stride,
-            scope=layer_name + '_depthwise')
-        feature_map = slim.conv2d(
-            feature_map,
-            depth_fn(layer_depth), [1, 1],
-            padding='SAME',
-            stride=1,
-            scope=layer_name)
-      else:
-        feature_map = slim.conv2d(
-            intermediate_layer,
-            depth_fn(layer_depth), [conv_kernel_size, conv_kernel_size],
-            padding=padding,
-            stride=stride,
-            scope=layer_name)
-      feature_map_keys.append(layer_name)
-    feature_maps.append(feature_map)
-  return collections.OrderedDict(
-      [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])
+    feature_map_keys = []
+    feature_maps = []
+    base_from_layer = ''
+    use_explicit_padding = False
+    if 'use_explicit_padding' in feature_map_layout:
+        use_explicit_padding = feature_map_layout['use_explicit_padding']
+    use_depthwise = False
+    if 'use_depthwise' in feature_map_layout:
+        use_depthwise = feature_map_layout['use_depthwise']
+    for index, from_layer in enumerate(feature_map_layout['from_layer']):
+        layer_depth = feature_map_layout['layer_depth'][index]
+        conv_kernel_size = 3
+        if 'conv_kernel_size' in feature_map_layout:
+            conv_kernel_size = feature_map_layout['conv_kernel_size'][index]
+        if from_layer:
+            feature_map = image_features[from_layer]
+            base_from_layer = from_layer
+            feature_map_keys.append(from_layer)
+        else:
+            pre_layer = feature_maps[-1]
+            intermediate_layer = pre_layer
+            if insert_1x1_conv:
+                layer_name = '{}_1_Conv2d_{}_1x1_{}'.format(
+                    base_from_layer, index, depth_fn(layer_depth / 2))
+                intermediate_layer = slim.conv2d(
+                    pre_layer,
+                    depth_fn(layer_depth / 2), [1, 1],
+                    padding='SAME',
+                    stride=1,
+                    scope=layer_name)
+            layer_name = '{}_2_Conv2d_{}_{}x{}_s2_{}'.format(
+                base_from_layer, index, conv_kernel_size, conv_kernel_size,
+                depth_fn(layer_depth))
+            stride = 2
+            padding = 'SAME'
+            if use_explicit_padding:
+                padding = 'VALID'
+                intermediate_layer = ops.fixed_padding(
+                    intermediate_layer, conv_kernel_size)
+            if use_depthwise:
+                feature_map = slim.separable_conv2d(
+                    intermediate_layer,
+                    None, [conv_kernel_size, conv_kernel_size],
+                    depth_multiplier=1,
+                    padding=padding,
+                    stride=stride,
+                    scope=layer_name + '_depthwise')
+                feature_map = slim.conv2d(
+                    feature_map,
+                    depth_fn(layer_depth), [1, 1],
+                    padding='SAME',
+                    stride=1,
+                    scope=layer_name)
+            else:
+                feature_map = slim.conv2d(
+                    intermediate_layer,
+                    depth_fn(layer_depth), [conv_kernel_size, conv_kernel_size],
+                    padding=padding,
+                    stride=stride,
+                    scope=layer_name)
+            feature_map_keys.append(layer_name)
+        feature_maps.append(feature_map)
+    return collections.OrderedDict(
+        [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])
 
 
 def fpn_top_down_feature_maps(image_features,
                               depth,
                               use_depthwise=False,
                               scope=None):
-  """Generates `top-down` feature maps for Feature Pyramid Networks.
+    """Generates `top-down` feature maps for Feature Pyramid Networks.
 
   See https://arxiv.org/abs/1612.03144 for details.
 
@@ -416,43 +423,43 @@ def fpn_top_down_feature_maps(image_features,
     feature_maps: an OrderedDict mapping keys (feature map names) to
       tensors where each tensor has shape [batch, height_i, width_i, depth_i].
   """
-  with tf.name_scope(scope, 'top_down'):
-    num_levels = len(image_features)
-    output_feature_maps_list = []
-    output_feature_map_keys = []
-    with slim.arg_scope(
-        [slim.conv2d, slim.separable_conv2d], padding='SAME', stride=1):
-      top_down = slim.conv2d(
-          image_features[-1][1],
-          depth, [1, 1], activation_fn=None, normalizer_fn=None,
-          scope='projection_%d' % num_levels)
-      output_feature_maps_list.append(top_down)
-      output_feature_map_keys.append(
-          'top_down_%s' % image_features[-1][0])
+    with tf.name_scope(scope, 'top_down'):
+        num_levels = len(image_features)
+        output_feature_maps_list = []
+        output_feature_map_keys = []
+        with slim.arg_scope(
+                [slim.conv2d, slim.separable_conv2d], padding='SAME', stride=1):
+            top_down = slim.conv2d(
+                image_features[-1][1],
+                depth, [1, 1], activation_fn=None, normalizer_fn=None,
+                scope='projection_%d' % num_levels)
+            output_feature_maps_list.append(top_down)
+            output_feature_map_keys.append(
+                'top_down_%s' % image_features[-1][0])
 
-      for level in reversed(range(num_levels - 1)):
-        top_down = ops.nearest_neighbor_upsampling(top_down, 2)
-        residual = slim.conv2d(
-            image_features[level][1], depth, [1, 1],
-            activation_fn=None, normalizer_fn=None,
-            scope='projection_%d' % (level + 1))
-        top_down += residual
-        if use_depthwise:
-          conv_op = functools.partial(slim.separable_conv2d, depth_multiplier=1)
-        else:
-          conv_op = slim.conv2d
-        output_feature_maps_list.append(conv_op(
-            top_down,
-            depth, [3, 3],
-            scope='smoothing_%d' % (level + 1)))
-        output_feature_map_keys.append('top_down_%s' % image_features[level][0])
-      return collections.OrderedDict(reversed(
-          list(zip(output_feature_map_keys, output_feature_maps_list))))
+            for level in reversed(range(num_levels - 1)):
+                top_down = ops.nearest_neighbor_upsampling(top_down, 2)
+                residual = slim.conv2d(
+                    image_features[level][1], depth, [1, 1],
+                    activation_fn=None, normalizer_fn=None,
+                    scope='projection_%d' % (level + 1))
+                top_down += residual
+                if use_depthwise:
+                    conv_op = functools.partial(slim.separable_conv2d, depth_multiplier=1)
+                else:
+                    conv_op = slim.conv2d
+                output_feature_maps_list.append(conv_op(
+                    top_down,
+                    depth, [3, 3],
+                    scope='smoothing_%d' % (level + 1)))
+                output_feature_map_keys.append('top_down_%s' % image_features[level][0])
+            return collections.OrderedDict(reversed(
+                list(zip(output_feature_map_keys, output_feature_maps_list))))
 
 
 def pooling_pyramid_feature_maps(base_feature_map_depth, num_layers,
                                  image_features, replace_pool_with_conv=False):
-  """Generates pooling pyramid feature maps.
+    """Generates pooling pyramid feature maps.
 
   The pooling pyramid feature maps is motivated by
   multi_resolution_feature_maps. The main difference are that it is simpler and
@@ -484,44 +491,44 @@ def pooling_pyramid_feature_maps(base_feature_map_depth, num_layers,
   Raises:
     ValueError: image_features does not contain exactly one entry
   """
-  if len(image_features) != 1:
-    raise ValueError('image_features should be a dictionary of length 1.')
-  image_features = image_features[image_features.keys()[0]]
+    if len(image_features) != 1:
+        raise ValueError('image_features should be a dictionary of length 1.')
+    image_features = image_features[[v for v in image_features.keys()][0]]
 
-  feature_map_keys = []
-  feature_maps = []
-  feature_map_key = 'Base_Conv2d_1x1_%d' % base_feature_map_depth
-  if base_feature_map_depth > 0:
-    image_features = slim.conv2d(
-        image_features,
-        base_feature_map_depth,
-        [1, 1],  # kernel size
-        padding='SAME', stride=1, scope=feature_map_key)
-    # Add a 1x1 max-pooling node (a no op node) immediately after the conv2d for
-    # TPU v1 compatibility.  Without the following dummy op, TPU runtime
-    # compiler will combine the convolution with one max-pooling below into a
-    # single cycle, so getting the conv2d feature becomes impossible.
-    image_features = slim.max_pool2d(
-        image_features, [1, 1], padding='SAME', stride=1, scope=feature_map_key)
-  feature_map_keys.append(feature_map_key)
-  feature_maps.append(image_features)
-  feature_map = image_features
-  if replace_pool_with_conv:
-    with slim.arg_scope([slim.conv2d], padding='SAME', stride=2):
-      for i in range(num_layers - 1):
-        feature_map_key = 'Conv2d_{}_3x3_s2_{}'.format(i,
-                                                       base_feature_map_depth)
-        feature_map = slim.conv2d(
-            feature_map, base_feature_map_depth, [3, 3], scope=feature_map_key)
-        feature_map_keys.append(feature_map_key)
-        feature_maps.append(feature_map)
-  else:
-    with slim.arg_scope([slim.max_pool2d], padding='SAME', stride=2):
-      for i in range(num_layers - 1):
-        feature_map_key = 'MaxPool2d_%d_2x2' % i
-        feature_map = slim.max_pool2d(
-            feature_map, [2, 2], padding='SAME', scope=feature_map_key)
-        feature_map_keys.append(feature_map_key)
-        feature_maps.append(feature_map)
-  return collections.OrderedDict(
-      [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])
+    feature_map_keys = []
+    feature_maps = []
+    feature_map_key = 'Base_Conv2d_1x1_%d' % base_feature_map_depth
+    if base_feature_map_depth > 0:
+        image_features = slim.conv2d(
+            image_features,
+            base_feature_map_depth,
+            [1, 1],  # kernel size
+            padding='SAME', stride=1, scope=feature_map_key)
+        # Add a 1x1 max-pooling node (a no op node) immediately after the conv2d for
+        # TPU v1 compatibility.  Without the following dummy op, TPU runtime
+        # compiler will combine the convolution with one max-pooling below into a
+        # single cycle, so getting the conv2d feature becomes impossible.
+        image_features = slim.max_pool2d(
+            image_features, [1, 1], padding='SAME', stride=1, scope=feature_map_key)
+    feature_map_keys.append(feature_map_key)
+    feature_maps.append(image_features)
+    feature_map = image_features
+    if replace_pool_with_conv:
+        with slim.arg_scope([slim.conv2d], padding='SAME', stride=2):
+            for i in range(num_layers - 1):
+                feature_map_key = 'Conv2d_{}_3x3_s2_{}'.format(i,
+                                                               base_feature_map_depth)
+                feature_map = slim.conv2d(
+                    feature_map, base_feature_map_depth, [3, 3], scope=feature_map_key)
+                feature_map_keys.append(feature_map_key)
+                feature_maps.append(feature_map)
+    else:
+        with slim.arg_scope([slim.max_pool2d], padding='SAME', stride=2):
+            for i in range(num_layers - 1):
+                feature_map_key = 'MaxPool2d_%d_2x2' % i
+                feature_map = slim.max_pool2d(
+                    feature_map, [2, 2], padding='SAME', scope=feature_map_key)
+                feature_map_keys.append(feature_map_key)
+                feature_maps.append(feature_map)
+    return collections.OrderedDict(
+        [(x, y) for (x, y) in zip(feature_map_keys, feature_maps)])

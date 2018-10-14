@@ -8,11 +8,11 @@ from abc import ABCMeta
 from abc import abstractmethod
 import math
 
-from common import config_lib  # brain coder
+from . import config_lib  # brain coder
 
 
 class Schedule(object):
-  """Schedule is a function which sets a hyperparameter's value over time.
+    """Schedule is a function which sets a hyperparameter's value over time.
 
   For example, a schedule can be used to decay an hparams, or oscillate it over
   time.
@@ -35,20 +35,20 @@ class Schedule(object):
      replica training will behave the same.
   4) Duplicate successive calls on the same time are allowed.
   """
-  __metaclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
-  @abstractmethod
-  def __init__(self, config):
-    """Construct this schedule with a config specific to each class impl.
+    @abstractmethod
+    def __init__(self, config):
+        """Construct this schedule with a config specific to each class impl.
 
     Args:
       config: An instance of config_lib.Config.
     """
-    pass
+        pass
 
-  @abstractmethod
-  def __call__(self, global_step):
-    """Map `global_step` to a value.
+    @abstractmethod
+    def __call__(self, global_step):
+        """Map `global_step` to a value.
 
     `global_step` is an integer counting how many calls to the train op have
     been made across all replicas (hence why it is global). Implementations
@@ -61,11 +61,11 @@ class Schedule(object):
     Returns:
       Hparam value at this step. A number.
     """
-    pass
+        pass
 
 
 class ConstSchedule(Schedule):
-  """Constant function.
+    """Constant function.
 
   config:
     const: Constant value at every step.
@@ -73,16 +73,16 @@ class ConstSchedule(Schedule):
   f(t) = const.
   """
 
-  def __init__(self, config):
-    super(ConstSchedule, self).__init__(config)
-    self.const = config.const
+    def __init__(self, config):
+        super(ConstSchedule, self).__init__(config)
+        self.const = config.const
 
-  def __call__(self, global_step):
-    return self.const
+    def __call__(self, global_step):
+        return self.const
 
 
 class LinearDecaySchedule(Schedule):
-  """Linear decay function.
+    """Linear decay function.
 
   config:
     initial: Decay starts from this value.
@@ -97,32 +97,32 @@ class LinearDecaySchedule(Schedule):
   If start_time == end_time, this becomes a step function.
   """
 
-  def __init__(self, config):
-    super(LinearDecaySchedule, self).__init__(config)
-    self.initial = config.initial
-    self.final = config.final
-    self.start_time = config.start_time
-    self.end_time = config.end_time
+    def __init__(self, config):
+        super(LinearDecaySchedule, self).__init__(config)
+        self.initial = config.initial
+        self.final = config.final
+        self.start_time = config.start_time
+        self.end_time = config.end_time
 
-    if self.end_time < self.start_time:
-      raise ValueError('start_time must be before end_time.')
+        if self.end_time < self.start_time:
+            raise ValueError('start_time must be before end_time.')
 
-    # Linear interpolation.
-    self._time_diff = float(self.end_time - self.start_time)
-    self._diff = float(self.final - self.initial)
-    self._slope = (
-        self._diff / self._time_diff if self._time_diff > 0 else float('inf'))
+        # Linear interpolation.
+        self._time_diff = float(self.end_time - self.start_time)
+        self._diff = float(self.final - self.initial)
+        self._slope = (
+            self._diff / self._time_diff if self._time_diff > 0 else float('inf'))
 
-  def __call__(self, global_step):
-    if global_step <= self.start_time:
-      return self.initial
-    if global_step > self.end_time:
-      return self.final
-    return self.initial + (global_step - self.start_time) * self._slope
+    def __call__(self, global_step):
+        if global_step <= self.start_time:
+            return self.initial
+        if global_step > self.end_time:
+            return self.final
+        return self.initial + (global_step - self.start_time) * self._slope
 
 
 class ExponentialDecaySchedule(Schedule):
-  """Exponential decay function.
+    """Exponential decay function.
 
   See https://en.wikipedia.org/wiki/Exponential_decay.
 
@@ -144,30 +144,30 @@ class ExponentialDecaySchedule(Schedule):
   If start_time == end_time, this becomes a step function.
   """
 
-  def __init__(self, config):
-    super(ExponentialDecaySchedule, self).__init__(config)
-    self.initial = config.initial
-    self.final = config.final
-    self.start_time = config.start_time
-    self.end_time = config.end_time
+    def __init__(self, config):
+        super(ExponentialDecaySchedule, self).__init__(config)
+        self.initial = config.initial
+        self.final = config.final
+        self.start_time = config.start_time
+        self.end_time = config.end_time
 
-    if self.initial <= 0 or self.final <= 0:
-      raise ValueError('initial and final must be positive numbers.')
+        if self.initial <= 0 or self.final <= 0:
+            raise ValueError('initial and final must be positive numbers.')
 
-    # Linear interpolation in log space.
-    self._linear_fn = LinearDecaySchedule(
-        config_lib.Config(
-            initial=math.log(self.initial),
-            final=math.log(self.final),
-            start_time=self.start_time,
-            end_time=self.end_time))
+        # Linear interpolation in log space.
+        self._linear_fn = LinearDecaySchedule(
+            config_lib.Config(
+                initial=math.log(self.initial),
+                final=math.log(self.final),
+                start_time=self.start_time,
+                end_time=self.end_time))
 
-  def __call__(self, global_step):
-    return math.exp(self._linear_fn(global_step))
+    def __call__(self, global_step):
+        return math.exp(self._linear_fn(global_step))
 
 
 class SmootherstepDecaySchedule(Schedule):
-  """Smootherstep decay function.
+    """Smootherstep decay function.
 
   A sigmoidal like transition from initial to final values. A smoother
   transition than linear and exponential decays, hence the name.
@@ -185,32 +185,32 @@ class SmootherstepDecaySchedule(Schedule):
   f(t) is smooth, as in its first-derivative exists everywhere.
   """
 
-  def __init__(self, config):
-    super(SmootherstepDecaySchedule, self).__init__(config)
-    self.initial = config.initial
-    self.final = config.final
-    self.start_time = config.start_time
-    self.end_time = config.end_time
+    def __init__(self, config):
+        super(SmootherstepDecaySchedule, self).__init__(config)
+        self.initial = config.initial
+        self.final = config.final
+        self.start_time = config.start_time
+        self.end_time = config.end_time
 
-    if self.end_time < self.start_time:
-      raise ValueError('start_time must be before end_time.')
+        if self.end_time < self.start_time:
+            raise ValueError('start_time must be before end_time.')
 
-    self._time_diff = float(self.end_time - self.start_time)
-    self._diff = float(self.final - self.initial)
+        self._time_diff = float(self.end_time - self.start_time)
+        self._diff = float(self.final - self.initial)
 
-  def __call__(self, global_step):
-    if global_step <= self.start_time:
-      return self.initial
-    if global_step > self.end_time:
-      return self.final
-    x = (global_step - self.start_time) / self._time_diff
+    def __call__(self, global_step):
+        if global_step <= self.start_time:
+            return self.initial
+        if global_step > self.end_time:
+            return self.final
+        x = (global_step - self.start_time) / self._time_diff
 
-    # Smootherstep
-    return self.initial + x * x * x * (x * (x * 6 - 15) + 10) * self._diff
+        # Smootherstep
+        return self.initial + x * x * x * (x * (x * 6 - 15) + 10) * self._diff
 
 
 class HardOscillatorSchedule(Schedule):
-  """Hard oscillator function.
+    """Hard oscillator function.
 
   config:
     high: Max value of the oscillator. Value at constant plateaus.
@@ -238,41 +238,41 @@ class HardOscillatorSchedule(Schedule):
   Note: when transition_fraction is 0, f starts the period low and ends high.
   """
 
-  def __init__(self, config):
-    super(HardOscillatorSchedule, self).__init__(config)
-    self.high = config.high
-    self.low = config.low
-    self.start_time = config.start_time
-    self.period = float(config.period)
-    self.transition_fraction = config.transition_fraction
-    self.half_transition_fraction = config.transition_fraction / 2.0
+    def __init__(self, config):
+        super(HardOscillatorSchedule, self).__init__(config)
+        self.high = config.high
+        self.low = config.low
+        self.start_time = config.start_time
+        self.period = float(config.period)
+        self.transition_fraction = config.transition_fraction
+        self.half_transition_fraction = config.transition_fraction / 2.0
 
-    if self.transition_fraction < 0 or self.transition_fraction > 1.0:
-      raise ValueError('transition_fraction must be between 0 and 1.0')
-    if self.period <= 0:
-      raise ValueError('period must be positive')
+        if self.transition_fraction < 0 or self.transition_fraction > 1.0:
+            raise ValueError('transition_fraction must be between 0 and 1.0')
+        if self.period <= 0:
+            raise ValueError('period must be positive')
 
-    self._slope = (
-        float(self.high - self.low) / self.half_transition_fraction
-        if self.half_transition_fraction > 0 else float('inf'))
+        self._slope = (
+            float(self.high - self.low) / self.half_transition_fraction
+            if self.half_transition_fraction > 0 else float('inf'))
 
-  def __call__(self, global_step):
-    if global_step < self.start_time:
-      return self.high
-    period_pos = ((global_step - self.start_time) / self.period) % 1.0
-    if period_pos >= 0.5:
-      # ascending
-      period_pos -= 0.5
-      if period_pos < self.half_transition_fraction:
-        return self.low + period_pos * self._slope
-      else:
-        return self.high
-    else:
-      # descending
-      if period_pos < self.half_transition_fraction:
-        return self.high - period_pos * self._slope
-      else:
-        return self.low
+    def __call__(self, global_step):
+        if global_step < self.start_time:
+            return self.high
+        period_pos = ((global_step - self.start_time) / self.period) % 1.0
+        if period_pos >= 0.5:
+            # ascending
+            period_pos -= 0.5
+            if period_pos < self.half_transition_fraction:
+                return self.low + period_pos * self._slope
+            else:
+                return self.high
+        else:
+            # descending
+            if period_pos < self.half_transition_fraction:
+                return self.high - period_pos * self._slope
+            else:
+                return self.low
 
 
 _NAME_TO_CONFIG = {
@@ -285,7 +285,7 @@ _NAME_TO_CONFIG = {
 
 
 def make_schedule(config):
-  """Schedule factory.
+    """Schedule factory.
 
   Given `config` containing a `fn` property, a Schedule implementation is
   instantiated with `config`. See `_NAME_TO_CONFIG` for `fn` options.
@@ -297,5 +297,5 @@ def make_schedule(config):
   Returns:
     A Schedule impl instance.
   """
-  schedule_class = _NAME_TO_CONFIG[config.fn]
-  return schedule_class(config)
+    schedule_class = _NAME_TO_CONFIG[config.fn]
+    return schedule_class(config)

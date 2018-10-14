@@ -26,14 +26,14 @@ slim = tf.contrib.slim
 
 
 def _validate_image_inputs(inputs):
-  inputs.get_shape().assert_has_rank(4)
-  inputs.get_shape()[1:3].assert_is_fully_defined()
-  if inputs.get_shape()[1] != inputs.get_shape()[2]:
-    raise ValueError('Input tensor does not have equal width and height: ',
-                     inputs.get_shape()[1:3])
-  width = inputs.get_shape().as_list()[1]
-  if log(width, 2) != int(log(width, 2)):
-    raise ValueError('Input tensor `width` is not a power of 2: ', width)
+    inputs.get_shape().assert_has_rank(4)
+    inputs.get_shape()[1:3].assert_is_fully_defined()
+    if inputs.get_shape()[1] != inputs.get_shape()[2]:
+        raise ValueError('Input tensor does not have equal width and height: ',
+                         inputs.get_shape()[1:3])
+    width = inputs.get_shape().as_list()[1]
+    if log(width, 2) != int(log(width, 2)):
+        raise ValueError('Input tensor `width` is not a power of 2: ', width)
 
 
 # TODO(joelshor): Use fused batch norm by default. Investigate why some GAN
@@ -44,7 +44,7 @@ def discriminator(inputs,
                   reuse=None,
                   scope='Discriminator',
                   fused_batch_norm=False):
-  """Discriminator network for DCGAN.
+    """Discriminator network for DCGAN.
 
   Construct discriminator network from inputs to the final endpoint.
 
@@ -70,38 +70,38 @@ def discriminator(inputs,
       two.
   """
 
-  normalizer_fn = slim.batch_norm
-  normalizer_fn_args = {
-      'is_training': is_training,
-      'zero_debias_moving_mean': True,
-      'fused': fused_batch_norm,
-  }
+    normalizer_fn = slim.batch_norm
+    normalizer_fn_args = {
+        'is_training': is_training,
+        'zero_debias_moving_mean': True,
+        'fused': fused_batch_norm,
+    }
 
-  _validate_image_inputs(inputs)
-  inp_shape = inputs.get_shape().as_list()[1]
+    _validate_image_inputs(inputs)
+    inp_shape = inputs.get_shape().as_list()[1]
 
-  end_points = {}
-  with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
-    with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
-      with slim.arg_scope([slim.conv2d],
-                          stride=2,
-                          kernel_size=4,
-                          activation_fn=tf.nn.leaky_relu):
-        net = inputs
-        for i in xrange(int(log(inp_shape, 2))):
-          scope = 'conv%i' % (i + 1)
-          current_depth = depth * 2**i
-          normalizer_fn_ = None if i == 0 else normalizer_fn
-          net = slim.conv2d(
-              net, current_depth, normalizer_fn=normalizer_fn_, scope=scope)
-          end_points[scope] = net
+    end_points = {}
+    with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
+        with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
+            with slim.arg_scope([slim.conv2d],
+                                stride=2,
+                                kernel_size=4,
+                                activation_fn=tf.nn.leaky_relu):
+                net = inputs
+                for i in xrange(int(log(inp_shape, 2))):
+                    scope = 'conv%i' % (i + 1)
+                    current_depth = depth * 2 ** i
+                    normalizer_fn_ = None if i == 0 else normalizer_fn
+                    net = slim.conv2d(
+                        net, current_depth, normalizer_fn=normalizer_fn_, scope=scope)
+                    end_points[scope] = net
 
-        logits = slim.conv2d(net, 1, kernel_size=1, stride=1, padding='VALID',
-                             normalizer_fn=None, activation_fn=None)
-        logits = tf.reshape(logits, [-1, 1])
-        end_points['logits'] = logits
+                logits = slim.conv2d(net, 1, kernel_size=1, stride=1, padding='VALID',
+                                     normalizer_fn=None, activation_fn=None)
+                logits = tf.reshape(logits, [-1, 1])
+                end_points['logits'] = logits
 
-        return logits, end_points
+                return logits, end_points
 
 
 # TODO(joelshor): Use fused batch norm by default. Investigate why some GAN
@@ -114,7 +114,7 @@ def generator(inputs,
               reuse=None,
               scope='Generator',
               fused_batch_norm=False):
-  """Generator network for DCGAN.
+    """Generator network for DCGAN.
 
   Construct generator network from inputs to the final endpoint.
 
@@ -140,63 +140,63 @@ def generator(inputs,
     ValueError: If `inputs` is not 2-dimensional.
     ValueError: If `final_size` isn't a power of 2 or is less than 8.
   """
-  normalizer_fn = slim.batch_norm
-  normalizer_fn_args = {
-      'is_training': is_training,
-      'zero_debias_moving_mean': True,
-      'fused': fused_batch_norm,
-  }
+    normalizer_fn = slim.batch_norm
+    normalizer_fn_args = {
+        'is_training': is_training,
+        'zero_debias_moving_mean': True,
+        'fused': fused_batch_norm,
+    }
 
-  inputs.get_shape().assert_has_rank(2)
-  if log(final_size, 2) != int(log(final_size, 2)):
-    raise ValueError('`final_size` (%i) must be a power of 2.' % final_size)
-  if final_size < 8:
-    raise ValueError('`final_size` (%i) must be greater than 8.' % final_size)
+    inputs.get_shape().assert_has_rank(2)
+    if log(final_size, 2) != int(log(final_size, 2)):
+        raise ValueError('`final_size` (%i) must be a power of 2.' % final_size)
+    if final_size < 8:
+        raise ValueError('`final_size` (%i) must be greater than 8.' % final_size)
 
-  end_points = {}
-  num_layers = int(log(final_size, 2)) - 1
-  with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
-    with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
-      with slim.arg_scope([slim.conv2d_transpose],
-                          normalizer_fn=normalizer_fn,
-                          stride=2,
-                          kernel_size=4):
-        net = tf.expand_dims(tf.expand_dims(inputs, 1), 1)
+    end_points = {}
+    num_layers = int(log(final_size, 2)) - 1
+    with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
+        with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
+            with slim.arg_scope([slim.conv2d_transpose],
+                                normalizer_fn=normalizer_fn,
+                                stride=2,
+                                kernel_size=4):
+                net = tf.expand_dims(tf.expand_dims(inputs, 1), 1)
 
-        # First upscaling is different because it takes the input vector.
-        current_depth = depth * 2 ** (num_layers - 1)
-        scope = 'deconv1'
-        net = slim.conv2d_transpose(
-            net, current_depth, stride=1, padding='VALID', scope=scope)
-        end_points[scope] = net
+                # First upscaling is different because it takes the input vector.
+                current_depth = depth * 2 ** (num_layers - 1)
+                scope = 'deconv1'
+                net = slim.conv2d_transpose(
+                    net, current_depth, stride=1, padding='VALID', scope=scope)
+                end_points[scope] = net
 
-        for i in xrange(2, num_layers):
-          scope = 'deconv%i' % (i)
-          current_depth = depth * 2 ** (num_layers - i)
-          net = slim.conv2d_transpose(net, current_depth, scope=scope)
-          end_points[scope] = net
+                for i in xrange(2, num_layers):
+                    scope = 'deconv%i' % (i)
+                    current_depth = depth * 2 ** (num_layers - i)
+                    net = slim.conv2d_transpose(net, current_depth, scope=scope)
+                    end_points[scope] = net
 
-        # Last layer has different normalizer and activation.
-        scope = 'deconv%i' % (num_layers)
-        net = slim.conv2d_transpose(
-            net, depth, normalizer_fn=None, activation_fn=None, scope=scope)
-        end_points[scope] = net
+                # Last layer has different normalizer and activation.
+                scope = 'deconv%i' % (num_layers)
+                net = slim.conv2d_transpose(
+                    net, depth, normalizer_fn=None, activation_fn=None, scope=scope)
+                end_points[scope] = net
 
-        # Convert to proper channels.
-        scope = 'logits'
-        logits = slim.conv2d(
-            net,
-            num_outputs,
-            normalizer_fn=None,
-            activation_fn=None,
-            kernel_size=1,
-            stride=1,
-            padding='VALID',
-            scope=scope)
-        end_points[scope] = logits
+                # Convert to proper channels.
+                scope = 'logits'
+                logits = slim.conv2d(
+                    net,
+                    num_outputs,
+                    normalizer_fn=None,
+                    activation_fn=None,
+                    kernel_size=1,
+                    stride=1,
+                    padding='VALID',
+                    scope=scope)
+                end_points[scope] = logits
 
-        logits.get_shape().assert_has_rank(4)
-        logits.get_shape().assert_is_compatible_with(
-            [None, final_size, final_size, num_outputs])
+                logits.get_shape().assert_has_rank(4)
+                logits.get_shape().assert_is_compatible_with(
+                    [None, final_size, final_size, num_outputs])
 
-        return logits, end_points
+                return logits, end_points

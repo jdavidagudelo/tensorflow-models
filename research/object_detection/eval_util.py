@@ -20,14 +20,14 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from object_detection.core import box_list
-from object_detection.core import box_list_ops
-from object_detection.core import keypoint_ops
-from object_detection.core import standard_fields as fields
-from object_detection.metrics import coco_evaluation
-from object_detection.utils import label_map_util
-from object_detection.utils import ops
-from object_detection.utils import visualization_utils as vis_utils
+from research.object_detection.core import box_list
+from research.object_detection.core import box_list_ops
+from research.object_detection.core import keypoint_ops
+from research.object_detection.core import standard_fields as fields
+from research.object_detection.metrics import coco_evaluation
+from research.object_detection.utils import label_map_util
+from research.object_detection.utils import ops
+from research.object_detection.utils import visualization_utils as vis_utils
 
 slim = tf.contrib.slim
 
@@ -45,22 +45,22 @@ EVAL_DEFAULT_METRIC = 'coco_detection_metrics'
 
 
 def write_metrics(metrics, global_step, summary_dir):
-  """Write metrics to a summary directory.
+    """Write metrics to a summary directory.
 
   Args:
     metrics: A dictionary containing metric names and values.
     global_step: Global step at which the metrics are computed.
     summary_dir: Directory to write tensorflow summaries to.
   """
-  tf.logging.info('Writing metrics to tf summary.')
-  summary_writer = tf.summary.FileWriterCache.get(summary_dir)
-  for key in sorted(metrics):
-    summary = tf.Summary(value=[
-        tf.Summary.Value(tag=key, simple_value=metrics[key]),
-    ])
-    summary_writer.add_summary(summary, global_step)
-    tf.logging.info('%s: %f', key, metrics[key])
-  tf.logging.info('Metrics written to tf summary.')
+    tf.logging.info('Writing metrics to tf summary.')
+    summary_writer = tf.summary.FileWriterCache.get(summary_dir)
+    for key in sorted(metrics):
+        summary = tf.Summary(value=[
+            tf.Summary.Value(tag=key, simple_value=metrics[key]),
+        ])
+        summary_writer.add_summary(summary, global_step)
+        tf.logging.info('%s: %f', key, metrics[key])
+    tf.logging.info('Metrics written to tf summary.')
 
 
 # TODO(rathodv): Add tests.
@@ -78,7 +78,7 @@ def visualize_detection_results(result_dict,
                                 skip_scores=False,
                                 skip_labels=False,
                                 keep_image_id_for_visualization_export=False):
-  """Visualizes detection results and writes visualizations to image summaries.
+    """Visualizes detection results and writes visualizations to image summaries.
 
   This function visualizes an image with its detected bounding boxes and writes
   to image summaries which can be viewed on tensorboard.  It optionally also
@@ -128,84 +128,84 @@ def visualize_detection_results(result_dict,
       'original_image', 'detection_boxes', 'detection_scores',
       'detection_classes')
   """
-  detection_fields = fields.DetectionResultFields
-  input_fields = fields.InputDataFields
-  if not set([
-      input_fields.original_image,
-      detection_fields.detection_boxes,
-      detection_fields.detection_scores,
-      detection_fields.detection_classes,
-  ]).issubset(set(result_dict.keys())):
-    raise ValueError('result_dict does not contain all expected keys.')
-  if show_groundtruth and input_fields.groundtruth_boxes not in result_dict:
-    raise ValueError('If show_groundtruth is enabled, result_dict must contain '
-                     'groundtruth_boxes.')
-  tf.logging.info('Creating detection visualizations.')
-  category_index = label_map_util.create_category_index(categories)
+    detection_fields = fields.DetectionResultFields
+    input_fields = fields.InputDataFields
+    if not set([
+        input_fields.original_image,
+        detection_fields.detection_boxes,
+        detection_fields.detection_scores,
+        detection_fields.detection_classes,
+    ]).issubset(set(result_dict.keys())):
+        raise ValueError('result_dict does not contain all expected keys.')
+    if show_groundtruth and input_fields.groundtruth_boxes not in result_dict:
+        raise ValueError('If show_groundtruth is enabled, result_dict must contain '
+                         'groundtruth_boxes.')
+    tf.logging.info('Creating detection visualizations.')
+    category_index = label_map_util.create_category_index(categories)
 
-  image = np.squeeze(result_dict[input_fields.original_image], axis=0)
-  if image.shape[2] == 1:  # If one channel image, repeat in RGB.
-    image = np.tile(image, [1, 1, 3])
-  detection_boxes = result_dict[detection_fields.detection_boxes]
-  detection_scores = result_dict[detection_fields.detection_scores]
-  detection_classes = np.int32((result_dict[
-      detection_fields.detection_classes]))
-  detection_keypoints = result_dict.get(detection_fields.detection_keypoints)
-  detection_masks = result_dict.get(detection_fields.detection_masks)
-  detection_boundaries = result_dict.get(detection_fields.detection_boundaries)
+    image = np.squeeze(result_dict[input_fields.original_image], axis=0)
+    if image.shape[2] == 1:  # If one channel image, repeat in RGB.
+        image = np.tile(image, [1, 1, 3])
+    detection_boxes = result_dict[detection_fields.detection_boxes]
+    detection_scores = result_dict[detection_fields.detection_scores]
+    detection_classes = np.int32((result_dict[
+        detection_fields.detection_classes]))
+    detection_keypoints = result_dict.get(detection_fields.detection_keypoints)
+    detection_masks = result_dict.get(detection_fields.detection_masks)
+    detection_boundaries = result_dict.get(detection_fields.detection_boundaries)
 
-  # Plot groundtruth underneath detections
-  if show_groundtruth:
-    groundtruth_boxes = result_dict[input_fields.groundtruth_boxes]
-    groundtruth_keypoints = result_dict.get(input_fields.groundtruth_keypoints)
+    # Plot groundtruth underneath detections
+    if show_groundtruth:
+        groundtruth_boxes = result_dict[input_fields.groundtruth_boxes]
+        groundtruth_keypoints = result_dict.get(input_fields.groundtruth_keypoints)
+        vis_utils.visualize_boxes_and_labels_on_image_array(
+            image=image,
+            boxes=groundtruth_boxes,
+            classes=None,
+            scores=None,
+            category_index=category_index,
+            keypoints=groundtruth_keypoints,
+            use_normalized_coordinates=False,
+            max_boxes_to_draw=None,
+            groundtruth_box_visualization_color=groundtruth_box_visualization_color)
     vis_utils.visualize_boxes_and_labels_on_image_array(
-        image=image,
-        boxes=groundtruth_boxes,
-        classes=None,
-        scores=None,
-        category_index=category_index,
-        keypoints=groundtruth_keypoints,
+        image,
+        detection_boxes,
+        detection_classes,
+        detection_scores,
+        category_index,
+        instance_masks=detection_masks,
+        instance_boundaries=detection_boundaries,
+        keypoints=detection_keypoints,
         use_normalized_coordinates=False,
-        max_boxes_to_draw=None,
-        groundtruth_box_visualization_color=groundtruth_box_visualization_color)
-  vis_utils.visualize_boxes_and_labels_on_image_array(
-      image,
-      detection_boxes,
-      detection_classes,
-      detection_scores,
-      category_index,
-      instance_masks=detection_masks,
-      instance_boundaries=detection_boundaries,
-      keypoints=detection_keypoints,
-      use_normalized_coordinates=False,
-      max_boxes_to_draw=max_num_predictions,
-      min_score_thresh=min_score_thresh,
-      agnostic_mode=agnostic_mode,
-      skip_scores=skip_scores,
-      skip_labels=skip_labels)
+        max_boxes_to_draw=max_num_predictions,
+        min_score_thresh=min_score_thresh,
+        agnostic_mode=agnostic_mode,
+        skip_scores=skip_scores,
+        skip_labels=skip_labels)
 
-  if export_dir:
-    if keep_image_id_for_visualization_export and result_dict[fields.
-                                                              InputDataFields()
-                                                              .key]:
-      export_path = os.path.join(export_dir, 'export-{}-{}.png'.format(
-          tag, result_dict[fields.InputDataFields().key]))
-    else:
-      export_path = os.path.join(export_dir, 'export-{}.png'.format(tag))
-    vis_utils.save_image_array_as_png(image, export_path)
+    if export_dir:
+        if keep_image_id_for_visualization_export and result_dict[fields.
+                InputDataFields()
+                .key]:
+            export_path = os.path.join(export_dir, 'export-{}-{}.png'.format(
+                tag, result_dict[fields.InputDataFields().key]))
+        else:
+            export_path = os.path.join(export_dir, 'export-{}.png'.format(tag))
+        vis_utils.save_image_array_as_png(image, export_path)
 
-  summary = tf.Summary(value=[
-      tf.Summary.Value(
-          tag=tag,
-          image=tf.Summary.Image(
-              encoded_image_string=vis_utils.encode_image_array_as_png_str(
-                  image)))
-  ])
-  summary_writer = tf.summary.FileWriterCache.get(summary_dir)
-  summary_writer.add_summary(summary, global_step)
+    summary = tf.Summary(value=[
+        tf.Summary.Value(
+            tag=tag,
+            image=tf.Summary.Image(
+                encoded_image_string=vis_utils.encode_image_array_as_png_str(
+                    image)))
+    ])
+    summary_writer = tf.summary.FileWriterCache.get(summary_dir)
+    summary_writer.add_summary(summary, global_step)
 
-  tf.logging.info('Detection visualizations written to summary with tag %s.',
-                  tag)
+    tf.logging.info('Detection visualizations written to summary with tag %s.',
+                    tag)
 
 
 def _run_checkpoint_once(tensor_dict,
@@ -220,7 +220,7 @@ def _run_checkpoint_once(tensor_dict,
                          save_graph_dir='',
                          losses_dict=None,
                          eval_export_path=None):
-  """Evaluates metrics defined in evaluators and returns summaries.
+    """Evaluates metrics defined in evaluators and returns summaries.
 
   This function loads the latest checkpoint in checkpoint_dirs and evaluates
   all metrics defined in evaluators. The metrics are processed in batch by the
@@ -271,92 +271,92 @@ def _run_checkpoint_once(tensor_dict,
       one element.
     ValueError: if save_graph is True and save_graph_dir is not defined.
   """
-  if save_graph and not save_graph_dir:
-    raise ValueError('`save_graph_dir` must be defined.')
-  sess = tf.Session(master, graph=tf.get_default_graph())
-  sess.run(tf.global_variables_initializer())
-  sess.run(tf.local_variables_initializer())
-  sess.run(tf.tables_initializer())
-  if restore_fn:
-    restore_fn(sess)
-  else:
-    if not checkpoint_dirs:
-      raise ValueError('`checkpoint_dirs` must have at least one entry.')
-    checkpoint_file = tf.train.latest_checkpoint(checkpoint_dirs[0])
-    saver = tf.train.Saver(variables_to_restore)
-    saver.restore(sess, checkpoint_file)
+    if save_graph and not save_graph_dir:
+        raise ValueError('`save_graph_dir` must be defined.')
+    sess = tf.Session(master, graph=tf.get_default_graph())
+    sess.run(tf.global_variables_initializer())
+    sess.run(tf.local_variables_initializer())
+    sess.run(tf.tables_initializer())
+    if restore_fn:
+        restore_fn(sess)
+    else:
+        if not checkpoint_dirs:
+            raise ValueError('`checkpoint_dirs` must have at least one entry.')
+        checkpoint_file = tf.train.latest_checkpoint(checkpoint_dirs[0])
+        saver = tf.train.Saver(variables_to_restore)
+        saver.restore(sess, checkpoint_file)
 
-  if save_graph:
-    tf.train.write_graph(sess.graph_def, save_graph_dir, 'eval.pbtxt')
+    if save_graph:
+        tf.train.write_graph(sess.graph_def, save_graph_dir, 'eval.pbtxt')
 
-  counters = {'skipped': 0, 'success': 0}
-  aggregate_result_losses_dict = collections.defaultdict(list)
-  with tf.contrib.slim.queues.QueueRunners(sess):
-    try:
-      for batch in range(int(num_batches)):
-        if (batch + 1) % 100 == 0:
-          tf.logging.info('Running eval ops batch %d/%d', batch + 1,
-                          num_batches)
-        if not batch_processor:
-          try:
-            if not losses_dict:
-              losses_dict = {}
-            result_dict, result_losses_dict = sess.run([tensor_dict,
-                                                        losses_dict])
-            counters['success'] += 1
-          except tf.errors.InvalidArgumentError:
-            tf.logging.info('Skipping image')
-            counters['skipped'] += 1
-            result_dict = {}
-        else:
-          result_dict, result_losses_dict = batch_processor(
-              tensor_dict, sess, batch, counters, losses_dict=losses_dict)
-        if not result_dict:
-          continue
-        for key, value in iter(result_losses_dict.items()):
-          aggregate_result_losses_dict[key].append(value)
-        for evaluator in evaluators:
-          # TODO(b/65130867): Use image_id tensor once we fix the input data
-          # decoders to return correct image_id.
-          # TODO(akuznetsa): result_dict contains batches of images, while
-          # add_single_ground_truth_image_info expects a single image. Fix
-          if (isinstance(result_dict, dict) and
-              result_dict[fields.InputDataFields.key]):
-            image_id = result_dict[fields.InputDataFields.key]
-          else:
-            image_id = batch
-          evaluator.add_single_ground_truth_image_info(
-              image_id=image_id, groundtruth_dict=result_dict)
-          evaluator.add_single_detected_image_info(
-              image_id=image_id, detections_dict=result_dict)
-      tf.logging.info('Running eval batches done.')
-    except tf.errors.OutOfRangeError:
-      tf.logging.info('Done evaluating -- epoch limit reached')
-    finally:
-      # When done, ask the threads to stop.
-      tf.logging.info('# success: %d', counters['success'])
-      tf.logging.info('# skipped: %d', counters['skipped'])
-      all_evaluator_metrics = {}
-      if eval_export_path and eval_export_path is not None:
-        for evaluator in evaluators:
-          if (isinstance(evaluator, coco_evaluation.CocoDetectionEvaluator) or
-              isinstance(evaluator, coco_evaluation.CocoMaskEvaluator)):
-            tf.logging.info('Started dumping to json file.')
-            evaluator.dump_detections_to_json_file(
-                json_output_path=eval_export_path)
-            tf.logging.info('Finished dumping to json file.')
-      for evaluator in evaluators:
-        metrics = evaluator.evaluate()
-        evaluator.clear()
-        if any(key in all_evaluator_metrics for key in metrics):
-          raise ValueError('Metric names between evaluators must not collide.')
-        all_evaluator_metrics.update(metrics)
-      global_step = tf.train.global_step(sess, tf.train.get_global_step())
+    counters = {'skipped': 0, 'success': 0}
+    aggregate_result_losses_dict = collections.defaultdict(list)
+    with tf.contrib.slim.queues.QueueRunners(sess):
+        try:
+            for batch in range(int(num_batches)):
+                if (batch + 1) % 100 == 0:
+                    tf.logging.info('Running eval ops batch %d/%d', batch + 1,
+                                    num_batches)
+                if not batch_processor:
+                    try:
+                        if not losses_dict:
+                            losses_dict = {}
+                        result_dict, result_losses_dict = sess.run([tensor_dict,
+                                                                    losses_dict])
+                        counters['success'] += 1
+                    except tf.errors.InvalidArgumentError:
+                        tf.logging.info('Skipping image')
+                        counters['skipped'] += 1
+                        result_dict = {}
+                else:
+                    result_dict, result_losses_dict = batch_processor(
+                        tensor_dict, sess, batch, counters, losses_dict=losses_dict)
+                if not result_dict:
+                    continue
+                for key, value in iter(result_losses_dict.items()):
+                    aggregate_result_losses_dict[key].append(value)
+                for evaluator in evaluators:
+                    # TODO(b/65130867): Use image_id tensor once we fix the input data
+                    # decoders to return correct image_id.
+                    # TODO(akuznetsa): result_dict contains batches of images, while
+                    # add_single_ground_truth_image_info expects a single image. Fix
+                    if (isinstance(result_dict, dict) and
+                            result_dict[fields.InputDataFields.key]):
+                        image_id = result_dict[fields.InputDataFields.key]
+                    else:
+                        image_id = batch
+                    evaluator.add_single_ground_truth_image_info(
+                        image_id=image_id, groundtruth_dict=result_dict)
+                    evaluator.add_single_detected_image_info(
+                        image_id=image_id, detections_dict=result_dict)
+            tf.logging.info('Running eval batches done.')
+        except tf.errors.OutOfRangeError:
+            tf.logging.info('Done evaluating -- epoch limit reached')
+        finally:
+            # When done, ask the threads to stop.
+            tf.logging.info('# success: %d', counters['success'])
+            tf.logging.info('# skipped: %d', counters['skipped'])
+            all_evaluator_metrics = {}
+            if eval_export_path and eval_export_path is not None:
+                for evaluator in evaluators:
+                    if (isinstance(evaluator, coco_evaluation.CocoDetectionEvaluator) or
+                            isinstance(evaluator, coco_evaluation.CocoMaskEvaluator)):
+                        tf.logging.info('Started dumping to json file.')
+                        evaluator.dump_detections_to_json_file(
+                            json_output_path=eval_export_path)
+                        tf.logging.info('Finished dumping to json file.')
+            for evaluator in evaluators:
+                metrics = evaluator.evaluate()
+                evaluator.clear()
+                if any(key in all_evaluator_metrics for key in metrics):
+                    raise ValueError('Metric names between evaluators must not collide.')
+                all_evaluator_metrics.update(metrics)
+            global_step = tf.train.global_step(sess, tf.train.get_global_step())
 
-      for key, value in iter(aggregate_result_losses_dict.items()):
-        all_evaluator_metrics['Losses/' + key] = np.mean(value)
-  sess.close()
-  return (global_step, all_evaluator_metrics)
+            for key, value in iter(aggregate_result_losses_dict.items()):
+                all_evaluator_metrics['Losses/' + key] = np.mean(value)
+    sess.close()
+    return (global_step, all_evaluator_metrics)
 
 
 # TODO(rathodv): Add tests.
@@ -375,7 +375,7 @@ def repeated_checkpoint_run(tensor_dict,
                             save_graph_dir='',
                             losses_dict=None,
                             eval_export_path=None):
-  """Periodically evaluates desired tensors using checkpoint_dirs or restore_fn.
+    """Periodically evaluates desired tensors using checkpoint_dirs or restore_fn.
 
   This function repeatedly loads a checkpoint and evaluates a desired
   set of tensors (provided by tensor_dict) and hands the resulting numpy
@@ -426,53 +426,54 @@ def repeated_checkpoint_run(tensor_dict,
     ValueError: if max_num_of_evaluations is not None or a positive number.
     ValueError: if checkpoint_dirs doesn't have at least one element.
   """
-  if max_number_of_evaluations and max_number_of_evaluations <= 0:
-    raise ValueError(
-        '`number_of_steps` must be either None or a positive number.')
+    if max_number_of_evaluations and max_number_of_evaluations <= 0:
+        raise ValueError(
+            '`number_of_steps` must be either None or a positive number.')
 
-  if not checkpoint_dirs:
-    raise ValueError('`checkpoint_dirs` must have at least one entry.')
+    if not checkpoint_dirs:
+        raise ValueError('`checkpoint_dirs` must have at least one entry.')
 
-  last_evaluated_model_path = None
-  number_of_evaluations = 0
-  while True:
-    start = time.time()
-    tf.logging.info('Starting evaluation at ' + time.strftime(
-        '%Y-%m-%d-%H:%M:%S', time.gmtime()))
-    model_path = tf.train.latest_checkpoint(checkpoint_dirs[0])
-    if not model_path:
-      tf.logging.info('No model found in %s. Will try again in %d seconds',
-                      checkpoint_dirs[0], eval_interval_secs)
-    elif model_path == last_evaluated_model_path:
-      tf.logging.info('Found already evaluated checkpoint. Will try again in '
-                      '%d seconds', eval_interval_secs)
-    else:
-      last_evaluated_model_path = model_path
-      global_step, metrics = _run_checkpoint_once(
-          tensor_dict,
-          evaluators,
-          batch_processor,
-          checkpoint_dirs,
-          variables_to_restore,
-          restore_fn,
-          num_batches,
-          master,
-          save_graph,
-          save_graph_dir,
-          losses_dict=losses_dict,
-          eval_export_path=eval_export_path)
-      write_metrics(metrics, global_step, summary_dir)
-    number_of_evaluations += 1
+    last_evaluated_model_path = None
+    number_of_evaluations = 0
+    metrics = None
+    while True:
+        start = time.time()
+        tf.logging.info('Starting evaluation at ' + time.strftime(
+            '%Y-%m-%d-%H:%M:%S', time.gmtime()))
+        model_path = tf.train.latest_checkpoint(checkpoint_dirs[0])
+        if not model_path:
+            tf.logging.info('No model found in %s. Will try again in %d seconds',
+                            checkpoint_dirs[0], eval_interval_secs)
+        elif model_path == last_evaluated_model_path:
+            tf.logging.info('Found already evaluated checkpoint. Will try again in '
+                            '%d seconds', eval_interval_secs)
+        else:
+            last_evaluated_model_path = model_path
+            global_step, metrics = _run_checkpoint_once(
+                tensor_dict,
+                evaluators,
+                batch_processor,
+                checkpoint_dirs,
+                variables_to_restore,
+                restore_fn,
+                num_batches,
+                master,
+                save_graph,
+                save_graph_dir,
+                losses_dict=losses_dict,
+                eval_export_path=eval_export_path)
+            write_metrics(metrics, global_step, summary_dir)
+        number_of_evaluations += 1
 
-    if (max_number_of_evaluations and
-        number_of_evaluations >= max_number_of_evaluations):
-      tf.logging.info('Finished evaluation!')
-      break
-    time_to_next_eval = start + eval_interval_secs - time.time()
-    if time_to_next_eval > 0:
-      time.sleep(time_to_next_eval)
+        if (max_number_of_evaluations and
+                number_of_evaluations >= max_number_of_evaluations):
+            tf.logging.info('Finished evaluation!')
+            break
+        time_to_next_eval = start + eval_interval_secs - time.time()
+        if time_to_next_eval > 0:
+            time.sleep(time_to_next_eval)
 
-  return metrics
+    return metrics
 
 
 def result_dict_for_single_example(image,
@@ -481,7 +482,7 @@ def result_dict_for_single_example(image,
                                    groundtruth=None,
                                    class_agnostic=False,
                                    scale_to_absolute=False):
-  """Merges all detection and groundtruth information for a single example.
+    """Merges all detection and groundtruth information for a single example.
 
   Note that evaluation tools require classes that are 1-indexed, and so this
   function performs the offset. If `class_agnostic` is True, all output classes
@@ -533,94 +534,94 @@ def result_dict_for_single_example(image,
       (Optional).
 
   """
-  label_id_offset = 1  # Applying label id offset (b/63711816)
+    label_id_offset = 1  # Applying label id offset (b/63711816)
 
-  input_data_fields = fields.InputDataFields
-  output_dict = {
-      input_data_fields.original_image: image,
-      input_data_fields.key: key,
-  }
+    input_data_fields = fields.InputDataFields
+    output_dict = {
+        input_data_fields.original_image: image,
+        input_data_fields.key: key,
+    }
 
-  detection_fields = fields.DetectionResultFields
-  detection_boxes = detections[detection_fields.detection_boxes][0]
-  image_shape = tf.shape(image)
-  detection_scores = detections[detection_fields.detection_scores][0]
+    detection_fields = fields.DetectionResultFields
+    detection_boxes = detections[detection_fields.detection_boxes][0]
+    image_shape = tf.shape(image)
+    detection_scores = detections[detection_fields.detection_scores][0]
 
-  if class_agnostic:
-    detection_classes = tf.ones_like(detection_scores, dtype=tf.int64)
-  else:
-    detection_classes = (
-        tf.to_int64(detections[detection_fields.detection_classes][0]) +
-        label_id_offset)
-
-  num_detections = tf.to_int32(detections[detection_fields.num_detections][0])
-  detection_boxes = tf.slice(
-      detection_boxes, begin=[0, 0], size=[num_detections, -1])
-  detection_classes = tf.slice(
-      detection_classes, begin=[0], size=[num_detections])
-  detection_scores = tf.slice(
-      detection_scores, begin=[0], size=[num_detections])
-
-  if scale_to_absolute:
-    absolute_detection_boxlist = box_list_ops.to_absolute_coordinates(
-        box_list.BoxList(detection_boxes), image_shape[1], image_shape[2])
-    output_dict[detection_fields.detection_boxes] = (
-        absolute_detection_boxlist.get())
-  else:
-    output_dict[detection_fields.detection_boxes] = detection_boxes
-  output_dict[detection_fields.detection_classes] = detection_classes
-  output_dict[detection_fields.detection_scores] = detection_scores
-
-  if detection_fields.detection_masks in detections:
-    detection_masks = detections[detection_fields.detection_masks][0]
-    # TODO(rathodv): This should be done in model's postprocess
-    # function ideally.
-    detection_masks = tf.slice(
-        detection_masks, begin=[0, 0, 0], size=[num_detections, -1, -1])
-    detection_masks_reframed = ops.reframe_box_masks_to_image_masks(
-        detection_masks, detection_boxes, image_shape[1], image_shape[2])
-    detection_masks_reframed = tf.cast(
-        tf.greater(detection_masks_reframed, 0.5), tf.uint8)
-    output_dict[detection_fields.detection_masks] = detection_masks_reframed
-  if detection_fields.detection_keypoints in detections:
-    detection_keypoints = detections[detection_fields.detection_keypoints][0]
-    output_dict[detection_fields.detection_keypoints] = detection_keypoints
-    if scale_to_absolute:
-      absolute_detection_keypoints = keypoint_ops.scale(
-          detection_keypoints, image_shape[1], image_shape[2])
-      output_dict[detection_fields.detection_keypoints] = (
-          absolute_detection_keypoints)
-
-  if groundtruth:
-    if input_data_fields.groundtruth_instance_masks in groundtruth:
-      masks = groundtruth[input_data_fields.groundtruth_instance_masks]
-      masks = tf.expand_dims(masks, 3)
-      masks = tf.image.resize_images(
-          masks,
-          image_shape[1:3],
-          method=tf.image.ResizeMethod.NEAREST_NEIGHBOR,
-          align_corners=True)
-      masks = tf.squeeze(masks, 3)
-      groundtruth[input_data_fields.groundtruth_instance_masks] = tf.cast(
-          masks, tf.uint8)
-    output_dict.update(groundtruth)
-    if scale_to_absolute:
-      groundtruth_boxes = groundtruth[input_data_fields.groundtruth_boxes]
-      absolute_gt_boxlist = box_list_ops.to_absolute_coordinates(
-          box_list.BoxList(groundtruth_boxes), image_shape[1], image_shape[2])
-      output_dict[input_data_fields.groundtruth_boxes] = (
-          absolute_gt_boxlist.get())
-    # For class-agnostic models, groundtruth classes all become 1.
     if class_agnostic:
-      groundtruth_classes = groundtruth[input_data_fields.groundtruth_classes]
-      groundtruth_classes = tf.ones_like(groundtruth_classes, dtype=tf.int64)
-      output_dict[input_data_fields.groundtruth_classes] = groundtruth_classes
+        detection_classes = tf.ones_like(detection_scores, dtype=tf.int64)
+    else:
+        detection_classes = (
+                tf.to_int64(detections[detection_fields.detection_classes][0]) +
+                label_id_offset)
 
-  return output_dict
+    num_detections = tf.to_int32(detections[detection_fields.num_detections][0])
+    detection_boxes = tf.slice(
+        detection_boxes, begin=[0, 0], size=[num_detections, -1])
+    detection_classes = tf.slice(
+        detection_classes, begin=[0], size=[num_detections])
+    detection_scores = tf.slice(
+        detection_scores, begin=[0], size=[num_detections])
+
+    if scale_to_absolute:
+        absolute_detection_boxlist = box_list_ops.to_absolute_coordinates(
+            box_list.BoxList(detection_boxes), image_shape[1], image_shape[2])
+        output_dict[detection_fields.detection_boxes] = (
+            absolute_detection_boxlist.get())
+    else:
+        output_dict[detection_fields.detection_boxes] = detection_boxes
+    output_dict[detection_fields.detection_classes] = detection_classes
+    output_dict[detection_fields.detection_scores] = detection_scores
+
+    if detection_fields.detection_masks in detections:
+        detection_masks = detections[detection_fields.detection_masks][0]
+        # TODO(rathodv): This should be done in model's postprocess
+        # function ideally.
+        detection_masks = tf.slice(
+            detection_masks, begin=[0, 0, 0], size=[num_detections, -1, -1])
+        detection_masks_reframed = ops.reframe_box_masks_to_image_masks(
+            detection_masks, detection_boxes, image_shape[1], image_shape[2])
+        detection_masks_reframed = tf.cast(
+            tf.greater(detection_masks_reframed, 0.5), tf.uint8)
+        output_dict[detection_fields.detection_masks] = detection_masks_reframed
+    if detection_fields.detection_keypoints in detections:
+        detection_keypoints = detections[detection_fields.detection_keypoints][0]
+        output_dict[detection_fields.detection_keypoints] = detection_keypoints
+        if scale_to_absolute:
+            absolute_detection_keypoints = keypoint_ops.scale(
+                detection_keypoints, image_shape[1], image_shape[2])
+            output_dict[detection_fields.detection_keypoints] = (
+                absolute_detection_keypoints)
+
+    if groundtruth:
+        if input_data_fields.groundtruth_instance_masks in groundtruth:
+            masks = groundtruth[input_data_fields.groundtruth_instance_masks]
+            masks = tf.expand_dims(masks, 3)
+            masks = tf.image.resize_images(
+                masks,
+                image_shape[1:3],
+                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR,
+                align_corners=True)
+            masks = tf.squeeze(masks, 3)
+            groundtruth[input_data_fields.groundtruth_instance_masks] = tf.cast(
+                masks, tf.uint8)
+        output_dict.update(groundtruth)
+        if scale_to_absolute:
+            groundtruth_boxes = groundtruth[input_data_fields.groundtruth_boxes]
+            absolute_gt_boxlist = box_list_ops.to_absolute_coordinates(
+                box_list.BoxList(groundtruth_boxes), image_shape[1], image_shape[2])
+            output_dict[input_data_fields.groundtruth_boxes] = (
+                absolute_gt_boxlist.get())
+        # For class-agnostic models, groundtruth classes all become 1.
+        if class_agnostic:
+            groundtruth_classes = groundtruth[input_data_fields.groundtruth_classes]
+            groundtruth_classes = tf.ones_like(groundtruth_classes, dtype=tf.int64)
+            output_dict[input_data_fields.groundtruth_classes] = groundtruth_classes
+
+    return output_dict
 
 
 def get_evaluators(eval_config, categories, evaluator_options=None):
-  """Returns the evaluator class according to eval_config, valid for categories.
+    """Returns the evaluator class according to eval_config, valid for categories.
 
   Args:
     eval_config: An `eval_pb2.EvalConfig`.
@@ -640,26 +641,26 @@ def get_evaluators(eval_config, categories, evaluator_options=None):
   Raises:
     ValueError: if metric is not in the metric class dictionary.
   """
-  evaluator_options = evaluator_options or {}
-  eval_metric_fn_keys = eval_config.metrics_set
-  if not eval_metric_fn_keys:
-    eval_metric_fn_keys = [EVAL_DEFAULT_METRIC]
-  evaluators_list = []
-  for eval_metric_fn_key in eval_metric_fn_keys:
-    if eval_metric_fn_key not in EVAL_METRICS_CLASS_DICT:
-      raise ValueError('Metric not found: {}'.format(eval_metric_fn_key))
-    kwargs_dict = (evaluator_options[eval_metric_fn_key] if eval_metric_fn_key
-                   in evaluator_options else {})
-    evaluators_list.append(EVAL_METRICS_CLASS_DICT[eval_metric_fn_key](
-        categories,
-        **kwargs_dict))
-  return evaluators_list
+    evaluator_options = evaluator_options or {}
+    eval_metric_fn_keys = eval_config.metrics_set
+    if not eval_metric_fn_keys:
+        eval_metric_fn_keys = [EVAL_DEFAULT_METRIC]
+    evaluators_list = []
+    for eval_metric_fn_key in eval_metric_fn_keys:
+        if eval_metric_fn_key not in EVAL_METRICS_CLASS_DICT:
+            raise ValueError('Metric not found: {}'.format(eval_metric_fn_key))
+        kwargs_dict = (evaluator_options[eval_metric_fn_key] if eval_metric_fn_key
+                                                                in evaluator_options else {})
+        evaluators_list.append(EVAL_METRICS_CLASS_DICT[eval_metric_fn_key](
+            categories,
+            **kwargs_dict))
+    return evaluators_list
 
 
 def get_eval_metric_ops_for_evaluators(eval_config,
                                        categories,
                                        eval_dict):
-  """Returns eval metrics ops to use with `tf.estimator.EstimatorSpec`.
+    """Returns eval metrics ops to use with `tf.estimator.EstimatorSpec`.
 
   Args:
     eval_config: An `eval_pb2.EvalConfig`.
@@ -673,17 +674,17 @@ def get_eval_metric_ops_for_evaluators(eval_config,
     A dictionary of metric names to tuple of value_op and update_op that can be
     used as eval metric ops in tf.EstimatorSpec.
   """
-  eval_metric_ops = {}
-  evaluator_options = evaluator_options_from_eval_config(eval_config)
-  evaluators_list = get_evaluators(eval_config, categories, evaluator_options)
-  for evaluator in evaluators_list:
-    eval_metric_ops.update(evaluator.get_estimator_eval_metric_ops(
-        eval_dict))
-  return eval_metric_ops
+    eval_metric_ops = {}
+    evaluator_options = evaluator_options_from_eval_config(eval_config)
+    evaluators_list = get_evaluators(eval_config, categories, evaluator_options)
+    for evaluator in evaluators_list:
+        eval_metric_ops.update(evaluator.get_estimator_eval_metric_ops(
+            eval_dict))
+    return eval_metric_ops
 
 
 def evaluator_options_from_eval_config(eval_config):
-  """Produces a dictionary of evaluation options for each eval metric.
+    """Produces a dictionary of evaluation options for each eval metric.
 
   Args:
     eval_config: An `eval_pb2.EvalConfig`.
@@ -696,12 +697,12 @@ def evaluator_options_from_eval_config(eval_config):
         'coco_detection_metrics': {'include_metrics_per_category': True}
       }
   """
-  eval_metric_fn_keys = eval_config.metrics_set
-  evaluator_options = {}
-  for eval_metric_fn_key in eval_metric_fn_keys:
-    if eval_metric_fn_key in ('coco_detection_metrics', 'coco_mask_metrics'):
-      evaluator_options[eval_metric_fn_key] = {
-          'include_metrics_per_category': (
-              eval_config.include_metrics_per_category)
-      }
-  return evaluator_options
+    eval_metric_fn_keys = eval_config.metrics_set
+    evaluator_options = {}
+    for eval_metric_fn_key in eval_metric_fn_keys:
+        if eval_metric_fn_key in ('coco_detection_metrics', 'coco_mask_metrics'):
+            evaluator_options[eval_metric_fn_key] = {
+                'include_metrics_per_category': (
+                    eval_config.include_metrics_per_category)
+            }
+    return evaluator_options

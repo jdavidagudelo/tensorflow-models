@@ -16,29 +16,29 @@
 """SSDFeatureExtractor for InceptionV3 features."""
 import tensorflow as tf
 
-from object_detection.meta_architectures import ssd_meta_arch
-from object_detection.models import feature_map_generators
-from object_detection.utils import ops
-from object_detection.utils import shape_utils
-from nets import inception_v3
+from research.object_detection.meta_architectures import ssd_meta_arch
+from research.object_detection.models import feature_map_generators
+from research.object_detection.utils import ops
+from research.object_detection.utils import shape_utils
+from research.slim.nets import inception_v3
 
 slim = tf.contrib.slim
 
 
 class SSDInceptionV3FeatureExtractor(ssd_meta_arch.SSDFeatureExtractor):
-  """SSD Feature Extractor using InceptionV3 features."""
+    """SSD Feature Extractor using InceptionV3 features."""
 
-  def __init__(self,
-               is_training,
-               depth_multiplier,
-               min_depth,
-               pad_to_multiple,
-               conv_hyperparams_fn,
-               reuse_weights=None,
-               use_explicit_padding=False,
-               use_depthwise=False,
-               override_base_feature_extractor_hyperparams=False):
-    """InceptionV3 Feature Extractor for SSD Models.
+    def __init__(self,
+                 is_training,
+                 depth_multiplier,
+                 min_depth,
+                 pad_to_multiple,
+                 conv_hyperparams_fn,
+                 reuse_weights=None,
+                 use_explicit_padding=False,
+                 use_depthwise=False,
+                 override_base_feature_extractor_hyperparams=False):
+        """InceptionV3 Feature Extractor for SSD Models.
 
     Args:
       is_training: whether the network is in training mode.
@@ -60,27 +60,26 @@ class SSDInceptionV3FeatureExtractor(ssd_meta_arch.SSDFeatureExtractor):
     Raises:
       ValueError: If `override_base_feature_extractor_hyperparams` is False.
     """
-    super(SSDInceptionV3FeatureExtractor, self).__init__(
-        is_training=is_training,
-        depth_multiplier=depth_multiplier,
-        min_depth=min_depth,
-        pad_to_multiple=pad_to_multiple,
-        conv_hyperparams_fn=conv_hyperparams_fn,
-        reuse_weights=reuse_weights,
-        use_explicit_padding=use_explicit_padding,
-        use_depthwise=use_depthwise,
-        override_base_feature_extractor_hyperparams=
-        override_base_feature_extractor_hyperparams)
+        super(SSDInceptionV3FeatureExtractor, self).__init__(
+            is_training=is_training,
+            depth_multiplier=depth_multiplier,
+            min_depth=min_depth,
+            pad_to_multiple=pad_to_multiple,
+            conv_hyperparams_fn=conv_hyperparams_fn,
+            reuse_weights=reuse_weights,
+            use_explicit_padding=use_explicit_padding,
+            use_depthwise=use_depthwise,
+            override_base_feature_extractor_hyperparams=override_base_feature_extractor_hyperparams)
 
-    if not self._override_base_feature_extractor_hyperparams:
-      raise ValueError('SSD Inception V3 feature extractor always uses'
-                       'scope returned by `conv_hyperparams_fn` for both the '
-                       'base feature extractor and the additional layers '
-                       'added since there is no arg_scope defined for the base '
-                       'feature extractor.')
+        if not self._override_base_feature_extractor_hyperparams:
+            raise ValueError('SSD Inception V3 feature extractor always uses'
+                             'scope returned by `conv_hyperparams_fn` for both the '
+                             'base feature extractor and the additional layers '
+                             'added since there is no arg_scope defined for the base '
+                             'feature extractor.')
 
-  def preprocess(self, resized_inputs):
-    """SSD preprocessing.
+    def preprocess(self, resized_inputs):
+        """SSD preprocessing.
 
     Maps pixel values to the range [-1, 1].
 
@@ -92,10 +91,10 @@ class SSDInceptionV3FeatureExtractor(ssd_meta_arch.SSDFeatureExtractor):
       preprocessed_inputs: a [batch, height, width, channels] float tensor
         representing a batch of images.
     """
-    return (2.0 / 255.0) * resized_inputs - 1.0
+        return (2.0 / 255.0) * resized_inputs - 1.0
 
-  def extract_features(self, preprocessed_inputs):
-    """Extract features from preprocessed inputs.
+    def extract_features(self, preprocessed_inputs):
+        """Extract features from preprocessed inputs.
 
     Args:
       preprocessed_inputs: a [batch, height, width, channels] float tensor
@@ -105,29 +104,29 @@ class SSDInceptionV3FeatureExtractor(ssd_meta_arch.SSDFeatureExtractor):
       feature_maps: a list of tensors where the ith tensor has shape
         [batch, height_i, width_i, depth_i]
     """
-    preprocessed_inputs = shape_utils.check_min_image_dim(
-        33, preprocessed_inputs)
+        preprocessed_inputs = shape_utils.check_min_image_dim(
+            33, preprocessed_inputs)
 
-    feature_map_layout = {
-        'from_layer': ['Mixed_5d', 'Mixed_6e', 'Mixed_7c', '', '', ''],
-        'layer_depth': [-1, -1, -1, 512, 256, 128],
-        'use_explicit_padding': self._use_explicit_padding,
-        'use_depthwise': self._use_depthwise,
-    }
+        feature_map_layout = {
+            'from_layer': ['Mixed_5d', 'Mixed_6e', 'Mixed_7c', '', '', ''],
+            'layer_depth': [-1, -1, -1, 512, 256, 128],
+            'use_explicit_padding': self._use_explicit_padding,
+            'use_depthwise': self._use_depthwise,
+        }
 
-    with slim.arg_scope(self._conv_hyperparams_fn()):
-      with tf.variable_scope('InceptionV3', reuse=self._reuse_weights) as scope:
-        _, image_features = inception_v3.inception_v3_base(
-            ops.pad_to_multiple(preprocessed_inputs, self._pad_to_multiple),
-            final_endpoint='Mixed_7c',
-            min_depth=self._min_depth,
-            depth_multiplier=self._depth_multiplier,
-            scope=scope)
-        feature_maps = feature_map_generators.multi_resolution_feature_maps(
-            feature_map_layout=feature_map_layout,
-            depth_multiplier=self._depth_multiplier,
-            min_depth=self._min_depth,
-            insert_1x1_conv=True,
-            image_features=image_features)
+        with slim.arg_scope(self._conv_hyperparams_fn()):
+            with tf.variable_scope('InceptionV3', reuse=self._reuse_weights) as scope:
+                _, image_features = inception_v3.inception_v3_base(
+                    ops.pad_to_multiple(preprocessed_inputs, self._pad_to_multiple),
+                    final_endpoint='Mixed_7c',
+                    min_depth=self._min_depth,
+                    depth_multiplier=self._depth_multiplier,
+                    scope=scope)
+                feature_maps = feature_map_generators.multi_resolution_feature_maps(
+                    feature_map_layout=feature_map_layout,
+                    depth_multiplier=self._depth_multiplier,
+                    min_depth=self._min_depth,
+                    insert_1x1_conv=True,
+                    image_features=image_features)
 
-    return feature_maps.values()
+        return feature_maps.values()

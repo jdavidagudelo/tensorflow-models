@@ -26,12 +26,11 @@ from absl import flags
 
 import tensorflow as tf
 
-import adversarial_attack
-import model_lib
-from datasets import dataset_factory
+from . import adversarial_attack
+from . import model_lib
+from .datasets import dataset_factory
 
 FLAGS = flags.FLAGS
-
 
 flags.DEFINE_string('train_dir', None,
                     'Training directory. If specified then this program '
@@ -82,100 +81,100 @@ flags.DEFINE_string('trainable_scopes', None,
 
 
 def main(_):
-  if not FLAGS.train_dir and not FLAGS.checkpoint_path:
-    print('Either --train_dir or --checkpoint_path flags has to be provided.')
-  if FLAGS.train_dir and FLAGS.checkpoint_path:
-    print('Only one of --train_dir or --checkpoint_path should be provided.')
-  params = model_lib.default_hparams()
-  params.parse(FLAGS.hparams)
-  tf.logging.info('User provided hparams: %s', FLAGS.hparams)
-  tf.logging.info('All hyper parameters: %s', params)
-  batch_size = params.eval_batch_size
-  graph = tf.Graph()
-  with graph.as_default():
-    # dataset
-    dataset, num_examples, num_classes, bounds = dataset_factory.get_dataset(
-        FLAGS.dataset,
-        FLAGS.split_name,
-        batch_size,
-        FLAGS.dataset_image_size,
-        is_training=False)
-    dataset_iterator = dataset.make_one_shot_iterator()
-    images, labels = dataset_iterator.get_next()
-    if FLAGS.num_examples > 0:
-      num_examples = min(num_examples, FLAGS.num_examples)
+    if not FLAGS.train_dir and not FLAGS.checkpoint_path:
+        print('Either --train_dir or --checkpoint_path flags has to be provided.')
+    if FLAGS.train_dir and FLAGS.checkpoint_path:
+        print('Only one of --train_dir or --checkpoint_path should be provided.')
+    params = model_lib.default_hparams()
+    params.parse(FLAGS.hparams)
+    tf.logging.info('User provided hparams: %s', FLAGS.hparams)
+    tf.logging.info('All hyper parameters: %s', params)
+    batch_size = params.eval_batch_size
+    graph = tf.Graph()
+    with graph.as_default():
+        # dataset
+        dataset, num_examples, num_classes, bounds = dataset_factory.get_dataset(
+            FLAGS.dataset,
+            FLAGS.split_name,
+            batch_size,
+            FLAGS.dataset_image_size,
+            is_training=False)
+        dataset_iterator = dataset.make_one_shot_iterator()
+        images, labels = dataset_iterator.get_next()
+        if FLAGS.num_examples > 0:
+            num_examples = min(num_examples, FLAGS.num_examples)
 
-    # setup model
-    global_step = tf.train.get_or_create_global_step()
-    model_fn_two_args = model_lib.get_model(FLAGS.model_name, num_classes)
-    model_fn = lambda x: model_fn_two_args(x, is_training=False)
-    if not FLAGS.adv_method or FLAGS.adv_method == 'clean':
-      logits = model_fn(images)
-    else:
-      adv_examples = adversarial_attack.generate_adversarial_examples(
-          images, bounds, model_fn, FLAGS.adv_method)
-      logits = model_fn(adv_examples)
+        # setup model
+        global_step = tf.train.get_or_create_global_step()
+        model_fn_two_args = model_lib.get_model(FLAGS.model_name, num_classes)
+        model_fn = lambda x: model_fn_two_args(x, is_training=False)
+        if not FLAGS.adv_method or FLAGS.adv_method == 'clean':
+            logits = model_fn(images)
+        else:
+            adv_examples = adversarial_attack.generate_adversarial_examples(
+                images, bounds, model_fn, FLAGS.adv_method)
+            logits = model_fn(adv_examples)
 
-    # update trainable variables if fine tuning is used
-    model_lib.filter_trainable_variables(FLAGS.trainable_scopes)
+        # update trainable variables if fine tuning is used
+        model_lib.filter_trainable_variables(FLAGS.trainable_scopes)
 
-    # Setup the moving averages
-    if FLAGS.moving_average_decay and (FLAGS.moving_average_decay > 0):
-      variable_averages = tf.train.ExponentialMovingAverage(
-          FLAGS.moving_average_decay, global_step)
-      variables_to_restore = variable_averages.variables_to_restore(
-          tf.contrib.framework.get_model_variables())
-      variables_to_restore[global_step.op.name] = global_step
-    else:
-      variables_to_restore = tf.contrib.framework.get_variables_to_restore()
+        # Setup the moving averages
+        if FLAGS.moving_average_decay and (FLAGS.moving_average_decay > 0):
+            variable_averages = tf.train.ExponentialMovingAverage(
+                FLAGS.moving_average_decay, global_step)
+            variables_to_restore = variable_averages.variables_to_restore(
+                tf.contrib.framework.get_model_variables())
+            variables_to_restore[global_step.op.name] = global_step
+        else:
+            variables_to_restore = tf.contrib.framework.get_variables_to_restore()
 
-    # Setup evaluation metric
-    with tf.name_scope('Eval'):
-      names_to_values, names_to_updates = (
-          tf.contrib.metrics.aggregate_metric_map({
-              'Accuracy': tf.metrics.accuracy(labels, tf.argmax(logits, 1)),
-              'Top5': tf.metrics.recall_at_k(tf.to_int64(labels), logits, 5)
-          }))
+        # Setup evaluation metric
+        with tf.name_scope('Eval'):
+            names_to_values, names_to_updates = (
+                tf.contrib.metrics.aggregate_metric_map({
+                    'Accuracy': tf.metrics.accuracy(labels, tf.argmax(logits, 1)),
+                    'Top5': tf.metrics.recall_at_k(tf.to_int64(labels), logits, 5)
+                }))
 
-      for name, value in names_to_values.iteritems():
-        tf.summary.scalar(name, value)
+            for name, value in names_to_values.iteritems():
+                tf.summary.scalar(name, value)
 
-    # Run evaluation
-    num_batches = int(num_examples / batch_size)
-    if FLAGS.train_dir:
-      output_dir = os.path.join(FLAGS.train_dir, FLAGS.eval_name)
-      if not tf.gfile.Exists(output_dir):
-        tf.gfile.MakeDirs(output_dir)
-      tf.contrib.training.evaluate_repeatedly(
-          FLAGS.train_dir,
-          master=FLAGS.master,
-          scaffold=tf.train.Scaffold(
-              saver=tf.train.Saver(variables_to_restore)),
-          eval_ops=names_to_updates.values(),
-          eval_interval_secs=FLAGS.eval_interval_secs,
-          hooks=[
-              tf.contrib.training.StopAfterNEvalsHook(num_batches),
-              tf.contrib.training.SummaryAtEndHook(output_dir),
-              tf.train.LoggingTensorHook(names_to_values, at_end=True),
-          ],
-          max_number_of_evaluations=1 if FLAGS.eval_once else None)
-    else:
-      result = tf.contrib.training.evaluate_once(
-          FLAGS.checkpoint_path,
-          master=FLAGS.master,
-          scaffold=tf.train.Scaffold(
-              saver=tf.train.Saver(variables_to_restore)),
-          eval_ops=names_to_updates.values(),
-          final_ops=names_to_values,
-          hooks=[
-              tf.contrib.training.StopAfterNEvalsHook(num_batches),
-              tf.train.LoggingTensorHook(names_to_values, at_end=True),
-          ])
-      if FLAGS.output_file:
-        with tf.gfile.Open(FLAGS.output_file, 'a') as f:
-          f.write('%s,%.3f,%.3f\n'
-                  % (FLAGS.eval_name, result['Accuracy'], result['Top5']))
+        # Run evaluation
+        num_batches = int(num_examples / batch_size)
+        if FLAGS.train_dir:
+            output_dir = os.path.join(FLAGS.train_dir, FLAGS.eval_name)
+            if not tf.gfile.Exists(output_dir):
+                tf.gfile.MakeDirs(output_dir)
+            tf.contrib.training.evaluate_repeatedly(
+                FLAGS.train_dir,
+                master=FLAGS.master,
+                scaffold=tf.train.Scaffold(
+                    saver=tf.train.Saver(variables_to_restore)),
+                eval_ops=names_to_updates.values(),
+                eval_interval_secs=FLAGS.eval_interval_secs,
+                hooks=[
+                    tf.contrib.training.StopAfterNEvalsHook(num_batches),
+                    tf.contrib.training.SummaryAtEndHook(output_dir),
+                    tf.train.LoggingTensorHook(names_to_values, at_end=True),
+                ],
+                max_number_of_evaluations=1 if FLAGS.eval_once else None)
+        else:
+            result = tf.contrib.training.evaluate_once(
+                FLAGS.checkpoint_path,
+                master=FLAGS.master,
+                scaffold=tf.train.Scaffold(
+                    saver=tf.train.Saver(variables_to_restore)),
+                eval_ops=names_to_updates.values(),
+                final_ops=names_to_values,
+                hooks=[
+                    tf.contrib.training.StopAfterNEvalsHook(num_batches),
+                    tf.train.LoggingTensorHook(names_to_values, at_end=True),
+                ])
+            if FLAGS.output_file:
+                with tf.gfile.Open(FLAGS.output_file, 'a') as f:
+                    f.write('%s,%.3f,%.3f\n'
+                            % (FLAGS.eval_name, result['Accuracy'], result['Top5']))
 
 
 if __name__ == '__main__':
-  app.run(main)
+    app.run(main)

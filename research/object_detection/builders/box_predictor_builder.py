@@ -18,17 +18,17 @@
 import collections
 from absl import logging
 import tensorflow as tf
-from object_detection.predictors import convolutional_box_predictor
-from object_detection.predictors import convolutional_keras_box_predictor
-from object_detection.predictors import mask_rcnn_box_predictor
-from object_detection.predictors import rfcn_box_predictor
-from object_detection.predictors.heads import box_head
-from object_detection.predictors.heads import class_head
-from object_detection.predictors.heads import keras_box_head
-from object_detection.predictors.heads import keras_class_head
-from object_detection.predictors.heads import keras_mask_head
-from object_detection.predictors.heads import mask_head
-from object_detection.protos import box_predictor_pb2
+from research.object_detection.predictors import convolutional_box_predictor
+from research.object_detection.predictors import convolutional_keras_box_predictor
+from research.object_detection.predictors import mask_rcnn_box_predictor
+from research.object_detection.predictors import rfcn_box_predictor
+from research.object_detection.predictors.heads import box_head
+from research.object_detection.predictors.heads import class_head
+from research.object_detection.predictors.heads import keras_box_head
+from research.object_detection.predictors.heads import keras_class_head
+from research.object_detection.predictors.heads import keras_mask_head
+from research.object_detection.predictors.heads import mask_head
+from research.object_detection.protos import box_predictor_pb2
 
 
 def build_convolutional_box_predictor(is_training,
@@ -45,7 +45,7 @@ def build_convolutional_box_predictor(is_training,
                                       class_prediction_bias_init=0.0,
                                       use_depthwise=False,
                                       mask_head_config=None):
-  """Builds the ConvolutionalBoxPredictor from the arguments.
+    """Builds the ConvolutionalBoxPredictor from the arguments.
 
   Args:
     is_training: Indicates whether the BoxPredictor is in training mode.
@@ -81,46 +81,46 @@ def build_convolutional_box_predictor(is_training,
   Returns:
     A ConvolutionalBoxPredictor class.
   """
-  box_prediction_head = box_head.ConvolutionalBoxHead(
-      is_training=is_training,
-      box_code_size=box_code_size,
-      kernel_size=kernel_size,
-      use_depthwise=use_depthwise)
-  class_prediction_head = class_head.ConvolutionalClassHead(
-      is_training=is_training,
-      num_classes=num_classes,
-      use_dropout=use_dropout,
-      dropout_keep_prob=dropout_keep_prob,
-      kernel_size=kernel_size,
-      apply_sigmoid_to_scores=apply_sigmoid_to_scores,
-      class_prediction_bias_init=class_prediction_bias_init,
-      use_depthwise=use_depthwise)
-  other_heads = {}
-  if mask_head_config is not None:
-    if not mask_head_config.masks_are_class_agnostic:
-      logging.warning('Note that class specific mask prediction for SSD '
-                      'models is memory consuming.')
-    other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = (
-        mask_head.ConvolutionalMaskHead(
-            is_training=is_training,
-            num_classes=num_classes,
-            use_dropout=use_dropout,
-            dropout_keep_prob=dropout_keep_prob,
-            kernel_size=kernel_size,
-            use_depthwise=use_depthwise,
-            mask_height=mask_head_config.mask_height,
-            mask_width=mask_head_config.mask_width,
-            masks_are_class_agnostic=mask_head_config.masks_are_class_agnostic))
-  return convolutional_box_predictor.ConvolutionalBoxPredictor(
-      is_training=is_training,
-      num_classes=num_classes,
-      box_prediction_head=box_prediction_head,
-      class_prediction_head=class_prediction_head,
-      other_heads=other_heads,
-      conv_hyperparams_fn=conv_hyperparams_fn,
-      num_layers_before_predictor=num_layers_before_predictor,
-      min_depth=min_depth,
-      max_depth=max_depth)
+    box_prediction_head = box_head.ConvolutionalBoxHead(
+        is_training=is_training,
+        box_code_size=box_code_size,
+        kernel_size=kernel_size,
+        use_depthwise=use_depthwise)
+    class_prediction_head = class_head.ConvolutionalClassHead(
+        is_training=is_training,
+        num_classes=num_classes,
+        use_dropout=use_dropout,
+        dropout_keep_prob=dropout_keep_prob,
+        kernel_size=kernel_size,
+        apply_sigmoid_to_scores=apply_sigmoid_to_scores,
+        class_prediction_bias_init=class_prediction_bias_init,
+        use_depthwise=use_depthwise)
+    other_heads = {}
+    if mask_head_config is not None:
+        if not mask_head_config.masks_are_class_agnostic:
+            logging.warning('Note that class specific mask prediction for SSD '
+                            'models is memory consuming.')
+        other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = (
+            mask_head.ConvolutionalMaskHead(
+                is_training=is_training,
+                num_classes=num_classes,
+                use_dropout=use_dropout,
+                dropout_keep_prob=dropout_keep_prob,
+                kernel_size=kernel_size,
+                use_depthwise=use_depthwise,
+                mask_height=mask_head_config.mask_height,
+                mask_width=mask_head_config.mask_width,
+                masks_are_class_agnostic=mask_head_config.masks_are_class_agnostic))
+    return convolutional_box_predictor.ConvolutionalBoxPredictor(
+        is_training=is_training,
+        num_classes=num_classes,
+        box_prediction_head=box_prediction_head,
+        class_prediction_head=class_prediction_head,
+        other_heads=other_heads,
+        conv_hyperparams_fn=conv_hyperparams_fn,
+        num_layers_before_predictor=num_layers_before_predictor,
+        min_depth=min_depth,
+        max_depth=max_depth)
 
 
 def build_convolutional_keras_box_predictor(is_training,
@@ -140,7 +140,7 @@ def build_convolutional_keras_box_predictor(is_training,
                                             use_depthwise=False,
                                             mask_head_config=None,
                                             name='BoxPredictor'):
-  """Builds the ConvolutionalBoxPredictor from the arguments.
+    """Builds the ConvolutionalBoxPredictor from the arguments.
 
   Args:
     is_training: Indicates whether the BoxPredictor is in training mode.
@@ -187,93 +187,93 @@ def build_convolutional_keras_box_predictor(is_training,
   Returns:
     A ConvolutionalBoxPredictor class.
   """
-  box_prediction_heads = []
-  class_prediction_heads = []
-  mask_prediction_heads = []
-  other_heads = {}
-  if mask_head_config is not None:
-    other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = \
-      mask_prediction_heads
-
-  for stack_index, num_predictions_per_location in enumerate(
-      num_predictions_per_location_list):
-    box_prediction_heads.append(
-        keras_box_head.ConvolutionalBoxHead(
-            is_training=is_training,
-            box_code_size=box_code_size,
-            kernel_size=kernel_size,
-            conv_hyperparams=conv_hyperparams,
-            freeze_batchnorm=freeze_batchnorm,
-            num_predictions_per_location=num_predictions_per_location,
-            use_depthwise=use_depthwise,
-            name='ConvolutionalBoxHead_%d' % stack_index))
-    class_prediction_heads.append(
-        keras_class_head.ConvolutionalClassHead(
-            is_training=is_training,
-            num_classes=num_classes,
-            use_dropout=use_dropout,
-            dropout_keep_prob=dropout_keep_prob,
-            kernel_size=kernel_size,
-            conv_hyperparams=conv_hyperparams,
-            freeze_batchnorm=freeze_batchnorm,
-            num_predictions_per_location=num_predictions_per_location,
-            class_prediction_bias_init=class_prediction_bias_init,
-            use_depthwise=use_depthwise,
-            name='ConvolutionalClassHead_%d' % stack_index))
+    box_prediction_heads = []
+    class_prediction_heads = []
+    mask_prediction_heads = []
+    other_heads = {}
     if mask_head_config is not None:
-      if not mask_head_config.masks_are_class_agnostic:
-        logging.warning('Note that class specific mask prediction for SSD '
-                        'models is memory consuming.')
-      mask_prediction_heads.append(
-          keras_mask_head.ConvolutionalMaskHead(
-              is_training=is_training,
-              num_classes=num_classes,
-              use_dropout=use_dropout,
-              dropout_keep_prob=dropout_keep_prob,
-              kernel_size=kernel_size,
-              conv_hyperparams=conv_hyperparams,
-              freeze_batchnorm=freeze_batchnorm,
-              num_predictions_per_location=num_predictions_per_location,
-              use_depthwise=use_depthwise,
-              mask_height=mask_head_config.mask_height,
-              mask_width=mask_head_config.mask_width,
-              masks_are_class_agnostic=mask_head_config.
-              masks_are_class_agnostic,
-              name='ConvolutionalMaskHead_%d' % stack_index))
+        other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = \
+            mask_prediction_heads
 
-  return convolutional_keras_box_predictor.ConvolutionalBoxPredictor(
-      is_training=is_training,
-      num_classes=num_classes,
-      box_prediction_heads=box_prediction_heads,
-      class_prediction_heads=class_prediction_heads,
-      other_heads=other_heads,
-      conv_hyperparams=conv_hyperparams,
-      num_layers_before_predictor=num_layers_before_predictor,
-      min_depth=min_depth,
-      max_depth=max_depth,
-      freeze_batchnorm=freeze_batchnorm,
-      inplace_batchnorm_update=inplace_batchnorm_update,
-      name=name)
+    for stack_index, num_predictions_per_location in enumerate(
+            num_predictions_per_location_list):
+        box_prediction_heads.append(
+            keras_box_head.ConvolutionalBoxHead(
+                is_training=is_training,
+                box_code_size=box_code_size,
+                kernel_size=kernel_size,
+                conv_hyperparams=conv_hyperparams,
+                freeze_batchnorm=freeze_batchnorm,
+                num_predictions_per_location=num_predictions_per_location,
+                use_depthwise=use_depthwise,
+                name='ConvolutionalBoxHead_%d' % stack_index))
+        class_prediction_heads.append(
+            keras_class_head.ConvolutionalClassHead(
+                is_training=is_training,
+                num_classes=num_classes,
+                use_dropout=use_dropout,
+                dropout_keep_prob=dropout_keep_prob,
+                kernel_size=kernel_size,
+                conv_hyperparams=conv_hyperparams,
+                freeze_batchnorm=freeze_batchnorm,
+                num_predictions_per_location=num_predictions_per_location,
+                class_prediction_bias_init=class_prediction_bias_init,
+                use_depthwise=use_depthwise,
+                name='ConvolutionalClassHead_%d' % stack_index))
+        if mask_head_config is not None:
+            if not mask_head_config.masks_are_class_agnostic:
+                logging.warning('Note that class specific mask prediction for SSD '
+                                'models is memory consuming.')
+            mask_prediction_heads.append(
+                keras_mask_head.ConvolutionalMaskHead(
+                    is_training=is_training,
+                    num_classes=num_classes,
+                    use_dropout=use_dropout,
+                    dropout_keep_prob=dropout_keep_prob,
+                    kernel_size=kernel_size,
+                    conv_hyperparams=conv_hyperparams,
+                    freeze_batchnorm=freeze_batchnorm,
+                    num_predictions_per_location=num_predictions_per_location,
+                    use_depthwise=use_depthwise,
+                    mask_height=mask_head_config.mask_height,
+                    mask_width=mask_head_config.mask_width,
+                    masks_are_class_agnostic=mask_head_config.
+                        masks_are_class_agnostic,
+                    name='ConvolutionalMaskHead_%d' % stack_index))
+
+    return convolutional_keras_box_predictor.ConvolutionalBoxPredictor(
+        is_training=is_training,
+        num_classes=num_classes,
+        box_prediction_heads=box_prediction_heads,
+        class_prediction_heads=class_prediction_heads,
+        other_heads=other_heads,
+        conv_hyperparams=conv_hyperparams,
+        num_layers_before_predictor=num_layers_before_predictor,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        freeze_batchnorm=freeze_batchnorm,
+        inplace_batchnorm_update=inplace_batchnorm_update,
+        name=name)
 
 
 def build_weight_shared_convolutional_box_predictor(
-    is_training,
-    num_classes,
-    conv_hyperparams_fn,
-    depth,
-    num_layers_before_predictor,
-    box_code_size,
-    kernel_size=3,
-    class_prediction_bias_init=0.0,
-    use_dropout=False,
-    dropout_keep_prob=0.8,
-    share_prediction_tower=False,
-    apply_batch_norm=True,
-    use_depthwise=False,
-    mask_head_config=None,
-    score_converter_fn=tf.identity,
-    box_encodings_clip_range=None):
-  """Builds and returns a WeightSharedConvolutionalBoxPredictor class.
+        is_training,
+        num_classes,
+        conv_hyperparams_fn,
+        depth,
+        num_layers_before_predictor,
+        box_code_size,
+        kernel_size=3,
+        class_prediction_bias_init=0.0,
+        use_dropout=False,
+        dropout_keep_prob=0.8,
+        share_prediction_tower=False,
+        apply_batch_norm=True,
+        use_depthwise=False,
+        mask_head_config=None,
+        score_converter_fn=tf.identity,
+        box_encodings_clip_range=None):
+    """Builds and returns a WeightSharedConvolutionalBoxPredictor class.
 
   Args:
     is_training: Indicates whether the BoxPredictor is in training mode.
@@ -306,47 +306,47 @@ def build_weight_shared_convolutional_box_predictor(
   Returns:
     A WeightSharedConvolutionalBoxPredictor class.
   """
-  box_prediction_head = box_head.WeightSharedConvolutionalBoxHead(
-      box_code_size=box_code_size,
-      kernel_size=kernel_size,
-      use_depthwise=use_depthwise,
-      box_encodings_clip_range=box_encodings_clip_range)
-  class_prediction_head = (
-      class_head.WeightSharedConvolutionalClassHead(
-          num_classes=num_classes,
-          kernel_size=kernel_size,
-          class_prediction_bias_init=class_prediction_bias_init,
-          use_dropout=use_dropout,
-          dropout_keep_prob=dropout_keep_prob,
-          use_depthwise=use_depthwise,
-          score_converter_fn=score_converter_fn))
-  other_heads = {}
-  if mask_head_config is not None:
-    if not mask_head_config.masks_are_class_agnostic:
-      logging.warning('Note that class specific mask prediction for SSD '
-                      'models is memory consuming.')
-    other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = (
-        mask_head.WeightSharedConvolutionalMaskHead(
+    box_prediction_head = box_head.WeightSharedConvolutionalBoxHead(
+        box_code_size=box_code_size,
+        kernel_size=kernel_size,
+        use_depthwise=use_depthwise,
+        box_encodings_clip_range=box_encodings_clip_range)
+    class_prediction_head = (
+        class_head.WeightSharedConvolutionalClassHead(
             num_classes=num_classes,
             kernel_size=kernel_size,
+            class_prediction_bias_init=class_prediction_bias_init,
             use_dropout=use_dropout,
             dropout_keep_prob=dropout_keep_prob,
-            mask_height=mask_head_config.mask_height,
-            mask_width=mask_head_config.mask_width,
-            masks_are_class_agnostic=mask_head_config.masks_are_class_agnostic))
-  return convolutional_box_predictor.WeightSharedConvolutionalBoxPredictor(
-      is_training=is_training,
-      num_classes=num_classes,
-      box_prediction_head=box_prediction_head,
-      class_prediction_head=class_prediction_head,
-      other_heads=other_heads,
-      conv_hyperparams_fn=conv_hyperparams_fn,
-      depth=depth,
-      num_layers_before_predictor=num_layers_before_predictor,
-      kernel_size=kernel_size,
-      apply_batch_norm=apply_batch_norm,
-      share_prediction_tower=share_prediction_tower,
-      use_depthwise=use_depthwise)
+            use_depthwise=use_depthwise,
+            score_converter_fn=score_converter_fn))
+    other_heads = {}
+    if mask_head_config is not None:
+        if not mask_head_config.masks_are_class_agnostic:
+            logging.warning('Note that class specific mask prediction for SSD '
+                            'models is memory consuming.')
+        other_heads[convolutional_box_predictor.MASK_PREDICTIONS] = (
+            mask_head.WeightSharedConvolutionalMaskHead(
+                num_classes=num_classes,
+                kernel_size=kernel_size,
+                use_dropout=use_dropout,
+                dropout_keep_prob=dropout_keep_prob,
+                mask_height=mask_head_config.mask_height,
+                mask_width=mask_head_config.mask_width,
+                masks_are_class_agnostic=mask_head_config.masks_are_class_agnostic))
+    return convolutional_box_predictor.WeightSharedConvolutionalBoxPredictor(
+        is_training=is_training,
+        num_classes=num_classes,
+        box_prediction_head=box_prediction_head,
+        class_prediction_head=class_prediction_head,
+        other_heads=other_heads,
+        conv_hyperparams_fn=conv_hyperparams_fn,
+        depth=depth,
+        num_layers_before_predictor=num_layers_before_predictor,
+        kernel_size=kernel_size,
+        apply_batch_norm=apply_batch_norm,
+        share_prediction_tower=share_prediction_tower,
+        use_depthwise=use_depthwise)
 
 
 def build_mask_rcnn_box_predictor(is_training,
@@ -363,7 +363,7 @@ def build_mask_rcnn_box_predictor(is_training,
                                   mask_prediction_num_conv_layers=2,
                                   mask_prediction_conv_depth=256,
                                   masks_are_class_agnostic=False):
-  """Builds and returns a MaskRCNNBoxPredictor class.
+    """Builds and returns a MaskRCNNBoxPredictor class.
 
   Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -400,25 +400,25 @@ def build_mask_rcnn_box_predictor(is_training,
   Returns:
     A MaskRCNNBoxPredictor class.
   """
-  box_prediction_head = box_head.MaskRCNNBoxHead(
-      is_training=is_training,
-      num_classes=num_classes,
-      fc_hyperparams_fn=fc_hyperparams_fn,
-      use_dropout=use_dropout,
-      dropout_keep_prob=dropout_keep_prob,
-      box_code_size=box_code_size,
-      share_box_across_classes=share_box_across_classes)
-  class_prediction_head = class_head.MaskRCNNClassHead(
-      is_training=is_training,
-      num_classes=num_classes,
-      fc_hyperparams_fn=fc_hyperparams_fn,
-      use_dropout=use_dropout,
-      dropout_keep_prob=dropout_keep_prob)
-  third_stage_heads = {}
-  if predict_instance_masks:
-    third_stage_heads[
-        mask_rcnn_box_predictor.
-        MASK_PREDICTIONS] = mask_head.MaskRCNNMaskHead(
+    box_prediction_head = box_head.MaskRCNNBoxHead(
+        is_training=is_training,
+        num_classes=num_classes,
+        fc_hyperparams_fn=fc_hyperparams_fn,
+        use_dropout=use_dropout,
+        dropout_keep_prob=dropout_keep_prob,
+        box_code_size=box_code_size,
+        share_box_across_classes=share_box_across_classes)
+    class_prediction_head = class_head.MaskRCNNClassHead(
+        is_training=is_training,
+        num_classes=num_classes,
+        fc_hyperparams_fn=fc_hyperparams_fn,
+        use_dropout=use_dropout,
+        dropout_keep_prob=dropout_keep_prob)
+    third_stage_heads = {}
+    if predict_instance_masks:
+        third_stage_heads[
+            mask_rcnn_box_predictor.
+                MASK_PREDICTIONS] = mask_head.MaskRCNNMaskHead(
             num_classes=num_classes,
             conv_hyperparams_fn=conv_hyperparams_fn,
             mask_height=mask_height,
@@ -426,16 +426,16 @@ def build_mask_rcnn_box_predictor(is_training,
             mask_prediction_num_conv_layers=mask_prediction_num_conv_layers,
             mask_prediction_conv_depth=mask_prediction_conv_depth,
             masks_are_class_agnostic=masks_are_class_agnostic)
-  return mask_rcnn_box_predictor.MaskRCNNBoxPredictor(
-      is_training=is_training,
-      num_classes=num_classes,
-      box_prediction_head=box_prediction_head,
-      class_prediction_head=class_prediction_head,
-      third_stage_heads=third_stage_heads)
+    return mask_rcnn_box_predictor.MaskRCNNBoxPredictor(
+        is_training=is_training,
+        num_classes=num_classes,
+        box_prediction_head=box_prediction_head,
+        class_prediction_head=class_prediction_head,
+        third_stage_heads=third_stage_heads)
 
 
 def build_score_converter(score_converter_config, is_training):
-  """Builds score converter based on the config.
+    """Builds score converter based on the config.
 
   Builds one of [tf.identity, tf.sigmoid] score converters based on the config
   and whether the BoxPredictor is for training or inference.
@@ -451,13 +451,13 @@ def build_score_converter(score_converter_config, is_training):
   Raises:
     ValueError: On unknown score converter.
   """
-  if score_converter_config == (
-      box_predictor_pb2.WeightSharedConvolutionalBoxPredictor.IDENTITY):
-    return tf.identity
-  if score_converter_config == (
-      box_predictor_pb2.WeightSharedConvolutionalBoxPredictor.SIGMOID):
-    return tf.identity if is_training else tf.sigmoid
-  raise ValueError('Unknown score converter.')
+    if score_converter_config == (
+            box_predictor_pb2.WeightSharedConvolutionalBoxPredictor.IDENTITY):
+        return tf.identity
+    if score_converter_config == (
+            box_predictor_pb2.WeightSharedConvolutionalBoxPredictor.SIGMOID):
+        return tf.identity if is_training else tf.sigmoid
+    raise ValueError('Unknown score converter.')
 
 
 BoxEncodingsClipRange = collections.namedtuple('BoxEncodingsClipRange',
@@ -465,7 +465,7 @@ BoxEncodingsClipRange = collections.namedtuple('BoxEncodingsClipRange',
 
 
 def build(argscope_fn, box_predictor_config, is_training, num_classes):
-  """Builds box predictor based on the configuration.
+    """Builds box predictor based on the configuration.
 
   Builds box predictor based on the configuration. See box_predictor.proto for
   configurable options. Also, see box_predictor.py for more details.
@@ -486,120 +486,120 @@ def build(argscope_fn, box_predictor_config, is_training, num_classes):
   Raises:
     ValueError: On unknown box predictor.
   """
-  if not isinstance(box_predictor_config, box_predictor_pb2.BoxPredictor):
-    raise ValueError('box_predictor_config not of type '
-                     'box_predictor_pb2.BoxPredictor.')
+    # if not isinstance(box_predictor_config, box_predictor_pb2.BoxPredictor):
+    #    raise ValueError('box_predictor_config not of type '
+    #                    'box_predictor_pb2.BoxPredictor.')
 
-  box_predictor_oneof = box_predictor_config.WhichOneof('box_predictor_oneof')
+    box_predictor_oneof = box_predictor_config.WhichOneof('box_predictor_oneof')
 
-  if  box_predictor_oneof == 'convolutional_box_predictor':
-    config_box_predictor = box_predictor_config.convolutional_box_predictor
-    conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
-                                      is_training)
-    mask_head_config = (
-        config_box_predictor.mask_head
-        if config_box_predictor.HasField('mask_head') else None)
-    return build_convolutional_box_predictor(
-        is_training=is_training,
-        num_classes=num_classes,
-        conv_hyperparams_fn=conv_hyperparams_fn,
-        use_dropout=config_box_predictor.use_dropout,
-        dropout_keep_prob=config_box_predictor.dropout_keep_probability,
-        box_code_size=config_box_predictor.box_code_size,
-        kernel_size=config_box_predictor.kernel_size,
-        num_layers_before_predictor=(
-            config_box_predictor.num_layers_before_predictor),
-        min_depth=config_box_predictor.min_depth,
-        max_depth=config_box_predictor.max_depth,
-        apply_sigmoid_to_scores=config_box_predictor.apply_sigmoid_to_scores,
-        class_prediction_bias_init=(
-            config_box_predictor.class_prediction_bias_init),
-        use_depthwise=config_box_predictor.use_depthwise,
-        mask_head_config=mask_head_config)
+    if box_predictor_oneof == 'convolutional_box_predictor':
+        config_box_predictor = box_predictor_config.convolutional_box_predictor
+        conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
+                                          is_training)
+        mask_head_config = (
+            config_box_predictor.mask_head
+            if config_box_predictor.HasField('mask_head') else None)
+        return build_convolutional_box_predictor(
+            is_training=is_training,
+            num_classes=num_classes,
+            conv_hyperparams_fn=conv_hyperparams_fn,
+            use_dropout=config_box_predictor.use_dropout,
+            dropout_keep_prob=config_box_predictor.dropout_keep_probability,
+            box_code_size=config_box_predictor.box_code_size,
+            kernel_size=config_box_predictor.kernel_size,
+            num_layers_before_predictor=(
+                config_box_predictor.num_layers_before_predictor),
+            min_depth=config_box_predictor.min_depth,
+            max_depth=config_box_predictor.max_depth,
+            apply_sigmoid_to_scores=config_box_predictor.apply_sigmoid_to_scores,
+            class_prediction_bias_init=(
+                config_box_predictor.class_prediction_bias_init),
+            use_depthwise=config_box_predictor.use_depthwise,
+            mask_head_config=mask_head_config)
 
-  if  box_predictor_oneof == 'weight_shared_convolutional_box_predictor':
-    config_box_predictor = (
-        box_predictor_config.weight_shared_convolutional_box_predictor)
-    conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
-                                      is_training)
-    apply_batch_norm = config_box_predictor.conv_hyperparams.HasField(
-        'batch_norm')
-    mask_head_config = (
-        config_box_predictor.mask_head
-        if config_box_predictor.HasField('mask_head') else None)
-    # During training phase, logits are used to compute the loss. Only apply
-    # sigmoid at inference to make the inference graph TPU friendly.
-    score_converter_fn = build_score_converter(
-        config_box_predictor.score_converter, is_training)
-    # Optionally apply clipping to box encodings, when box_encodings_clip_range
-    # is set.
-    box_encodings_clip_range = (
-        BoxEncodingsClipRange(
-            min=config_box_predictor.box_encodings_clip_range.min,
-            max=config_box_predictor.box_encodings_clip_range.max)
-        if config_box_predictor.HasField('box_encodings_clip_range') else None)
+    if box_predictor_oneof == 'weight_shared_convolutional_box_predictor':
+        config_box_predictor = (
+            box_predictor_config.weight_shared_convolutional_box_predictor)
+        conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
+                                          is_training)
+        apply_batch_norm = config_box_predictor.conv_hyperparams.HasField(
+            'batch_norm')
+        mask_head_config = (
+            config_box_predictor.mask_head
+            if config_box_predictor.HasField('mask_head') else None)
+        # During training phase, logits are used to compute the loss. Only apply
+        # sigmoid at inference to make the inference graph TPU friendly.
+        score_converter_fn = build_score_converter(
+            config_box_predictor.score_converter, is_training)
+        # Optionally apply clipping to box encodings, when box_encodings_clip_range
+        # is set.
+        box_encodings_clip_range = (
+            BoxEncodingsClipRange(
+                min=config_box_predictor.box_encodings_clip_range.min,
+                max=config_box_predictor.box_encodings_clip_range.max)
+            if config_box_predictor.HasField('box_encodings_clip_range') else None)
 
-    return build_weight_shared_convolutional_box_predictor(
-        is_training=is_training,
-        num_classes=num_classes,
-        conv_hyperparams_fn=conv_hyperparams_fn,
-        depth=config_box_predictor.depth,
-        num_layers_before_predictor=(
-            config_box_predictor.num_layers_before_predictor),
-        box_code_size=config_box_predictor.box_code_size,
-        kernel_size=config_box_predictor.kernel_size,
-        class_prediction_bias_init=(
-            config_box_predictor.class_prediction_bias_init),
-        use_dropout=config_box_predictor.use_dropout,
-        dropout_keep_prob=config_box_predictor.dropout_keep_probability,
-        share_prediction_tower=config_box_predictor.share_prediction_tower,
-        apply_batch_norm=apply_batch_norm,
-        use_depthwise=config_box_predictor.use_depthwise,
-        mask_head_config=mask_head_config,
-        score_converter_fn=score_converter_fn,
-        box_encodings_clip_range=box_encodings_clip_range)
+        return build_weight_shared_convolutional_box_predictor(
+            is_training=is_training,
+            num_classes=num_classes,
+            conv_hyperparams_fn=conv_hyperparams_fn,
+            depth=config_box_predictor.depth,
+            num_layers_before_predictor=(
+                config_box_predictor.num_layers_before_predictor),
+            box_code_size=config_box_predictor.box_code_size,
+            kernel_size=config_box_predictor.kernel_size,
+            class_prediction_bias_init=(
+                config_box_predictor.class_prediction_bias_init),
+            use_dropout=config_box_predictor.use_dropout,
+            dropout_keep_prob=config_box_predictor.dropout_keep_probability,
+            share_prediction_tower=config_box_predictor.share_prediction_tower,
+            apply_batch_norm=apply_batch_norm,
+            use_depthwise=config_box_predictor.use_depthwise,
+            mask_head_config=mask_head_config,
+            score_converter_fn=score_converter_fn,
+            box_encodings_clip_range=box_encodings_clip_range)
 
-  if box_predictor_oneof == 'mask_rcnn_box_predictor':
-    config_box_predictor = box_predictor_config.mask_rcnn_box_predictor
-    fc_hyperparams_fn = argscope_fn(config_box_predictor.fc_hyperparams,
-                                    is_training)
-    conv_hyperparams_fn = None
-    if config_box_predictor.HasField('conv_hyperparams'):
-      conv_hyperparams_fn = argscope_fn(
-          config_box_predictor.conv_hyperparams, is_training)
-    return build_mask_rcnn_box_predictor(
-        is_training=is_training,
-        num_classes=num_classes,
-        fc_hyperparams_fn=fc_hyperparams_fn,
-        use_dropout=config_box_predictor.use_dropout,
-        dropout_keep_prob=config_box_predictor.dropout_keep_probability,
-        box_code_size=config_box_predictor.box_code_size,
-        share_box_across_classes=(
-            config_box_predictor.share_box_across_classes),
-        predict_instance_masks=config_box_predictor.predict_instance_masks,
-        conv_hyperparams_fn=conv_hyperparams_fn,
-        mask_height=config_box_predictor.mask_height,
-        mask_width=config_box_predictor.mask_width,
-        mask_prediction_num_conv_layers=(
-            config_box_predictor.mask_prediction_num_conv_layers),
-        mask_prediction_conv_depth=(
-            config_box_predictor.mask_prediction_conv_depth),
-        masks_are_class_agnostic=(
-            config_box_predictor.masks_are_class_agnostic))
+    if box_predictor_oneof == 'mask_rcnn_box_predictor':
+        config_box_predictor = box_predictor_config.mask_rcnn_box_predictor
+        fc_hyperparams_fn = argscope_fn(config_box_predictor.fc_hyperparams,
+                                        is_training)
+        conv_hyperparams_fn = None
+        if config_box_predictor.HasField('conv_hyperparams'):
+            conv_hyperparams_fn = argscope_fn(
+                config_box_predictor.conv_hyperparams, is_training)
+        return build_mask_rcnn_box_predictor(
+            is_training=is_training,
+            num_classes=num_classes,
+            fc_hyperparams_fn=fc_hyperparams_fn,
+            use_dropout=config_box_predictor.use_dropout,
+            dropout_keep_prob=config_box_predictor.dropout_keep_probability,
+            box_code_size=config_box_predictor.box_code_size,
+            share_box_across_classes=(
+                config_box_predictor.share_box_across_classes),
+            predict_instance_masks=config_box_predictor.predict_instance_masks,
+            conv_hyperparams_fn=conv_hyperparams_fn,
+            mask_height=config_box_predictor.mask_height,
+            mask_width=config_box_predictor.mask_width,
+            mask_prediction_num_conv_layers=(
+                config_box_predictor.mask_prediction_num_conv_layers),
+            mask_prediction_conv_depth=(
+                config_box_predictor.mask_prediction_conv_depth),
+            masks_are_class_agnostic=(
+                config_box_predictor.masks_are_class_agnostic))
 
-  if box_predictor_oneof == 'rfcn_box_predictor':
-    config_box_predictor = box_predictor_config.rfcn_box_predictor
-    conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
-                                      is_training)
-    box_predictor_object = rfcn_box_predictor.RfcnBoxPredictor(
-        is_training=is_training,
-        num_classes=num_classes,
-        conv_hyperparams_fn=conv_hyperparams_fn,
-        crop_size=[config_box_predictor.crop_height,
-                   config_box_predictor.crop_width],
-        num_spatial_bins=[config_box_predictor.num_spatial_bins_height,
-                          config_box_predictor.num_spatial_bins_width],
-        depth=config_box_predictor.depth,
-        box_code_size=config_box_predictor.box_code_size)
-    return box_predictor_object
-  raise ValueError('Unknown box predictor: {}'.format(box_predictor_oneof))
+    if box_predictor_oneof == 'rfcn_box_predictor':
+        config_box_predictor = box_predictor_config.rfcn_box_predictor
+        conv_hyperparams_fn = argscope_fn(config_box_predictor.conv_hyperparams,
+                                          is_training)
+        box_predictor_object = rfcn_box_predictor.RfcnBoxPredictor(
+            is_training=is_training,
+            num_classes=num_classes,
+            conv_hyperparams_fn=conv_hyperparams_fn,
+            crop_size=[config_box_predictor.crop_height,
+                       config_box_predictor.crop_width],
+            num_spatial_bins=[config_box_predictor.num_spatial_bins_height,
+                              config_box_predictor.num_spatial_bins_width],
+            depth=config_box_predictor.depth,
+            box_code_size=config_box_predictor.box_code_size)
+        return box_predictor_object
+    raise ValueError('Unknown box predictor: {}'.format(box_predictor_oneof))

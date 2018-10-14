@@ -57,30 +57,30 @@ instance masks and keypoints.
 from abc import ABCMeta
 from abc import abstractmethod
 
-from object_detection.core import standard_fields as fields
+from research.object_detection.core import standard_fields as fields
 
 
 class DetectionModel(object):
-  """Abstract base class for detection models."""
-  __metaclass__ = ABCMeta
+    """Abstract base class for detection models."""
+    __metaclass__ = ABCMeta
 
-  def __init__(self, num_classes):
-    """Constructor.
+    def __init__(self, num_classes):
+        """Constructor.
 
     Args:
       num_classes: number of classes.  Note that num_classes *does not* include
       background categories that might be implicitly predicted in various
       implementations.
     """
-    self._num_classes = num_classes
-    self._groundtruth_lists = {}
+        self._num_classes = num_classes
+        self._groundtruth_lists = {}
 
-  @property
-  def num_classes(self):
-    return self._num_classes
+    @property
+    def num_classes(self):
+        return self._num_classes
 
-  def groundtruth_lists(self, field):
-    """Access list of groundtruth tensors.
+    def groundtruth_lists(self, field):
+        """Access list of groundtruth tensors.
 
     Args:
       field: a string key, options are
@@ -94,13 +94,13 @@ class DetectionModel(object):
     Raises:
       RuntimeError: if the field has not been provided via provide_groundtruth.
     """
-    if field not in self._groundtruth_lists:
-      raise RuntimeError('Groundtruth tensor {} has not been provided'.format(
-          field))
-    return self._groundtruth_lists[field]
+        if field not in self._groundtruth_lists:
+            raise RuntimeError('Groundtruth tensor {} has not been provided'.format(
+                field))
+        return self._groundtruth_lists[field]
 
-  def groundtruth_has_field(self, field):
-    """Determines whether the groundtruth includes the given field.
+    def groundtruth_has_field(self, field):
+        """Determines whether the groundtruth includes the given field.
 
     Args:
       field: a string key, options are
@@ -110,11 +110,11 @@ class DetectionModel(object):
     Returns:
       True if the groundtruth includes the given field, False otherwise.
     """
-    return field in self._groundtruth_lists
+        return field in self._groundtruth_lists
 
-  @abstractmethod
-  def preprocess(self, inputs):
-    """Input preprocessing.
+    @abstractmethod
+    def preprocess(self, inputs):
+        """Input preprocessing.
 
     To be overridden by implementations.
 
@@ -153,11 +153,11 @@ class DetectionModel(object):
         of true images in the resized images, as resized images can be padded
         with zeros.
     """
-    pass
+        pass
 
-  @abstractmethod
-  def predict(self, preprocessed_inputs, true_image_shapes):
-    """Predict prediction tensors from inputs tensor.
+    @abstractmethod
+    def predict(self, preprocessed_inputs, true_image_shapes):
+        """Predict prediction tensors from inputs tensor.
 
     Outputs of this function can be passed to loss or postprocess functions.
 
@@ -173,11 +173,11 @@ class DetectionModel(object):
       prediction_dict: a dictionary holding prediction tensors to be
         passed to the Loss or Postprocess functions.
     """
-    pass
+        pass
 
-  @abstractmethod
-  def postprocess(self, prediction_dict, true_image_shapes, **params):
-    """Convert predicted output tensors to final detections.
+    @abstractmethod
+    def postprocess(self, prediction_dict, true_image_shapes, **params):
+        """Convert predicted output tensors to final detections.
 
     Outputs adhere to the following conventions:
     * Classes are integers in [0, num_classes); background classes are removed
@@ -213,11 +213,11 @@ class DetectionModel(object):
         keypoints: [batch, max_detections, num_keypoints, 2] (optional)
         num_detections: [batch]
     """
-    pass
+        pass
 
-  @abstractmethod
-  def loss(self, prediction_dict, true_image_shapes):
-    """Compute scalar loss tensors with respect to provided groundtruth.
+    @abstractmethod
+    def loss(self, prediction_dict, true_image_shapes):
+        """Compute scalar loss tensors with respect to provided groundtruth.
 
     Calling this function requires that groundtruth tensors have been
     provided via the provide_groundtruth function.
@@ -233,17 +233,17 @@ class DetectionModel(object):
       a dictionary mapping strings (loss names) to scalar tensors representing
         loss values.
     """
-    pass
+        pass
 
-  def provide_groundtruth(self,
-                          groundtruth_boxes_list,
-                          groundtruth_classes_list,
-                          groundtruth_masks_list=None,
-                          groundtruth_keypoints_list=None,
-                          groundtruth_weights_list=None,
-                          groundtruth_is_crowd_list=None,
-                          is_annotated_list=None):
-    """Provide groundtruth tensors.
+    def provide_groundtruth(self,
+                            groundtruth_boxes_list,
+                            groundtruth_classes_list,
+                            groundtruth_masks_list=None,
+                            groundtruth_keypoints_list=None,
+                            groundtruth_weights_list=None,
+                            groundtruth_is_crowd_list=None,
+                            is_annotated_list=None):
+        """Provide groundtruth tensors.
 
     Args:
       groundtruth_boxes_list: a list of 2-D tf.float32 tensors of shape
@@ -270,28 +270,28 @@ class DetectionModel(object):
       is_annotated_list: A list of scalar tf.bool tensors indicating whether
         images have been labeled or not.
     """
-    self._groundtruth_lists[fields.BoxListFields.boxes] = groundtruth_boxes_list
-    self._groundtruth_lists[
-        fields.BoxListFields.classes] = groundtruth_classes_list
-    if groundtruth_weights_list:
-      self._groundtruth_lists[fields.BoxListFields.
-                              weights] = groundtruth_weights_list
-    if groundtruth_masks_list:
-      self._groundtruth_lists[
-          fields.BoxListFields.masks] = groundtruth_masks_list
-    if groundtruth_keypoints_list:
-      self._groundtruth_lists[
-          fields.BoxListFields.keypoints] = groundtruth_keypoints_list
-    if groundtruth_is_crowd_list:
-      self._groundtruth_lists[
-          fields.BoxListFields.is_crowd] = groundtruth_is_crowd_list
-    if is_annotated_list:
-      self._groundtruth_lists[
-          fields.InputDataFields.is_annotated] = is_annotated_list
+        self._groundtruth_lists[fields.BoxListFields.boxes] = groundtruth_boxes_list
+        self._groundtruth_lists[
+            fields.BoxListFields.classes] = groundtruth_classes_list
+        if groundtruth_weights_list:
+            self._groundtruth_lists[fields.BoxListFields.
+                weights] = groundtruth_weights_list
+        if groundtruth_masks_list:
+            self._groundtruth_lists[
+                fields.BoxListFields.masks] = groundtruth_masks_list
+        if groundtruth_keypoints_list:
+            self._groundtruth_lists[
+                fields.BoxListFields.keypoints] = groundtruth_keypoints_list
+        if groundtruth_is_crowd_list:
+            self._groundtruth_lists[
+                fields.BoxListFields.is_crowd] = groundtruth_is_crowd_list
+        if is_annotated_list:
+            self._groundtruth_lists[
+                fields.InputDataFields.is_annotated] = is_annotated_list
 
-  @abstractmethod
-  def restore_map(self, fine_tune_checkpoint_type='detection'):
-    """Returns a map of variables to load from a foreign checkpoint.
+    @abstractmethod
+    def restore_map(self, fine_tune_checkpoint_type='detection'):
+        """Returns a map of variables to load from a foreign checkpoint.
 
     Returns a map of variable names to load from a checkpoint to variables in
     the model graph. This enables the model to initialize based on weights from
@@ -311,4 +311,4 @@ class DetectionModel(object):
       A dict mapping variable names (to load from a checkpoint) to variables in
       the model graph.
     """
-    pass
+        pass

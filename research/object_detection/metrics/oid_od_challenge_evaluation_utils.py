@@ -19,11 +19,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from object_detection.core import standard_fields
+from research.object_detection.core import standard_fields
 
 
 def build_groundtruth_boxes_dictionary(data, class_label_map):
-  """Builds a groundtruth dictionary from groundtruth data in CSV file.
+    """Builds a groundtruth dictionary from groundtruth data in CSV file.
 
   Args:
     data: Pandas DataFrame with the groundtruth data for a single image.
@@ -44,24 +44,23 @@ def build_groundtruth_boxes_dictionary(data, class_label_map):
           M numpy boolean array denoting whether a groundtruth box contains a
           group of instances.
   """
-  data_boxes = data[data.ConfidenceImageLabel.isnull()]
-  data_labels = data[data.XMin.isnull()]
+    data_boxes = data[data.ConfidenceImageLabel.isnull()]
+    data_labels = data[data.XMin.isnull()]
 
-  return {
-      standard_fields.InputDataFields.groundtruth_boxes:
-          data_boxes[['YMin', 'XMin', 'YMax', 'XMax']].as_matrix(),
-      standard_fields.InputDataFields.groundtruth_classes:
-          data_boxes['LabelName'].map(lambda x: class_label_map[x]).as_matrix(),
-      standard_fields.InputDataFields.groundtruth_group_of:
-          data_boxes['IsGroupOf'].as_matrix().astype(int),
-      standard_fields.InputDataFields.groundtruth_image_classes:
-          data_labels['LabelName'].map(lambda x: class_label_map[x])
-          .as_matrix(),
-  }
+    return {
+        standard_fields.InputDataFields.groundtruth_boxes:
+            data_boxes[['YMin', 'XMin', 'YMax', 'XMax']].values,
+        standard_fields.InputDataFields.groundtruth_classes:
+            data_boxes['LabelName'].map(lambda x: class_label_map[x]).values,
+        standard_fields.InputDataFields.groundtruth_group_of:
+            data_boxes['IsGroupOf'].values.astype(int),
+        standard_fields.InputDataFields.groundtruth_image_classes:
+            data_labels['LabelName'].map(lambda x: class_label_map[x]).values,
+    }
 
 
 def build_predictions_dictionary(data, class_label_map):
-  """Builds a predictions dictionary from predictions data in CSV file.
+    """Builds a predictions dictionary from predictions data in CSV file.
 
   Args:
     data: Pandas DataFrame with the predictions data for a single image.
@@ -80,11 +79,11 @@ def build_predictions_dictionary(data, class_label_map):
           the boxes.
 
   """
-  return {
-      standard_fields.DetectionResultFields.detection_boxes:
-          data[['YMin', 'XMin', 'YMax', 'XMax']].as_matrix(),
-      standard_fields.DetectionResultFields.detection_classes:
-          data['LabelName'].map(lambda x: class_label_map[x]).as_matrix(),
-      standard_fields.DetectionResultFields.detection_scores:
-          data['Score'].as_matrix()
-  }
+    return {
+        standard_fields.DetectionResultFields.detection_boxes:
+            data[['YMin', 'XMin', 'YMax', 'XMax']].values,
+        standard_fields.DetectionResultFields.detection_classes:
+            data['LabelName'].map(lambda x: class_label_map[x]).values,
+        standard_fields.DetectionResultFields.detection_scores:
+            data['Score'].values
+    }

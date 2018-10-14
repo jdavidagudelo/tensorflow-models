@@ -49,7 +49,7 @@ _NUM_CLASSES = 1001
 
 
 def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
-  """Gets a dataset tuple with instructions for reading ImageNet.
+    """Gets a dataset tuple with instructions for reading ImageNet.
 
   Args:
     split_name: A train/test split name.
@@ -65,54 +65,54 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
   Raises:
     ValueError: if `split_name` is not a valid train/test split.
   """
-  if split_name not in _SPLITS_TO_SIZES:
-    raise ValueError('split name %s was not recognized.' % split_name)
+    if split_name not in _SPLITS_TO_SIZES:
+        raise ValueError('split name %s was not recognized.' % split_name)
 
-  if not file_pattern:
-    file_pattern = _FILE_PATTERN
-  file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
+    if not file_pattern:
+        file_pattern = _FILE_PATTERN
+    file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
 
-  # Allowing None in the signature so that dataset_factory can use the default.
-  if reader is None:
-    reader = tf.TFRecordReader
+    # Allowing None in the signature so that dataset_factory can use the default.
+    if reader is None:
+        reader = tf.TFRecordReader
 
-  keys_to_features = {
-      'image/encoded': tf.FixedLenFeature(
-          (), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature(
-          (), tf.string, default_value='jpeg'),
-      'image/class/label': tf.FixedLenFeature(
-          [], dtype=tf.int64, default_value=-1),
-      'image/class/text': tf.FixedLenFeature(
-          [], dtype=tf.string, default_value=''),
-      'image/object/bbox/xmin': tf.VarLenFeature(
-          dtype=tf.float32),
-      'image/object/bbox/ymin': tf.VarLenFeature(
-          dtype=tf.float32),
-      'image/object/bbox/xmax': tf.VarLenFeature(
-          dtype=tf.float32),
-      'image/object/bbox/ymax': tf.VarLenFeature(
-          dtype=tf.float32),
-      'image/object/class/label': tf.VarLenFeature(
-          dtype=tf.int64),
-  }
+    keys_to_features = {
+        'image/encoded': tf.FixedLenFeature(
+            (), tf.string, default_value=''),
+        'image/format': tf.FixedLenFeature(
+            (), tf.string, default_value='jpeg'),
+        'image/class/label': tf.FixedLenFeature(
+            [], dtype=tf.int64, default_value=-1),
+        'image/class/text': tf.FixedLenFeature(
+            [], dtype=tf.string, default_value=''),
+        'image/object/bbox/xmin': tf.VarLenFeature(
+            dtype=tf.float32),
+        'image/object/bbox/ymin': tf.VarLenFeature(
+            dtype=tf.float32),
+        'image/object/bbox/xmax': tf.VarLenFeature(
+            dtype=tf.float32),
+        'image/object/bbox/ymax': tf.VarLenFeature(
+            dtype=tf.float32),
+        'image/object/class/label': tf.VarLenFeature(
+            dtype=tf.int64),
+    }
 
-  items_to_handlers = {
-      'image': slim.tfexample_decoder.Image('image/encoded', 'image/format'),
-      'label': slim.tfexample_decoder.Tensor('image/class/label'),
-      'label_text': slim.tfexample_decoder.Tensor('image/class/text'),
-      'object/bbox': slim.tfexample_decoder.BoundingBox(
-          ['ymin', 'xmin', 'ymax', 'xmax'], 'image/object/bbox/'),
-      'object/label': slim.tfexample_decoder.Tensor('image/object/class/label'),
-  }
+    items_to_handlers = {
+        'image': slim.tfexample_decoder.Image('image/encoded', 'image/format'),
+        'label': slim.tfexample_decoder.Tensor('image/class/label'),
+        'label_text': slim.tfexample_decoder.Tensor('image/class/text'),
+        'object/bbox': slim.tfexample_decoder.BoundingBox(
+            ['ymin', 'xmin', 'ymax', 'xmax'], 'image/object/bbox/'),
+        'object/label': slim.tfexample_decoder.Tensor('image/object/class/label'),
+    }
 
-  decoder = slim.tfexample_decoder.TFExampleDecoder(
-      keys_to_features, items_to_handlers)
+    decoder = slim.tfexample_decoder.TFExampleDecoder(
+        keys_to_features, items_to_handlers)
 
-  return slim.dataset.Dataset(
-      data_sources=file_pattern,
-      reader=reader,
-      decoder=decoder,
-      num_samples=_SPLITS_TO_SIZES[split_name],
-      items_to_descriptions=_ITEMS_TO_DESCRIPTIONS,
-      num_classes=_NUM_CLASSES)
+    return slim.dataset.Dataset(
+        data_sources=file_pattern,
+        reader=reader,
+        decoder=decoder,
+        num_samples=_SPLITS_TO_SIZES[split_name],
+        items_to_descriptions=_ITEMS_TO_DESCRIPTIONS,
+        num_classes=_NUM_CLASSES)

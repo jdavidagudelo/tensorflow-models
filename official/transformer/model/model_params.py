@@ -16,7 +16,7 @@
 
 from collections import defaultdict
 
-
+# noinspection PyTypeChecker
 BASE_PARAMS = defaultdict(
     lambda: None,  # Set default value to None.
 

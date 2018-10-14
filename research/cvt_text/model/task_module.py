@@ -23,22 +23,21 @@ import abc
 
 
 class SupervisedModule(object):
-  __metaclass__ = abc.ABCMeta
+    __metaclass__ = abc.ABCMeta
 
-  def __init__(self):
-    self.supervised_loss = NotImplemented
-    self.probs = NotImplemented
-    self.preds = NotImplemented
+    def __init__(self):
+        self.supervised_loss = NotImplemented
+        self.probs = NotImplemented
+        self.preds = NotImplemented
 
-  @abc.abstractmethod
-  def update_feed_dict(self, feed, mb):
-    pass
+    @abc.abstractmethod
+    def update_feed_dict(self, feed, mb):
+        pass
 
 
 class SemiSupervisedModule(SupervisedModule):
-  __metaclass__ = abc.ABCMeta
+    __metaclass__ = abc.ABCMeta
 
-  def __init__(self):
-    super(SemiSupervisedModule, self).__init__()
-    self.unsupervised_loss = NotImplemented
-
+    def __init__(self):
+        super(SemiSupervisedModule, self).__init__()
+        self.unsupervised_loss = NotImplemented

@@ -59,9 +59,8 @@ from __future__ import print_function
 import tensorflow as tf
 
 from tensorflow.python.platform import gfile
-from datasets import dataset_factory
-from nets import nets_factory
-
+from research.slim.datasets import dataset_factory
+from research.slim.nets import nets_factory
 
 slim = tf.contrib.slim
 
@@ -103,29 +102,29 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
-  if not FLAGS.output_file:
-    raise ValueError('You must supply the path to save to with --output_file')
-  tf.logging.set_verbosity(tf.logging.INFO)
-  with tf.Graph().as_default() as graph:
-    dataset = dataset_factory.get_dataset(FLAGS.dataset_name, 'train',
-                                          FLAGS.dataset_dir)
-    network_fn = nets_factory.get_network_fn(
-        FLAGS.model_name,
-        num_classes=(dataset.num_classes - FLAGS.labels_offset),
-        is_training=FLAGS.is_training)
-    image_size = FLAGS.image_size or network_fn.default_image_size
-    placeholder = tf.placeholder(name='input', dtype=tf.float32,
-                                 shape=[FLAGS.batch_size, image_size,
-                                        image_size, 3])
-    network_fn(placeholder)
+    if not FLAGS.output_file:
+        raise ValueError('You must supply the path to save to with --output_file')
+    tf.logging.set_verbosity(tf.logging.INFO)
+    with tf.Graph().as_default() as graph:
+        dataset = dataset_factory.get_dataset(FLAGS.dataset_name, 'train',
+                                              FLAGS.dataset_dir)
+        network_fn = nets_factory.get_network_fn(
+            FLAGS.model_name,
+            num_classes=(dataset.num_classes - FLAGS.labels_offset),
+            is_training=FLAGS.is_training)
+        image_size = FLAGS.image_size or network_fn.default_image_size
+        placeholder = tf.placeholder(name='input', dtype=tf.float32,
+                                     shape=[FLAGS.batch_size, image_size,
+                                            image_size, 3])
+        network_fn(placeholder)
 
-    if FLAGS.quantize:
-      tf.contrib.quantize.create_eval_graph()
+        if FLAGS.quantize:
+            tf.contrib.quantize.create_eval_graph()
 
-    graph_def = graph.as_graph_def()
-    with gfile.GFile(FLAGS.output_file, 'wb') as f:
-      f.write(graph_def.SerializeToString())
+        graph_def = graph.as_graph_def()
+        with gfile.GFile(FLAGS.output_file, 'wb') as f:
+            f.write(graph_def.SerializeToString())
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

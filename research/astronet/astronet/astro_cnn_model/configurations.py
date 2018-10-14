@@ -25,70 +25,70 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from astronet.astro_model import configurations as parent_configs
+from ..astro_model import configurations as parent_configs
 
 
 def base():
-  """Base configuration for a CNN model with a single global view."""
-  config = parent_configs.base()
+    """Base configuration for a CNN model with a single global view."""
+    config = parent_configs.base()
 
-  # Add configuration for the convolutional layers of the global_view feature.
-  config["hparams"]["time_series_hidden"] = {
-      "global_view": {
-          "cnn_num_blocks": 5,
-          "cnn_block_size": 2,
-          "cnn_initial_num_filters": 16,
-          "cnn_block_filter_factor": 2,
-          "cnn_kernel_size": 5,
-          "convolution_padding": "same",
-          "pool_size": 5,
-          "pool_strides": 2,
-      },
-  }
-  config["hparams"]["num_pre_logits_hidden_layers"] = 4
-  config["hparams"]["pre_logits_hidden_layer_size"] = 1024
-  return config
+    # Add configuration for the convolutional layers of the global_view feature.
+    config["hparams"]["time_series_hidden"] = {
+        "global_view": {
+            "cnn_num_blocks": 5,
+            "cnn_block_size": 2,
+            "cnn_initial_num_filters": 16,
+            "cnn_block_filter_factor": 2,
+            "cnn_kernel_size": 5,
+            "convolution_padding": "same",
+            "pool_size": 5,
+            "pool_strides": 2,
+        },
+    }
+    config["hparams"]["num_pre_logits_hidden_layers"] = 4
+    config["hparams"]["pre_logits_hidden_layer_size"] = 1024
+    return config
 
 
 def local_global():
-  """Base configuration for a CNN model with separate local/global views."""
-  config = parent_configs.base()
+    """Base configuration for a CNN model with separate local/global views."""
+    config = parent_configs.base()
 
-  # Override the model features to be local_view and global_view time series.
-  config["inputs"]["features"] = {
-      "local_view": {
-          "length": 201,
-          "is_time_series": True,
-      },
-      "global_view": {
-          "length": 2001,
-          "is_time_series": True,
-      },
-  }
+    # Override the model features to be local_view and global_view time series.
+    config["inputs"]["features"] = {
+        "local_view": {
+            "length": 201,
+            "is_time_series": True,
+        },
+        "global_view": {
+            "length": 2001,
+            "is_time_series": True,
+        },
+    }
 
-  # Add configurations for the convolutional layers of time series features.
-  config["hparams"]["time_series_hidden"] = {
-      "local_view": {
-          "cnn_num_blocks": 2,
-          "cnn_block_size": 2,
-          "cnn_initial_num_filters": 16,
-          "cnn_block_filter_factor": 2,
-          "cnn_kernel_size": 5,
-          "convolution_padding": "same",
-          "pool_size": 7,
-          "pool_strides": 2,
-      },
-      "global_view": {
-          "cnn_num_blocks": 5,
-          "cnn_block_size": 2,
-          "cnn_initial_num_filters": 16,
-          "cnn_block_filter_factor": 2,
-          "cnn_kernel_size": 5,
-          "convolution_padding": "same",
-          "pool_size": 5,
-          "pool_strides": 2,
-      },
-  }
-  config["hparams"]["num_pre_logits_hidden_layers"] = 4
-  config["hparams"]["pre_logits_hidden_layer_size"] = 512
-  return config
+    # Add configurations for the convolutional layers of time series features.
+    config["hparams"]["time_series_hidden"] = {
+        "local_view": {
+            "cnn_num_blocks": 2,
+            "cnn_block_size": 2,
+            "cnn_initial_num_filters": 16,
+            "cnn_block_filter_factor": 2,
+            "cnn_kernel_size": 5,
+            "convolution_padding": "same",
+            "pool_size": 7,
+            "pool_strides": 2,
+        },
+        "global_view": {
+            "cnn_num_blocks": 5,
+            "cnn_block_size": 2,
+            "cnn_initial_num_filters": 16,
+            "cnn_block_filter_factor": 2,
+            "cnn_kernel_size": 5,
+            "convolution_padding": "same",
+            "pool_size": 5,
+            "pool_strides": 2,
+        },
+    }
+    config["hparams"]["num_pre_logits_hidden_layers"] = 4
+    config["hparams"]["pre_logits_hidden_layer_size"] = 512
+    return config

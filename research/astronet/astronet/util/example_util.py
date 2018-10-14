@@ -22,7 +22,7 @@ import numpy as np
 
 
 def get_feature(ex, name, kind=None, strict=True):
-  """Gets a feature value from a tf.train.Example.
+    """Gets a feature value from a tf.train.Example.
 
   Args:
     ex: A tf.train.Example.
@@ -38,49 +38,49 @@ def get_feature(ex, name, kind=None, strict=True):
     KeyError: If there is no feature with the specified name.
     TypeError: If the feature has a different type to that specified.
   """
-  if name not in ex.features.feature:
-    if strict:
-      raise KeyError(name)
-    return np.array([])
+    if name not in ex.features.feature:
+        if strict:
+            raise KeyError(name)
+        return np.array([])
 
-  inferred_kind = ex.features.feature[name].WhichOneof("kind")
-  if not inferred_kind:
-    return np.array([])  # Feature exists, but it's empty.
+    inferred_kind = ex.features.feature[name].WhichOneof("kind")
+    if not inferred_kind:
+        return np.array([])  # Feature exists, but it's empty.
 
-  if kind and kind != inferred_kind:
-    raise TypeError("Requested %s, but Feature has %s" % (kind, inferred_kind))
+    if kind and kind != inferred_kind:
+        raise TypeError("Requested %s, but Feature has %s" % (kind, inferred_kind))
 
-  return np.array(getattr(ex.features.feature[name], inferred_kind).value)
+    return np.array(getattr(ex.features.feature[name], inferred_kind).value)
 
 
 def get_bytes_feature(ex, name, strict=True):
-  """Gets the value of a bytes feature from a tf.train.Example."""
-  return get_feature(ex, name, "bytes_list", strict)
+    """Gets the value of a bytes feature from a tf.train.Example."""
+    return get_feature(ex, name, "bytes_list", strict)
 
 
 def get_float_feature(ex, name, strict=True):
-  """Gets the value of a float feature from a tf.train.Example."""
-  return get_feature(ex, name, "float_list", strict)
+    """Gets the value of a float feature from a tf.train.Example."""
+    return get_feature(ex, name, "float_list", strict)
 
 
 def get_int64_feature(ex, name, strict=True):
-  """Gets the value of an int64 feature from a tf.train.Example."""
-  return get_feature(ex, name, "int64_list", strict)
+    """Gets the value of an int64 feature from a tf.train.Example."""
+    return get_feature(ex, name, "int64_list", strict)
 
 
 def _infer_kind(value):
-  """Infers the tf.train.Feature kind from a value."""
-  if np.issubdtype(type(value[0]), np.integer):
-    return "int64_list"
-  try:
-    float(value[0])
-    return "float_list"
-  except ValueError:
-    return "bytes_list"
+    """Infers the tf.train.Feature kind from a value."""
+    if np.issubdtype(type(value[0]), np.integer):
+        return "int64_list"
+    try:
+        float(value[0])
+        return "float_list"
+    except ValueError:
+        return "bytes_list"
 
 
 def set_feature(ex, name, value, kind=None, allow_overwrite=False):
-  """Sets a feature value in a tf.train.Example.
+    """Sets a feature value in a tf.train.Example.
 
   Args:
     ex: A tf.train.Example.
@@ -94,38 +94,38 @@ def set_feature(ex, name, value, kind=None, allow_overwrite=False):
     ValueError: If `allow_overwrite` is False and the feature already exists, or
         if `kind` is unrecognized.
   """
-  if name in ex.features.feature:
-    if allow_overwrite:
-      del ex.features.feature[name]
+    if name in ex.features.feature:
+        if allow_overwrite:
+            del ex.features.feature[name]
+        else:
+            raise ValueError(
+                "Attempting to set duplicate feature with name: %s" % name)
+
+    if not kind:
+        kind = _infer_kind(value)
+
+    if kind == "bytes_list":
+        value = [str(v).encode("latin-1") for v in value]
+    elif kind == "float_list":
+        value = [float(v) for v in value]
+    elif kind == "int64_list":
+        value = [int(v) for v in value]
     else:
-      raise ValueError(
-          "Attempting to set duplicate feature with name: %s" % name)
+        raise ValueError("Unrecognized kind: %s" % kind)
 
-  if not kind:
-    kind = _infer_kind(value)
-
-  if kind == "bytes_list":
-    value = [str(v).encode("latin-1") for v in value]
-  elif kind == "float_list":
-    value = [float(v) for v in value]
-  elif kind == "int64_list":
-    value = [int(v) for v in value]
-  else:
-    raise ValueError("Unrecognized kind: %s" % kind)
-
-  getattr(ex.features.feature[name], kind).value.extend(value)
+    getattr(ex.features.feature[name], kind).value.extend(value)
 
 
 def set_float_feature(ex, name, value, allow_overwrite=False):
-  """Sets the value of a float feature in a tf.train.Example."""
-  set_feature(ex, name, value, "float_list", allow_overwrite)
+    """Sets the value of a float feature in a tf.train.Example."""
+    set_feature(ex, name, value, "float_list", allow_overwrite)
 
 
 def set_bytes_feature(ex, name, value, allow_overwrite=False):
-  """Sets the value of a bytes feature in a tf.train.Example."""
-  set_feature(ex, name, value, "bytes_list", allow_overwrite)
+    """Sets the value of a bytes feature in a tf.train.Example."""
+    set_feature(ex, name, value, "bytes_list", allow_overwrite)
 
 
 def set_int64_feature(ex, name, value, allow_overwrite=False):
-  """Sets the value of an int64 feature in a tf.train.Example."""
-  set_feature(ex, name, value, "int64_list", allow_overwrite)
+    """Sets the value of an int64 feature in a tf.train.Example."""
+    set_feature(ex, name, value, "int64_list", allow_overwrite)

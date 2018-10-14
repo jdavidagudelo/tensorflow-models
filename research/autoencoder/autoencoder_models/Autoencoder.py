@@ -15,14 +15,14 @@ class Autoencoder(object):
         self.x = tf.placeholder(tf.float32, [None, self.n_layers[0]])
         self.hidden_encode = []
         h = self.x
-        for layer in range(len(self.n_layers)-1):
+        for layer in range(len(self.n_layers) - 1):
             h = self.transfer(
                 tf.add(tf.matmul(h, self.weights['encode'][layer]['w']),
                        self.weights['encode'][layer]['b']))
             self.hidden_encode.append(h)
 
         self.hidden_recon = []
-        for layer in range(len(self.n_layers)-1):
+        for layer in range(len(self.n_layers) - 1):
             h = self.transfer(
                 tf.add(tf.matmul(h, self.weights['recon'][layer]['w']),
                        self.weights['recon'][layer]['b']))
@@ -37,13 +37,12 @@ class Autoencoder(object):
         self.sess = tf.Session()
         self.sess.run(init)
 
-
     def _initialize_weights(self):
         all_weights = dict()
         initializer = tf.contrib.layers.xavier_initializer()
         # Encoding network weights
         encoder_weights = []
-        for layer in range(len(self.n_layers)-1):
+        for layer in range(len(self.n_layers) - 1):
             w = tf.Variable(
                 initializer((self.n_layers[layer], self.n_layers[layer + 1]),
                             dtype=tf.float32))
@@ -52,7 +51,7 @@ class Autoencoder(object):
             encoder_weights.append({'w': w, 'b': b})
         # Recon network weights
         recon_weights = []
-        for layer in range(len(self.n_layers)-1, 0, -1):
+        for layer in range(len(self.n_layers) - 1, 0, -1):
             w = tf.Variable(
                 initializer((self.n_layers[layer], self.n_layers[layer - 1]),
                             dtype=tf.float32))
@@ -88,4 +87,3 @@ class Autoencoder(object):
     def getBiases(self):
         raise NotImplementedError
         return self.sess.run(self.weights)
-

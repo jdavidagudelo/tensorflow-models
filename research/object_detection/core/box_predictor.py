@@ -35,10 +35,10 @@ MASK_PREDICTIONS = 'mask_predictions'
 
 
 class BoxPredictor(object):
-  """BoxPredictor."""
+    """BoxPredictor."""
 
-  def __init__(self, is_training, num_classes):
-    """Constructor.
+    def __init__(self, is_training, num_classes):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -47,20 +47,20 @@ class BoxPredictor(object):
         in {0, 1, .., K-1}, num_classes=K (and not K+1, even though the
         assigned classification targets can range from {0,... K}).
     """
-    self._is_training = is_training
-    self._num_classes = num_classes
+        self._is_training = is_training
+        self._num_classes = num_classes
 
-  @property
-  def is_keras_model(self):
-    return False
+    @property
+    def is_keras_model(self):
+        return False
 
-  @property
-  def num_classes(self):
-    return self._num_classes
+    @property
+    def num_classes(self):
+        return self._num_classes
 
-  def predict(self, image_features, num_predictions_per_location,
-              scope=None, **params):
-    """Computes encoded object locations and corresponding confidences.
+    def predict(self, image_features, num_predictions_per_location,
+                scope=None, **params):
+        """Computes encoded object locations and corresponding confidences.
 
     Takes a list of high level image feature maps as input and produces a list
     of box encodings and a list of class scores where each element in the output
@@ -92,23 +92,23 @@ class BoxPredictor(object):
       ValueError: If length of `image_features` is not equal to length of
         `num_predictions_per_location`.
     """
-    if len(image_features) != len(num_predictions_per_location):
-      raise ValueError('image_feature and num_predictions_per_location must '
-                       'be of same length, found: {} vs {}'.
-                       format(len(image_features),
-                              len(num_predictions_per_location)))
-    if scope is not None:
-      with tf.variable_scope(scope):
+        if len(image_features) != len(num_predictions_per_location):
+            raise ValueError('image_feature and num_predictions_per_location must '
+                             'be of same length, found: {} vs {}'.
+                             format(len(image_features),
+                                    len(num_predictions_per_location)))
+        if scope is not None:
+            with tf.variable_scope(scope):
+                return self._predict(image_features, num_predictions_per_location,
+                                     **params)
         return self._predict(image_features, num_predictions_per_location,
                              **params)
-    return self._predict(image_features, num_predictions_per_location,
-                         **params)
 
-  # TODO(rathodv): num_predictions_per_location could be moved to constructor.
-  # This is currently only used by ConvolutionalBoxPredictor.
-  @abstractmethod
-  def _predict(self, image_features, num_predictions_per_location, **params):
-    """Implementations must override this method.
+    # TODO(rathodv): num_predictions_per_location could be moved to constructor.
+    # This is currently only used by ConvolutionalBoxPredictor.
+    @abstractmethod
+    def _predict(self, image_features, num_predictions_per_location, **params):
+        """Implementations must override this method.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
@@ -131,15 +131,15 @@ class BoxPredictor(object):
           predictions for the proposals. Each entry in the list corresponds to a
           feature map in the input `image_features` list.
     """
-    pass
+        pass
 
 
 class KerasBoxPredictor(tf.keras.Model):
-  """Keras-based BoxPredictor."""
+    """Keras-based BoxPredictor."""
 
-  def __init__(self, is_training, num_classes, freeze_batchnorm,
-               inplace_batchnorm_update, name=None):
-    """Constructor.
+    def __init__(self, is_training, num_classes, freeze_batchnorm,
+                 inplace_batchnorm_update, name=None):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -158,23 +158,23 @@ class KerasBoxPredictor(tf.keras.Model):
       name: A string name scope to assign to the model. If `None`, Keras
         will auto-generate one from the class name.
     """
-    super(KerasBoxPredictor, self).__init__(name=name)
+        super(KerasBoxPredictor, self).__init__(name=name)
 
-    self._is_training = is_training
-    self._num_classes = num_classes
-    self._freeze_batchnorm = freeze_batchnorm
-    self._inplace_batchnorm_update = inplace_batchnorm_update
+        self._is_training = is_training
+        self._num_classes = num_classes
+        self._freeze_batchnorm = freeze_batchnorm
+        self._inplace_batchnorm_update = inplace_batchnorm_update
 
-  @property
-  def is_keras_model(self):
-    return True
+    @property
+    def is_keras_model(self):
+        return True
 
-  @property
-  def num_classes(self):
-    return self._num_classes
+    @property
+    def num_classes(self):
+        return self._num_classes
 
-  def call(self, image_features, **kwargs):
-    """Computes encoded object locations and corresponding confidences.
+    def call(self, image_features, **kwargs):
+        """Computes encoded object locations and corresponding confidences.
 
     Takes a list of high level image feature maps as input and produces a list
     of box encodings and a list of class scores where each element in the output
@@ -199,11 +199,11 @@ class KerasBoxPredictor(tf.keras.Model):
           predictions for the proposals. Each entry in the list corresponds to a
           feature map in the input `image_features` list.
     """
-    return self._predict(image_features, **kwargs)
+        return self._predict(image_features, **kwargs)
 
-  @abstractmethod
-  def _predict(self, image_features, **kwargs):
-    """Implementations must override this method.
+    @abstractmethod
+    def _predict(self, image_features, **kwargs):
+        """Implementations must override this method.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
@@ -224,4 +224,4 @@ class KerasBoxPredictor(tf.keras.Model):
           predictions for the proposals. Each entry in the list corresponds to a
           feature map in the input `image_features` list.
     """
-    raise NotImplementedError
+        raise NotImplementedError

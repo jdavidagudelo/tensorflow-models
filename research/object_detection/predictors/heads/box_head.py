@@ -22,27 +22,27 @@ All the box prediction heads have a predict function that receives the
 import functools
 import tensorflow as tf
 
-from object_detection.predictors.heads import head
+from research.object_detection.predictors.heads import head
 
 slim = tf.contrib.slim
 
 
 class MaskRCNNBoxHead(head.Head):
-  """Box prediction head.
+    """Box prediction head.
 
   Please refer to Mask RCNN paper:
   https://arxiv.org/abs/1703.06870
   """
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               fc_hyperparams_fn,
-               use_dropout,
-               dropout_keep_prob,
-               box_code_size,
-               share_box_across_classes=False):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 fc_hyperparams_fn,
+                 use_dropout,
+                 dropout_keep_prob,
+                 box_code_size,
+                 share_box_across_classes=False):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -61,17 +61,17 @@ class MaskRCNNBoxHead(head.Head):
       share_box_across_classes: Whether to share boxes across classes rather
         than use a different box for each class.
     """
-    super(MaskRCNNBoxHead, self).__init__()
-    self._is_training = is_training
-    self._num_classes = num_classes
-    self._fc_hyperparams_fn = fc_hyperparams_fn
-    self._use_dropout = use_dropout
-    self._dropout_keep_prob = dropout_keep_prob
-    self._box_code_size = box_code_size
-    self._share_box_across_classes = share_box_across_classes
+        super(MaskRCNNBoxHead, self).__init__()
+        self._is_training = is_training
+        self._num_classes = num_classes
+        self._fc_hyperparams_fn = fc_hyperparams_fn
+        self._use_dropout = use_dropout
+        self._dropout_keep_prob = dropout_keep_prob
+        self._box_code_size = box_code_size
+        self._share_box_across_classes = share_box_across_classes
 
-  def predict(self, features, num_predictions_per_location=1):
-    """Predicts boxes.
+    def predict(self, features, num_predictions_per_location=1):
+        """Predicts boxes.
 
     Args:
       features: A float tensor of shape [batch_size, height, width,
@@ -87,41 +87,41 @@ class MaskRCNNBoxHead(head.Head):
     Raises:
       ValueError: If num_predictions_per_location is not 1.
     """
-    if num_predictions_per_location != 1:
-      raise ValueError('Only num_predictions_per_location=1 is supported')
-    spatial_averaged_roi_pooled_features = tf.reduce_mean(
-        features, [1, 2], keep_dims=True, name='AvgPool')
-    flattened_roi_pooled_features = slim.flatten(
-        spatial_averaged_roi_pooled_features)
-    if self._use_dropout:
-      flattened_roi_pooled_features = slim.dropout(
-          flattened_roi_pooled_features,
-          keep_prob=self._dropout_keep_prob,
-          is_training=self._is_training)
-    number_of_boxes = 1
-    if not self._share_box_across_classes:
-      number_of_boxes = self._num_classes
+        if num_predictions_per_location != 1:
+            raise ValueError('Only num_predictions_per_location=1 is supported')
+        spatial_averaged_roi_pooled_features = tf.reduce_mean(
+            features, [1, 2], keepdims=True, name='AvgPool')
+        flattened_roi_pooled_features = slim.flatten(
+            spatial_averaged_roi_pooled_features)
+        if self._use_dropout:
+            flattened_roi_pooled_features = slim.dropout(
+                flattened_roi_pooled_features,
+                keep_prob=self._dropout_keep_prob,
+                is_training=self._is_training)
+        number_of_boxes = 1
+        if not self._share_box_across_classes:
+            number_of_boxes = self._num_classes
 
-    with slim.arg_scope(self._fc_hyperparams_fn()):
-      box_encodings = slim.fully_connected(
-          flattened_roi_pooled_features,
-          number_of_boxes * self._box_code_size,
-          activation_fn=None,
-          scope='BoxEncodingPredictor')
-    box_encodings = tf.reshape(box_encodings,
-                               [-1, 1, number_of_boxes, self._box_code_size])
-    return box_encodings
+        with slim.arg_scope(self._fc_hyperparams_fn()):
+            box_encodings = slim.fully_connected(
+                flattened_roi_pooled_features,
+                number_of_boxes * self._box_code_size,
+                activation_fn=None,
+                scope='BoxEncodingPredictor')
+        box_encodings = tf.reshape(box_encodings,
+                                   [-1, 1, number_of_boxes, self._box_code_size])
+        return box_encodings
 
 
 class ConvolutionalBoxHead(head.Head):
-  """Convolutional box prediction head."""
+    """Convolutional box prediction head."""
 
-  def __init__(self,
-               is_training,
-               box_code_size,
-               kernel_size,
-               use_depthwise=False):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 box_code_size,
+                 kernel_size,
+                 use_depthwise=False):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -136,14 +136,14 @@ class ConvolutionalBoxHead(head.Head):
     Raises:
       ValueError: if min_depth > max_depth.
     """
-    super(ConvolutionalBoxHead, self).__init__()
-    self._is_training = is_training
-    self._box_code_size = box_code_size
-    self._kernel_size = kernel_size
-    self._use_depthwise = use_depthwise
+        super(ConvolutionalBoxHead, self).__init__()
+        self._is_training = is_training
+        self._box_code_size = box_code_size
+        self._kernel_size = kernel_size
+        self._use_depthwise = use_depthwise
 
-  def predict(self, features, num_predictions_per_location):
-    """Predicts boxes.
+    def predict(self, features, num_predictions_per_location):
+        """Predicts boxes.
 
     Args:
       features: A float tensor of shape [batch_size, height, width, channels]
@@ -156,50 +156,50 @@ class ConvolutionalBoxHead(head.Head):
         [batch_size, num_anchors, q, code_size] representing the location of
         the objects, where q is 1 or the number of classes.
     """
-    net = features
-    if self._use_depthwise:
-      box_encodings = slim.separable_conv2d(
-          net, None, [self._kernel_size, self._kernel_size],
-          padding='SAME', depth_multiplier=1, stride=1,
-          rate=1, scope='BoxEncodingPredictor_depthwise')
-      box_encodings = slim.conv2d(
-          box_encodings,
-          num_predictions_per_location * self._box_code_size, [1, 1],
-          activation_fn=None,
-          normalizer_fn=None,
-          normalizer_params=None,
-          scope='BoxEncodingPredictor')
-    else:
-      box_encodings = slim.conv2d(
-          net, num_predictions_per_location * self._box_code_size,
-          [self._kernel_size, self._kernel_size],
-          activation_fn=None,
-          normalizer_fn=None,
-          normalizer_params=None,
-          scope='BoxEncodingPredictor')
-    batch_size = features.get_shape().as_list()[0]
-    if batch_size is None:
-      batch_size = tf.shape(features)[0]
-    box_encodings = tf.reshape(box_encodings,
-                               [batch_size, -1, 1, self._box_code_size])
-    return box_encodings
+        net = features
+        if self._use_depthwise:
+            box_encodings = slim.separable_conv2d(
+                net, None, [self._kernel_size, self._kernel_size],
+                padding='SAME', depth_multiplier=1, stride=1,
+                rate=1, scope='BoxEncodingPredictor_depthwise')
+            box_encodings = slim.conv2d(
+                box_encodings,
+                num_predictions_per_location * self._box_code_size, [1, 1],
+                activation_fn=None,
+                normalizer_fn=None,
+                normalizer_params=None,
+                scope='BoxEncodingPredictor')
+        else:
+            box_encodings = slim.conv2d(
+                net, num_predictions_per_location * self._box_code_size,
+                [self._kernel_size, self._kernel_size],
+                activation_fn=None,
+                normalizer_fn=None,
+                normalizer_params=None,
+                scope='BoxEncodingPredictor')
+        batch_size = features.get_shape().as_list()[0]
+        if batch_size is None:
+            batch_size = tf.shape(features)[0]
+        box_encodings = tf.reshape(box_encodings,
+                                   [batch_size, -1, 1, self._box_code_size])
+        return box_encodings
 
 
 # TODO(alirezafathi): See if possible to unify Weight Shared with regular
 # convolutional box head.
 class WeightSharedConvolutionalBoxHead(head.Head):
-  """Weight shared convolutional box prediction head.
+    """Weight shared convolutional box prediction head.
 
   This head allows sharing the same set of parameters (weights) when called more
   then once on different feature maps.
   """
 
-  def __init__(self,
-               box_code_size,
-               kernel_size=3,
-               use_depthwise=False,
-               box_encodings_clip_range=None):
-    """Constructor.
+    def __init__(self,
+                 box_code_size,
+                 kernel_size=3,
+                 use_depthwise=False,
+                 box_encodings_clip_range=None):
+        """Constructor.
 
     Args:
       box_code_size: Size of encoding for each box.
@@ -208,14 +208,14 @@ class WeightSharedConvolutionalBoxHead(head.Head):
         Default is False.
       box_encodings_clip_range: Min and max values for clipping box_encodings.
     """
-    super(WeightSharedConvolutionalBoxHead, self).__init__()
-    self._box_code_size = box_code_size
-    self._kernel_size = kernel_size
-    self._use_depthwise = use_depthwise
-    self._box_encodings_clip_range = box_encodings_clip_range
+        super(WeightSharedConvolutionalBoxHead, self).__init__()
+        self._box_code_size = box_code_size
+        self._kernel_size = kernel_size
+        self._use_depthwise = use_depthwise
+        self._box_encodings_clip_range = box_encodings_clip_range
 
-  def predict(self, features, num_predictions_per_location):
-    """Predicts boxes.
+    def predict(self, features, num_predictions_per_location):
+        """Predicts boxes.
 
     Args:
       features: A float tensor of shape [batch_size, height, width, channels]
@@ -228,26 +228,26 @@ class WeightSharedConvolutionalBoxHead(head.Head):
         [batch_size, num_anchors, code_size] representing the location of
         the objects.
     """
-    box_encodings_net = features
-    if self._use_depthwise:
-      conv_op = functools.partial(slim.separable_conv2d, depth_multiplier=1)
-    else:
-      conv_op = slim.conv2d
-    box_encodings = conv_op(
-        box_encodings_net,
-        num_predictions_per_location * self._box_code_size,
-        [self._kernel_size, self._kernel_size],
-        activation_fn=None, stride=1, padding='SAME',
-        normalizer_fn=None,
-        scope='BoxPredictor')
-    batch_size = features.get_shape().as_list()[0]
-    if batch_size is None:
-      batch_size = tf.shape(features)[0]
-    # Clipping the box encodings to make the inference graph TPU friendly.
-    if self._box_encodings_clip_range is not None:
-      box_encodings = tf.clip_by_value(
-          box_encodings, self._box_encodings_clip_range.min,
-          self._box_encodings_clip_range.max)
-    box_encodings = tf.reshape(box_encodings,
-                               [batch_size, -1, self._box_code_size])
-    return box_encodings
+        box_encodings_net = features
+        if self._use_depthwise:
+            conv_op = functools.partial(slim.separable_conv2d, depth_multiplier=1)
+        else:
+            conv_op = slim.conv2d
+        box_encodings = conv_op(
+            box_encodings_net,
+            num_predictions_per_location * self._box_code_size,
+            [self._kernel_size, self._kernel_size],
+            activation_fn=None, stride=1, padding='SAME',
+            normalizer_fn=None,
+            scope='BoxPredictor')
+        batch_size = features.get_shape().as_list()[0]
+        if batch_size is None:
+            batch_size = tf.shape(features)[0]
+        # Clipping the box encodings to make the inference graph TPU friendly.
+        if self._box_encodings_clip_range is not None:
+            box_encodings = tf.clip_by_value(
+                box_encodings, self._box_encodings_clip_range.min,
+                self._box_encodings_clip_range.max)
+        box_encodings = tf.reshape(box_encodings,
+                                   [batch_size, -1, self._box_code_size])
+        return box_encodings

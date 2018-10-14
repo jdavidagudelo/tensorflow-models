@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+ipython = "*"
+
+[packages]
+numpy = "*"
+opencv-python = "*"
+matplotlib = "*"
+ipython = "*"
+tensorflow = "*"
+torch = "*"
+torchvision = "*"
+jupyter = "*"
+scikit-learn = "*"
+pandas = "*"
+seaborn = "*"
+xgboost = "*"
+lightgbm = "*"
+statsmodels = "*"
+plotly = "*"
+google = "*"
+google-cloud = "*"
+gym = "*"
+
+[requires]
+python_version = "3.6"

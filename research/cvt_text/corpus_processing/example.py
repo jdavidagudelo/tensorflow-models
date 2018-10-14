@@ -19,8 +19,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from base import embeddings
-
+from ..base import embeddings
 
 CONTRACTION_WORDS = set(w + 'n' for w in
                         ['do', 'does', 'did', 'is', 'are', 'was', 'were', 'has',
@@ -29,24 +28,24 @@ CONTRACTION_WORDS = set(w + 'n' for w in
 
 
 class Example(object):
-  def __init__(self, words, word_vocab, char_vocab):
-    words = words[:]
-    # Fix inconsistent tokenization between datasets
-    for i in range(len(words)):
-      if (words[i].lower() == '\'t' and i > 0 and
-          words[i - 1].lower() in CONTRACTION_WORDS):
-        words[i] = words[i - 1][-1] + words[i]
-        words[i - 1] = words[i - 1][:-1]
+    def __init__(self, words, word_vocab, char_vocab):
+        words = words[:]
+        # Fix inconsistent tokenization between datasets
+        for i in range(len(words)):
+            if (words[i].lower() == '\'t' and i > 0 and
+                    words[i - 1].lower() in CONTRACTION_WORDS):
+                words[i] = words[i - 1][-1] + words[i]
+                words[i - 1] = words[i - 1][:-1]
 
-    self.words = ([embeddings.START] +
-                  [word_vocab[embeddings.normalize_word(w)] for w in words] +
-                  [embeddings.END])
-    self.chars = ([[embeddings.MISSING]] +
-                  [[char_vocab[c] for c in embeddings.normalize_chars(w)]
-                   for w in words] +
-                  [[embeddings.MISSING]])
+        self.words = ([embeddings.START] +
+                      [word_vocab[embeddings.normalize_word(w)] for w in words] +
+                      [embeddings.END])
+        self.chars = ([[embeddings.MISSING]] +
+                      [[char_vocab[c] for c in embeddings.normalize_chars(w)]
+                       for w in words] +
+                      [[embeddings.MISSING]])
 
-  def __repr__(self,):
-    inv_char_vocab = embeddings.get_inv_char_vocab()
-    return ' '.join([''.join([inv_char_vocab[c] for c in w])
-                     for w in self.chars])
+    def __repr__(self, ):
+        inv_char_vocab = embeddings.get_inv_char_vocab()
+        return ' '.join([''.join([inv_char_vocab[c] for c in w])
+                         for w in self.chars])

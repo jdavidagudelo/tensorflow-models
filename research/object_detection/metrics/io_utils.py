@@ -23,12 +23,12 @@ import csv
 
 
 def write_csv(fid, metrics):
-  """Writes metrics key-value pairs to CSV file.
+    """Writes metrics key-value pairs to CSV file.
 
   Args:
     fid: File identifier of an opened file.
     metrics: A dictionary with metrics to be written.
   """
-  metrics_writer = csv.writer(fid, delimiter=',')
-  for metric_name, metric_value in metrics.items():
-    metrics_writer.writerow([metric_name, str(metric_value)])
+    metrics_writer = csv.writer(fid, delimiter=',')
+    for metric_name, metric_value in metrics.items():
+        metrics_writer.writerow([metric_name, str(metric_value)])

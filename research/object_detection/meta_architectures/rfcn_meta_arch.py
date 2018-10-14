@@ -40,49 +40,49 @@ apply here.
 """
 import tensorflow as tf
 
-from object_detection.core import box_predictor
-from object_detection.meta_architectures import faster_rcnn_meta_arch
-from object_detection.utils import ops
+from research.object_detection.core import box_predictor
+from research.object_detection.meta_architectures import faster_rcnn_meta_arch
+from research.object_detection.utils import ops
 
 
 class RFCNMetaArch(faster_rcnn_meta_arch.FasterRCNNMetaArch):
-  """R-FCN Meta-architecture definition."""
+    """R-FCN Meta-architecture definition."""
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               image_resizer_fn,
-               feature_extractor,
-               number_of_stages,
-               first_stage_anchor_generator,
-               first_stage_target_assigner,
-               first_stage_atrous_rate,
-               first_stage_box_predictor_arg_scope_fn,
-               first_stage_box_predictor_kernel_size,
-               first_stage_box_predictor_depth,
-               first_stage_minibatch_size,
-               first_stage_sampler,
-               first_stage_non_max_suppression_fn,
-               first_stage_max_proposals,
-               first_stage_localization_loss_weight,
-               first_stage_objectness_loss_weight,
-               crop_and_resize_fn,
-               second_stage_target_assigner,
-               second_stage_rfcn_box_predictor,
-               second_stage_batch_size,
-               second_stage_sampler,
-               second_stage_non_max_suppression_fn,
-               second_stage_score_conversion_fn,
-               second_stage_localization_loss_weight,
-               second_stage_classification_loss_weight,
-               second_stage_classification_loss,
-               hard_example_miner,
-               parallel_iterations=16,
-               add_summaries=True,
-               clip_anchors_to_image=False,
-               use_static_shapes=False,
-               resize_masks=False):
-    """RFCNMetaArch Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 image_resizer_fn,
+                 feature_extractor,
+                 number_of_stages,
+                 first_stage_anchor_generator,
+                 first_stage_target_assigner,
+                 first_stage_atrous_rate,
+                 first_stage_box_predictor_arg_scope_fn,
+                 first_stage_box_predictor_kernel_size,
+                 first_stage_box_predictor_depth,
+                 first_stage_minibatch_size,
+                 first_stage_sampler,
+                 first_stage_non_max_suppression_fn,
+                 first_stage_max_proposals,
+                 first_stage_localization_loss_weight,
+                 first_stage_objectness_loss_weight,
+                 crop_and_resize_fn,
+                 second_stage_target_assigner,
+                 second_stage_rfcn_box_predictor,
+                 second_stage_batch_size,
+                 second_stage_sampler,
+                 second_stage_non_max_suppression_fn,
+                 second_stage_score_conversion_fn,
+                 second_stage_localization_loss_weight,
+                 second_stage_classification_loss_weight,
+                 second_stage_classification_loss,
+                 hard_example_miner,
+                 parallel_iterations=16,
+                 add_summaries=True,
+                 clip_anchors_to_image=False,
+                 use_static_shapes=False,
+                 resize_masks=False):
+        """RFCNMetaArch Constructor.
 
     Args:
       is_training: A boolean indicating whether the training version of the
@@ -186,56 +186,56 @@ class RFCNMetaArch(faster_rcnn_meta_arch.FasterRCNNMetaArch):
       ValueError: If first_stage_anchor_generator is not of type
         grid_anchor_generator.GridAnchorGenerator.
     """
-    # TODO(rathodv): add_summaries and crop_and_resize_fn is currently
-    # unused. Respect that directive in the future.
-    super(RFCNMetaArch, self).__init__(
-        is_training,
-        num_classes,
-        image_resizer_fn,
-        feature_extractor,
-        number_of_stages,
-        first_stage_anchor_generator,
-        first_stage_target_assigner,
-        first_stage_atrous_rate,
-        first_stage_box_predictor_arg_scope_fn,
-        first_stage_box_predictor_kernel_size,
-        first_stage_box_predictor_depth,
-        first_stage_minibatch_size,
-        first_stage_sampler,
-        first_stage_non_max_suppression_fn,
-        first_stage_max_proposals,
-        first_stage_localization_loss_weight,
-        first_stage_objectness_loss_weight,
-        crop_and_resize_fn,
-        None,  # initial_crop_size is not used in R-FCN
-        None,  # maxpool_kernel_size is not use in R-FCN
-        None,  # maxpool_stride is not use in R-FCN
-        second_stage_target_assigner,
-        None,  # fully_connected_box_predictor is not used in R-FCN.
-        second_stage_batch_size,
-        second_stage_sampler,
-        second_stage_non_max_suppression_fn,
-        second_stage_score_conversion_fn,
-        second_stage_localization_loss_weight,
-        second_stage_classification_loss_weight,
-        second_stage_classification_loss,
-        1.0,  # second stage mask prediction loss weight isn't used in R-FCN.
-        hard_example_miner,
-        parallel_iterations,
-        add_summaries,
-        clip_anchors_to_image,
-        use_static_shapes,
-        resize_masks)
+        # TODO(rathodv): add_summaries and crop_and_resize_fn is currently
+        # unused. Respect that directive in the future.
+        super(RFCNMetaArch, self).__init__(
+            is_training,
+            num_classes,
+            image_resizer_fn,
+            feature_extractor,
+            number_of_stages,
+            first_stage_anchor_generator,
+            first_stage_target_assigner,
+            first_stage_atrous_rate,
+            first_stage_box_predictor_arg_scope_fn,
+            first_stage_box_predictor_kernel_size,
+            first_stage_box_predictor_depth,
+            first_stage_minibatch_size,
+            first_stage_sampler,
+            first_stage_non_max_suppression_fn,
+            first_stage_max_proposals,
+            first_stage_localization_loss_weight,
+            first_stage_objectness_loss_weight,
+            crop_and_resize_fn,
+            None,  # initial_crop_size is not used in R-FCN
+            None,  # maxpool_kernel_size is not use in R-FCN
+            None,  # maxpool_stride is not use in R-FCN
+            second_stage_target_assigner,
+            None,  # fully_connected_box_predictor is not used in R-FCN.
+            second_stage_batch_size,
+            second_stage_sampler,
+            second_stage_non_max_suppression_fn,
+            second_stage_score_conversion_fn,
+            second_stage_localization_loss_weight,
+            second_stage_classification_loss_weight,
+            second_stage_classification_loss,
+            1.0,  # second stage mask prediction loss weight isn't used in R-FCN.
+            hard_example_miner,
+            parallel_iterations,
+            add_summaries,
+            clip_anchors_to_image,
+            use_static_shapes,
+            resize_masks)
 
-    self._rfcn_box_predictor = second_stage_rfcn_box_predictor
+        self._rfcn_box_predictor = second_stage_rfcn_box_predictor
 
-  def _predict_second_stage(self, rpn_box_encodings,
-                            rpn_objectness_predictions_with_background,
-                            rpn_features,
-                            anchors,
-                            image_shape,
-                            true_image_shapes):
-    """Predicts the output tensors from 2nd stage of R-FCN.
+    def _predict_second_stage(self, rpn_box_encodings,
+                              rpn_objectness_predictions_with_background,
+                              rpn_features,
+                              anchors,
+                              image_shape,
+                              true_image_shapes):
+        """Predicts the output tensors from 2nd stage of R-FCN.
 
     Args:
       rpn_box_encodings: 3-D float tensor of shape
@@ -286,46 +286,46 @@ class RFCNMetaArch(faster_rcnn_meta_arch.FasterRCNNMetaArch):
           [batch_size, feature_map_height, feature_map_width, depth],
           representing the box classifier features.
     """
-    image_shape_2d = tf.tile(tf.expand_dims(image_shape[1:], 0),
-                             [image_shape[0], 1])
-    proposal_boxes_normalized, _, num_proposals = self._postprocess_rpn(
-        rpn_box_encodings, rpn_objectness_predictions_with_background,
-        anchors, image_shape_2d, true_image_shapes)
+        image_shape_2d = tf.tile(tf.expand_dims(image_shape[1:], 0),
+                                 [image_shape[0], 1])
+        proposal_boxes_normalized, _, num_proposals = self._postprocess_rpn(
+            rpn_box_encodings, rpn_objectness_predictions_with_background,
+            anchors, image_shape_2d, true_image_shapes)
 
-    box_classifier_features = (
-        self._feature_extractor.extract_box_classifier_features(
-            rpn_features,
-            scope=self.second_stage_feature_extractor_scope))
+        box_classifier_features = (
+            self._feature_extractor.extract_box_classifier_features(
+                rpn_features,
+                scope=self.second_stage_feature_extractor_scope))
 
-    if self._rfcn_box_predictor.is_keras_model:
-      box_predictions = self._rfcn_box_predictor(
-          [box_classifier_features],
-          proposal_boxes=proposal_boxes_normalized)
-    else:
-      box_predictions = self._rfcn_box_predictor.predict(
-          [box_classifier_features],
-          num_predictions_per_location=[1],
-          scope=self.second_stage_box_predictor_scope,
-          proposal_boxes=proposal_boxes_normalized)
-    refined_box_encodings = tf.squeeze(
-        tf.concat(box_predictions[box_predictor.BOX_ENCODINGS], axis=1), axis=1)
-    class_predictions_with_background = tf.squeeze(
-        tf.concat(
-            box_predictions[box_predictor.CLASS_PREDICTIONS_WITH_BACKGROUND],
-            axis=1),
-        axis=1)
+        if self._rfcn_box_predictor.is_keras_model:
+            box_predictions = self._rfcn_box_predictor(
+                [box_classifier_features],
+                proposal_boxes=proposal_boxes_normalized)
+        else:
+            box_predictions = self._rfcn_box_predictor.predict(
+                [box_classifier_features],
+                num_predictions_per_location=[1],
+                scope=self.second_stage_box_predictor_scope,
+                proposal_boxes=proposal_boxes_normalized)
+        refined_box_encodings = tf.squeeze(
+            tf.concat(box_predictions[box_predictor.BOX_ENCODINGS], axis=1), axis=1)
+        class_predictions_with_background = tf.squeeze(
+            tf.concat(
+                box_predictions[box_predictor.CLASS_PREDICTIONS_WITH_BACKGROUND],
+                axis=1),
+            axis=1)
 
-    absolute_proposal_boxes = ops.normalized_to_image_coordinates(
-        proposal_boxes_normalized, image_shape,
-        parallel_iterations=self._parallel_iterations)
+        absolute_proposal_boxes = ops.normalized_to_image_coordinates(
+            proposal_boxes_normalized, image_shape,
+            parallel_iterations=self._parallel_iterations)
 
-    prediction_dict = {
-        'refined_box_encodings': refined_box_encodings,
-        'class_predictions_with_background':
-        class_predictions_with_background,
-        'num_proposals': num_proposals,
-        'proposal_boxes': absolute_proposal_boxes,
-        'box_classifier_features': box_classifier_features,
-        'proposal_boxes_normalized': proposal_boxes_normalized,
-    }
-    return prediction_dict
+        prediction_dict = {
+            'refined_box_encodings': refined_box_encodings,
+            'class_predictions_with_background':
+                class_predictions_with_background,
+            'num_proposals': num_proposals,
+            'proposal_boxes': absolute_proposal_boxes,
+            'box_classifier_features': box_classifier_features,
+            'proposal_boxes_normalized': proposal_boxes_normalized,
+        }
+        return prediction_dict

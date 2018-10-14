@@ -19,12 +19,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from datasets import imagenet_input
-from datasets import tiny_imagenet_input
+from . import imagenet_input
+from . import tiny_imagenet_input
 
 
 def get_dataset(dataset_name, split, batch_size, image_size, is_training):
-  """Returns dataset.
+    """Returns dataset.
 
   Args:
     dataset_name: name of the dataset, "imagenet" or "tiny_imagenet".
@@ -45,18 +45,18 @@ def get_dataset(dataset_name, split, batch_size, image_size, is_training):
     bounds: tuple with bounds of image values. All returned image pixels
       are between bounds[0] and bounds[1].
   """
-  if dataset_name == 'tiny_imagenet':
-    dataset = tiny_imagenet_input.tiny_imagenet_input(
-        split, batch_size, image_size, is_training)
-    num_examples = tiny_imagenet_input.num_examples_per_epoch(split)
-    num_classes = 200
-    bounds = (-1, 1)
-  elif dataset_name == 'imagenet':
-    dataset = imagenet_input.imagenet_input(
-        split, batch_size, image_size, is_training)
-    num_examples = imagenet_input.num_examples_per_epoch(split)
-    num_classes = 1001
-    bounds = (-1, 1)
-  else:
-    raise ValueError('Invalid dataset %s' % dataset_name)
-  return dataset, num_examples, num_classes, bounds
+    if dataset_name == 'tiny_imagenet':
+        dataset = tiny_imagenet_input.tiny_imagenet_input(
+            split, batch_size, image_size, is_training)
+        num_examples = tiny_imagenet_input.num_examples_per_epoch(split)
+        num_classes = 200
+        bounds = (-1, 1)
+    elif dataset_name == 'imagenet':
+        dataset = imagenet_input.imagenet_input(
+            split, batch_size, image_size, is_training)
+        num_examples = imagenet_input.num_examples_per_epoch(split)
+        num_classes = 1001
+        bounds = (-1, 1)
+    else:
+        raise ValueError('Invalid dataset %s' % dataset_name)
+    return dataset, num_examples, num_classes, bounds

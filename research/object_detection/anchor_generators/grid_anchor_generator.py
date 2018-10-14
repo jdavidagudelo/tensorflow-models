@@ -22,21 +22,21 @@ Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun.
 
 import tensorflow as tf
 
-from object_detection.core import anchor_generator
-from object_detection.core import box_list
-from object_detection.utils import ops
+from research.object_detection.core import anchor_generator
+from research.object_detection.core import box_list
+from research.object_detection.utils import ops
 
 
 class GridAnchorGenerator(anchor_generator.AnchorGenerator):
-  """Generates a grid of anchors at given scales and aspect ratios."""
+    """Generates a grid of anchors at given scales and aspect ratios."""
 
-  def __init__(self,
-               scales=(0.5, 1.0, 2.0),
-               aspect_ratios=(0.5, 1.0, 2.0),
-               base_anchor_size=None,
-               anchor_stride=None,
-               anchor_offset=None):
-    """Constructs a GridAnchorGenerator.
+    def __init__(self,
+                 scales=(0.5, 1.0, 2.0),
+                 aspect_ratios=(0.5, 1.0, 2.0),
+                 base_anchor_size=None,
+                 anchor_stride=None,
+                 anchor_offset=None):
+        """Constructs a GridAnchorGenerator.
 
     Args:
       scales: a list of (float) scales, default=(0.5, 1.0, 2.0)
@@ -53,37 +53,37 @@ class GridAnchorGenerator(anchor_generator.AnchorGenerator):
                      padding is used (length-2 float32 list or tensor,
                      default=[0, 0])
     """
-    # Handle argument defaults
-    if base_anchor_size is None:
-      base_anchor_size = [256, 256]
-    base_anchor_size = tf.to_float(tf.convert_to_tensor(base_anchor_size))
-    if anchor_stride is None:
-      anchor_stride = [16, 16]
-    anchor_stride = tf.to_float(tf.convert_to_tensor(anchor_stride))
-    if anchor_offset is None:
-      anchor_offset = [0, 0]
-    anchor_offset = tf.to_float(tf.convert_to_tensor(anchor_offset))
+        # Handle argument defaults
+        if base_anchor_size is None:
+            base_anchor_size = [256, 256]
+        base_anchor_size = tf.to_float(tf.convert_to_tensor(base_anchor_size))
+        if anchor_stride is None:
+            anchor_stride = [16, 16]
+        anchor_stride = tf.to_float(tf.convert_to_tensor(anchor_stride))
+        if anchor_offset is None:
+            anchor_offset = [0, 0]
+        anchor_offset = tf.to_float(tf.convert_to_tensor(anchor_offset))
 
-    self._scales = scales
-    self._aspect_ratios = aspect_ratios
-    self._base_anchor_size = base_anchor_size
-    self._anchor_stride = anchor_stride
-    self._anchor_offset = anchor_offset
+        self._scales = scales
+        self._aspect_ratios = aspect_ratios
+        self._base_anchor_size = base_anchor_size
+        self._anchor_stride = anchor_stride
+        self._anchor_offset = anchor_offset
 
-  def name_scope(self):
-    return 'GridAnchorGenerator'
+    def name_scope(self):
+        return 'GridAnchorGenerator'
 
-  def num_anchors_per_location(self):
-    """Returns the number of anchors per spatial location.
+    def num_anchors_per_location(self):
+        """Returns the number of anchors per spatial location.
 
     Returns:
       a list of integers, one for each expected feature map to be passed to
       the `generate` function.
     """
-    return [len(self._scales) * len(self._aspect_ratios)]
+        return [len(self._scales) * len(self._aspect_ratios)]
 
-  def _generate(self, feature_map_shape_list):
-    """Generates a collection of bounding boxes to be used as anchors.
+    def _generate(self, feature_map_shape_list, **kwargs):
+        """Generates a collection of bounding boxes to be used as anchors.
 
     Args:
       feature_map_shape_list: list of pairs of convnet layer resolutions in the
@@ -102,31 +102,31 @@ class GridAnchorGenerator(anchor_generator.AnchorGenerator):
       ValueError: if feature_map_shape_list does not consist of pairs of
         integers
     """
-    if not (isinstance(feature_map_shape_list, list)
-            and len(feature_map_shape_list) == 1):
-      raise ValueError('feature_map_shape_list must be a list of length 1.')
-    if not all([isinstance(list_item, tuple) and len(list_item) == 2
-                for list_item in feature_map_shape_list]):
-      raise ValueError('feature_map_shape_list must be a list of pairs.')
-    grid_height, grid_width = feature_map_shape_list[0]
-    scales_grid, aspect_ratios_grid = ops.meshgrid(self._scales,
-                                                   self._aspect_ratios)
-    scales_grid = tf.reshape(scales_grid, [-1])
-    aspect_ratios_grid = tf.reshape(aspect_ratios_grid, [-1])
-    anchors = tile_anchors(grid_height,
-                           grid_width,
-                           scales_grid,
-                           aspect_ratios_grid,
-                           self._base_anchor_size,
-                           self._anchor_stride,
-                           self._anchor_offset)
+        if not (isinstance(feature_map_shape_list, list)
+                and len(feature_map_shape_list) == 1):
+            raise ValueError('feature_map_shape_list must be a list of length 1.')
+        if not all([isinstance(list_item, tuple) and len(list_item) == 2
+                    for list_item in feature_map_shape_list]):
+            raise ValueError('feature_map_shape_list must be a list of pairs.')
+        grid_height, grid_width = feature_map_shape_list[0]
+        scales_grid, aspect_ratios_grid = ops.meshgrid(self._scales,
+                                                       self._aspect_ratios)
+        scales_grid = tf.reshape(scales_grid, [-1])
+        aspect_ratios_grid = tf.reshape(aspect_ratios_grid, [-1])
+        anchors = tile_anchors(grid_height,
+                               grid_width,
+                               scales_grid,
+                               aspect_ratios_grid,
+                               self._base_anchor_size,
+                               self._anchor_stride,
+                               self._anchor_offset)
 
-    num_anchors = anchors.num_boxes_static()
-    if num_anchors is None:
-      num_anchors = anchors.num_boxes()
-    anchor_indices = tf.zeros([num_anchors])
-    anchors.add_field('feature_map_index', anchor_indices)
-    return [anchors]
+        num_anchors = anchors.num_boxes_static()
+        if num_anchors is None:
+            num_anchors = anchors.num_boxes()
+        anchor_indices = tf.zeros([num_anchors])
+        anchors.add_field('feature_map_index', anchor_indices)
+        return [anchors]
 
 
 def tile_anchors(grid_height,
@@ -136,7 +136,7 @@ def tile_anchors(grid_height,
                  base_anchor_size,
                  anchor_stride,
                  anchor_offset):
-  """Create a tiled set of anchors strided along a grid in image space.
+    """Create a tiled set of anchors strided along a grid in image space.
 
   This op creates a set of anchor boxes by placing a "basis" collection of
   boxes with user-specified scales and aspect ratios centered at evenly
@@ -170,29 +170,29 @@ def tile_anchors(grid_height,
   Returns:
     a BoxList holding a collection of N anchor boxes
   """
-  ratio_sqrts = tf.sqrt(aspect_ratios)
-  heights = scales / ratio_sqrts * base_anchor_size[0]
-  widths = scales * ratio_sqrts * base_anchor_size[1]
+    ratio_sqrts = tf.sqrt(aspect_ratios)
+    heights = scales / ratio_sqrts * base_anchor_size[0]
+    widths = scales * ratio_sqrts * base_anchor_size[1]
 
-  # Get a grid of box centers
-  y_centers = tf.to_float(tf.range(grid_height))
-  y_centers = y_centers * anchor_stride[0] + anchor_offset[0]
-  x_centers = tf.to_float(tf.range(grid_width))
-  x_centers = x_centers * anchor_stride[1] + anchor_offset[1]
-  x_centers, y_centers = ops.meshgrid(x_centers, y_centers)
+    # Get a grid of box centers
+    y_centers = tf.to_float(tf.range(grid_height))
+    y_centers = y_centers * anchor_stride[0] + anchor_offset[0]
+    x_centers = tf.to_float(tf.range(grid_width))
+    x_centers = x_centers * anchor_stride[1] + anchor_offset[1]
+    x_centers, y_centers = ops.meshgrid(x_centers, y_centers)
 
-  widths_grid, x_centers_grid = ops.meshgrid(widths, x_centers)
-  heights_grid, y_centers_grid = ops.meshgrid(heights, y_centers)
-  bbox_centers = tf.stack([y_centers_grid, x_centers_grid], axis=3)
-  bbox_sizes = tf.stack([heights_grid, widths_grid], axis=3)
-  bbox_centers = tf.reshape(bbox_centers, [-1, 2])
-  bbox_sizes = tf.reshape(bbox_sizes, [-1, 2])
-  bbox_corners = _center_size_bbox_to_corners_bbox(bbox_centers, bbox_sizes)
-  return box_list.BoxList(bbox_corners)
+    widths_grid, x_centers_grid = ops.meshgrid(widths, x_centers)
+    heights_grid, y_centers_grid = ops.meshgrid(heights, y_centers)
+    bbox_centers = tf.stack([y_centers_grid, x_centers_grid], axis=3)
+    bbox_sizes = tf.stack([heights_grid, widths_grid], axis=3)
+    bbox_centers = tf.reshape(bbox_centers, [-1, 2])
+    bbox_sizes = tf.reshape(bbox_sizes, [-1, 2])
+    bbox_corners = _center_size_bbox_to_corners_bbox(bbox_centers, bbox_sizes)
+    return box_list.BoxList(bbox_corners)
 
 
 def _center_size_bbox_to_corners_bbox(centers, sizes):
-  """Converts bbox center-size representation to corners representation.
+    """Converts bbox center-size representation to corners representation.
 
   Args:
     centers: a tensor with shape [N, 2] representing bounding box centers
@@ -202,4 +202,4 @@ def _center_size_bbox_to_corners_bbox(centers, sizes):
     corners: tensor with shape [N, 4] representing bounding boxes in corners
       representation
   """
-  return tf.concat([centers - .5 * sizes, centers + .5 * sizes], 1)
+    return tf.concat([centers - .5 * sizes, centers + .5 * sizes], 1)

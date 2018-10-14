@@ -18,7 +18,7 @@ import tensorflow as tf
 
 
 class FreezableBatchNorm(tf.keras.layers.BatchNormalization):
-  """Batch normalization layer (Ioffe and Szegedy, 2014).
+    """Batch normalization layer (Ioffe and Szegedy, 2014).
 
   This is a `freezable` batch norm layer that supports setting the `training`
   parameter in the __init__ method rather than having to set it either via
@@ -60,11 +60,11 @@ class FreezableBatchNorm(tf.keras.layers.BatchNormalization):
         Internal Covariate Shift](https://arxiv.org/abs/1502.03167)
   """
 
-  def __init__(self, training=None, **kwargs):
-    super(FreezableBatchNorm, self).__init__(**kwargs)
-    self._training = training
+    def __init__(self, training=None, **kwargs):
+        super(FreezableBatchNorm, self).__init__(**kwargs)
+        self._training = training
 
-  def call(self, inputs, training=None):
-    if training is None:
-      training = self._training
-    return super(FreezableBatchNorm, self).call(inputs, training=training)
+    def call(self, inputs, training=None):
+        if training is None:
+            training = self._training
+        return super(FreezableBatchNorm, self).call(inputs, training=training)

@@ -46,6 +46,8 @@ def download_dataset(url, file):
         with open(file, "wb") as f:
             f.write(data)
             f.close()
+
+
 download_dataset(URL_TRAIN, FILE_TRAIN)
 download_dataset(URL_TEST, FILE_TEST)
 
@@ -57,6 +59,7 @@ feature_names = [
     'SepalWidth',
     'PetalLength',
     'PetalWidth']
+
 
 # Create an input function reading a file using the Dataset API
 # Then provide the results to the Estimator API
@@ -82,6 +85,7 @@ def my_input_fn(file_path, perform_shuffle=False, repeat_count=1):
     iterator = dataset.make_one_shot_iterator()
     batch_features, batch_labels = iterator.get_next()
     return batch_features, batch_labels
+
 
 next_batch = my_input_fn(FILE_TRAIN, True)  # Will return 32 random elements
 
@@ -138,6 +142,7 @@ def new_input_fn():
     iterator = dataset.make_one_shot_iterator()
     next_feature_batch = iterator.get_next()
     return next_feature_batch, None  # In prediction, we have no labels
+
 
 # Predict all our prediction_input
 predict_results = classifier.predict(input_fn=new_input_fn)

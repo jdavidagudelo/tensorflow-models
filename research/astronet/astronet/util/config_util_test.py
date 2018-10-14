@@ -20,43 +20,43 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from astronet.util import config_util
+from ..util import config_util
 
 
 class ConfigUtilTest(tf.test.TestCase):
 
-  def testUnflatten(self):
-    # Empty dict.
-    self.assertDictEqual(config_util.unflatten({}), {})
+    def testUnflatten(self):
+        # Empty dict.
+        self.assertDictEqual(config_util.unflatten({}), {})
 
-    # Already flat dict.
-    self.assertDictEqual(
-        config_util.unflatten({
-            "a": 1,
-            "b": 2
-        }), {
-            "a": 1,
-            "b": 2
-        })
+        # Already flat dict.
+        self.assertDictEqual(
+            config_util.unflatten({
+                "a": 1,
+                "b": 2
+            }), {
+                "a": 1,
+                "b": 2
+            })
 
-    # Nested dict.
-    self.assertDictEqual(
-        config_util.unflatten({
-            "a": 1,
-            "b.c": 2,
-            "b.d.e": 3,
-            "b.d.f": 4,
-        }), {
-            "a": 1,
-            "b": {
-                "c": 2,
-                "d": {
-                    "e": 3,
-                    "f": 4,
+        # Nested dict.
+        self.assertDictEqual(
+            config_util.unflatten({
+                "a": 1,
+                "b.c": 2,
+                "b.d.e": 3,
+                "b.d.f": 4,
+            }), {
+                "a": 1,
+                "b": {
+                    "c": 2,
+                    "d": {
+                        "e": 3,
+                        "f": 4,
+                    }
                 }
-            }
-        })
+            })
 
 
 if __name__ == "__main__":
-  tf.test.main()
+    tf.test.main()

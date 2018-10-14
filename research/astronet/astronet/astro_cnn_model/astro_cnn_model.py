@@ -48,14 +48,14 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from astronet.astro_model import astro_model
+from ..astro_model import astro_model
 
 
 class AstroCNNModel(astro_model.AstroModel):
-  """A model for classifying light curves using a convolutional neural net."""
+    """A model for classifying light curves using a convolutional neural net."""
 
-  def __init__(self, features, labels, hparams, mode):
-    """Basic setup. The actual TensorFlow graph is constructed in build().
+    def __init__(self, features, labels, hparams, mode):
+        """Basic setup. The actual TensorFlow graph is constructed in build().
 
     Args:
       features: A dictionary containing "time_series_features" and
@@ -70,10 +70,11 @@ class AstroCNNModel(astro_model.AstroModel):
     Raises:
       ValueError: If mode is invalid.
     """
-    super(AstroCNNModel, self).__init__(features, labels, hparams, mode)
+        super(AstroCNNModel, self).__init__(features, labels, hparams, mode)
 
-  def _build_cnn_layers(self, inputs, hparams, scope="cnn"):
-    """Builds convolutional layers.
+    @staticmethod
+    def _build_cnn_layers(inputs, hparams, scope="cnn"):
+        """Builds convolutional layers.
 
     The layers are defined by convolutional blocks with pooling between blocks
     (but not within blocks). Within a block, all layers have the same number of
@@ -90,38 +91,38 @@ class AstroCNNModel(astro_model.AstroModel):
       on the input size, kernel size, number of filters, number of layers,
       convolution padding type and pooling.
     """
-    with tf.variable_scope(scope):
-      net = tf.expand_dims(inputs, -1)  # [batch, length, channels]
-      for i in range(hparams.cnn_num_blocks):
-        num_filters = int(hparams.cnn_initial_num_filters *
-                          hparams.cnn_block_filter_factor**i)
-        with tf.variable_scope("block_%d" % (i + 1)):
-          for j in range(hparams.cnn_block_size):
-            net = tf.layers.conv1d(
-                inputs=net,
-                filters=num_filters,
-                kernel_size=int(hparams.cnn_kernel_size),
-                padding=hparams.convolution_padding,
-                activation=tf.nn.relu,
-                name="conv_%d" % (j + 1))
+        with tf.variable_scope(scope):
+            net = tf.expand_dims(inputs, -1)  # [batch, length, channels]
+            for i in range(hparams.cnn_num_blocks):
+                num_filters = int(hparams.cnn_initial_num_filters *
+                                  hparams.cnn_block_filter_factor ** i)
+                with tf.variable_scope("block_%d" % (i + 1)):
+                    for j in range(hparams.cnn_block_size):
+                        net = tf.layers.conv1d(
+                            inputs=net,
+                            filters=num_filters,
+                            kernel_size=int(hparams.cnn_kernel_size),
+                            padding=hparams.convolution_padding,
+                            activation=tf.nn.relu,
+                            name="conv_%d" % (j + 1))
 
-          if hparams.pool_size > 1:  # pool_size 0 or 1 denotes no pooling
-            net = tf.layers.max_pooling1d(
-                inputs=net,
-                pool_size=int(hparams.pool_size),
-                strides=int(hparams.pool_strides),
-                name="pool")
+                    if hparams.pool_size > 1:  # pool_size 0 or 1 denotes no pooling
+                        net = tf.layers.max_pooling1d(
+                            inputs=net,
+                            pool_size=int(hparams.pool_size),
+                            strides=int(hparams.pool_strides),
+                            name="pool")
 
-      # Flatten.
-      net.get_shape().assert_has_rank(3)
-      net_shape = net.get_shape().as_list()
-      output_dim = net_shape[1] * net_shape[2]
-      net = tf.reshape(net, [-1, output_dim], name="flatten")
+            # Flatten.
+            net.get_shape().assert_has_rank(3)
+            net_shape = net.get_shape().as_list()
+            output_dim = net_shape[1] * net_shape[2]
+            net = tf.reshape(net, [-1, output_dim], name="flatten")
 
-    return net
+        return net
 
-  def build_time_series_hidden_layers(self):
-    """Builds hidden layers for the time series features.
+    def build_time_series_hidden_layers(self):
+        """Builds hidden layers for the time series features.
 
     Inputs:
       self.time_series_features
@@ -129,11 +130,11 @@ class AstroCNNModel(astro_model.AstroModel):
     Outputs:
       self.time_series_hidden_layers
     """
-    time_series_hidden_layers = {}
-    for name, time_series in self.time_series_features.items():
-      time_series_hidden_layers[name] = self._build_cnn_layers(
-          inputs=time_series,
-          hparams=self.hparams.time_series_hidden[name],
-          scope=name + "_hidden")
+        time_series_hidden_layers = {}
+        for name, time_series in self.time_series_features.items():
+            time_series_hidden_layers[name] = self._build_cnn_layers(
+                inputs=time_series,
+                hparams=self.hparams.time_series_hidden[name],
+                scope=name + "_hidden")
 
-    self.time_series_hidden_layers = time_series_hidden_layers
+        self.time_series_hidden_layers = time_series_hidden_layers

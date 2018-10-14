@@ -21,18 +21,18 @@ import functools
 
 import tensorflow as tf
 
-from nets import alexnet
-from nets import cifarnet
-from nets import inception
-from nets import lenet
-from nets import mobilenet_v1
-from nets import overfeat
-from nets import resnet_v1
-from nets import resnet_v2
-from nets import vgg
-from nets.mobilenet import mobilenet_v2
-from nets.nasnet import nasnet
-from nets.nasnet import pnasnet
+from research.slim.nets import alexnet
+from research.slim.nets import cifarnet
+from research.slim.nets import inception
+from research.slim.nets import lenet
+from research.slim.nets import mobilenet_v1
+from research.slim.nets import overfeat
+from research.slim.nets import resnet_v1
+from research.slim.nets import resnet_v2
+from research.slim.nets import vgg
+from research.slim.nets.mobilenet import mobilenet_v2
+from research.slim.nets.nasnet import nasnet
+from research.slim.nets.nasnet import pnasnet
 
 slim = tf.contrib.slim
 
@@ -68,7 +68,7 @@ networks_map = {'alexnet_v2': alexnet.alexnet_v2,
                 'nasnet_large': nasnet.build_nasnet_large,
                 'pnasnet_large': pnasnet.build_pnasnet_large,
                 'pnasnet_mobile': pnasnet.build_pnasnet_mobile,
-               }
+                }
 
 arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
                   'cifarnet': cifarnet.cifarnet_arg_scope,
@@ -81,7 +81,7 @@ arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
                   'inception_v3': inception.inception_v3_arg_scope,
                   'inception_v4': inception.inception_v4_arg_scope,
                   'inception_resnet_v2':
-                  inception.inception_resnet_v2_arg_scope,
+                      inception.inception_resnet_v2_arg_scope,
                   'lenet': lenet.lenet_arg_scope,
                   'resnet_v1_50': resnet_v1.resnet_arg_scope,
                   'resnet_v1_101': resnet_v1.resnet_arg_scope,
@@ -103,11 +103,11 @@ arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
                   'nasnet_large': nasnet.nasnet_large_arg_scope,
                   'pnasnet_large': pnasnet.pnasnet_large_arg_scope,
                   'pnasnet_mobile': pnasnet.pnasnet_mobile_arg_scope,
-                 }
+                  }
 
 
 def get_network_fn(name, num_classes, weight_decay=0.0, is_training=False):
-  """Returns a network_fn such as `logits, end_points = network_fn(images)`.
+    """Returns a network_fn such as `logits, end_points = network_fn(images)`.
 
   Args:
     name: The name of the network.
@@ -137,15 +137,17 @@ def get_network_fn(name, num_classes, weight_decay=0.0, is_training=False):
   Raises:
     ValueError: If network `name` is not recognized.
   """
-  if name not in networks_map:
-    raise ValueError('Name of network unknown %s' % name)
-  func = networks_map[name]
-  @functools.wraps(func)
-  def network_fn(images, **kwargs):
-    arg_scope = arg_scopes_map[name](weight_decay=weight_decay)
-    with slim.arg_scope(arg_scope):
-      return func(images, num_classes, is_training=is_training, **kwargs)
-  if hasattr(func, 'default_image_size'):
-    network_fn.default_image_size = func.default_image_size
+    if name not in networks_map:
+        raise ValueError('Name of network unknown %s' % name)
+    func = networks_map[name]
 
-  return network_fn
+    @functools.wraps(func)
+    def network_fn(images, **kwargs):
+        arg_scope = arg_scopes_map[name](weight_decay=weight_decay)
+        with slim.arg_scope(arg_scope):
+            return func(images, num_classes, is_training=is_training, **kwargs)
+
+    if hasattr(func, 'default_image_size'):
+        network_fn.default_image_size = func.default_image_size
+
+    return network_fn

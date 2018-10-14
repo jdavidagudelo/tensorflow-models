@@ -49,9 +49,9 @@ from absl import app
 from absl import flags
 from absl import logging
 
-from single_task import defaults  # brain coder
-from single_task import ga_train  # brain coder
-from single_task import pg_train  # brain coder
+from ..single_task import defaults  # brain coder
+from ..single_task import ga_train  # brain coder
+from ..single_task import pg_train  # brain coder
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('config', '', 'Configuration.')
@@ -73,7 +73,6 @@ flags.DEFINE_string(
     'The threshold for what messages will be logged. One of DEBUG, INFO, WARN, '
     'ERROR, or FATAL.')
 
-
 # To register an algorithm:
 # 1) Add dependency in the BUILD file to this build rule.
 # 2) Import the algorithm's module at the top of this file.
@@ -89,7 +88,7 @@ ALGORITHM_REGISTRATION = {
 
 
 def get_namespace(config_string):
-  """Get namespace for the selected algorithm.
+    """Get namespace for the selected algorithm.
 
   Users who want to add additional algorithm types should modify this function.
   The algorithm's namespace should contain the following functions:
@@ -113,30 +112,20 @@ def get_namespace(config_string):
     ValueError: If config.agent.algorithm is not one of the registered
         algorithms.
   """
-  config = defaults.default_config_with_updates(config_string)
-  if config.agent.algorithm not in ALGORITHM_REGISTRATION:
-    raise ValueError('Unknown algorithm type "%s"' % (config.agent.algorithm,))
-  else:
-    return ALGORITHM_REGISTRATION[config.agent.algorithm], config
+    config = defaults.default_config_with_updates(config_string)
+    if config.agent.algorithm not in ALGORITHM_REGISTRATION:
+        raise ValueError('Unknown algorithm type "%s"' % (config.agent.algorithm,))
+    else:
+        return ALGORITHM_REGISTRATION[config.agent.algorithm], config
 
 
 def main(argv):
-  del argv  # Unused.
+    del argv  # Unused.
 
-  logging.set_verbosity(FLAGS.log_level)
+    logging.set_verbosity('error')
 
-  flags.mark_flag_as_required('logdir')
-  if FLAGS.num_workers <= 0:
-    raise ValueError('num_workers flag must be greater than 0.')
-  if FLAGS.task_id < 0:
-    raise ValueError('task_id flag must be greater than or equal to 0.')
-  if FLAGS.task_id >= FLAGS.num_workers:
-    raise ValueError(
-        'task_id flag must be strictly less than num_workers flag.')
-
-  ns, _ = get_namespace(FLAGS.config)
-  ns.run_training(is_chief=FLAGS.task_id == 0)
+    flags.mark_flag_as_required('logdir')
 
 
 if __name__ == '__main__':
-  app.run(main)
+    app.run(main)

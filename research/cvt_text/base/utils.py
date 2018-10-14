@@ -19,50 +19,50 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import cPickle
+import pickle
 import sys
 import tensorflow as tf
 
 
 class Memoize(object):
-  def __init__(self, f):
-    self.f = f
-    self.cache = {}
+    def __init__(self, f):
+        self.f = f
+        self.cache = {}
 
-  def __call__(self, *args):
-    if args not in self.cache:
-      self.cache[args] = self.f(*args)
-    return self.cache[args]
+    def __call__(self, *args):
+        if args not in self.cache:
+            self.cache[args] = self.f(*args)
+        return self.cache[args]
 
 
 def load_cpickle(path, memoized=True):
-  return _load_cpickle_memoize(path) if memoized else _load_cpickle(path)
+    return _load_cpickle_memoize(path) if memoized else _load_cpickle(path)
 
 
 def _load_cpickle(path):
-  with tf.gfile.GFile(path, 'r') as f:
-    return cPickle.load(f)
+    with tf.gfile.GFile(path, 'r') as f:
+        return pickle.load(f)
 
 
 @Memoize
 def _load_cpickle_memoize(path):
-  return _load_cpickle(path)
+    return _load_cpickle(path)
 
 
 def write_cpickle(o, path):
-  tf.gfile.MakeDirs(path.rsplit('/', 1)[0])
-  with tf.gfile.GFile(path, 'w') as f:
-    cPickle.dump(o, f, -1)
+    tf.gfile.MakeDirs(path.rsplit('/', 1)[0])
+    with tf.gfile.GFile(path, 'w') as f:
+        pickle.dump(o, f, -1)
 
 
 def log(*args):
-  msg = ' '.join(map(str, args))
-  sys.stdout.write(msg + '\n')
-  sys.stdout.flush()
+    msg = ' '.join(map(str, args))
+    sys.stdout.write(msg + '\n')
+    sys.stdout.flush()
 
 
 def heading(*args):
-  log()
-  log(80 * '=')
-  log(*args)
-  log(80 * '=')
+    log()
+    log(80 * '=')
+    log(*args)
+    log(80 * '=')

@@ -21,21 +21,21 @@
 # If MyFunc returns True, returns (output_arg1, output_arg2, ...)
 # If MyFunc returns False, raises ValueError(error).
 def ValueErrorOnFalse(ok, *output_args):
-  """Raises ValueError if not ok, otherwise returns the output arguments."""
-  n_outputs = len(output_args)
-  if n_outputs < 2:
-    raise ValueError("Expected 2 or more output_args. Got: %d" % n_outputs)
+    """Raises ValueError if not ok, otherwise returns the output arguments."""
+    n_outputs = len(output_args)
+    if n_outputs < 2:
+        raise ValueError("Expected 2 or more output_args. Got: %d" % n_outputs)
 
-  if not ok:
-    error = output_args[-1]
-    raise ValueError(error)
+    if not ok:
+        error = output_args[-1]
+        raise ValueError(error)
 
-  if n_outputs == 2:
-    output = output_args[0]
-  else:
-    output = output_args[0:-1]
+    if n_outputs == 2:
+        output = output_args[0]
+    else:
+        output = output_args[0:-1]
 
-  return output
+    return output
 
 
 # CLIF postprocessor for a C++ function with signature:
@@ -44,8 +44,8 @@ def ValueErrorOnFalse(ok, *output_args):
 # If result is not null, returns result.
 # If result is null, raises ValueError(error).
 def ValueErrorOnNull(result, error):
-  """Raises ValueError(error) if result is None, otherwise returns result."""
-  if result is None:
-    raise ValueError(error)
+    """Raises ValueError(error) if result is None, otherwise returns result."""
+    if result is None:
+        raise ValueError(error)
 
-  return result
+    return result

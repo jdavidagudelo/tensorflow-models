@@ -24,25 +24,26 @@ objects.
 """
 import tensorflow as tf
 
-from object_detection.predictors.heads import head
+from research.object_detection.predictors.heads import head
+
 slim = tf.contrib.slim
 
 
 class MaskRCNNKeypointHead(head.Head):
-  """Mask RCNN keypoint prediction head.
+    """Mask RCNN keypoint prediction head.
 
   Please refer to Mask RCNN paper:
   https://arxiv.org/abs/1703.06870
   """
 
-  def __init__(self,
-               num_keypoints=17,
-               conv_hyperparams_fn=None,
-               keypoint_heatmap_height=56,
-               keypoint_heatmap_width=56,
-               keypoint_prediction_num_conv_layers=8,
-               keypoint_prediction_conv_depth=512):
-    """Constructor.
+    def __init__(self,
+                 num_keypoints=17,
+                 conv_hyperparams_fn=None,
+                 keypoint_heatmap_height=56,
+                 keypoint_heatmap_width=56,
+                 keypoint_prediction_num_conv_layers=8,
+                 keypoint_prediction_conv_depth=512):
+        """Constructor.
 
     Args:
       num_keypoints: (int scalar) number of keypoints.
@@ -60,17 +61,17 @@ class MaskRCNNKeypointHead(head.Head):
         based on the number of object classes and the number of channels in the
         image features.
     """
-    super(MaskRCNNKeypointHead, self).__init__()
-    self._num_keypoints = num_keypoints
-    self._conv_hyperparams_fn = conv_hyperparams_fn
-    self._keypoint_heatmap_height = keypoint_heatmap_height
-    self._keypoint_heatmap_width = keypoint_heatmap_width
-    self._keypoint_prediction_num_conv_layers = (
-        keypoint_prediction_num_conv_layers)
-    self._keypoint_prediction_conv_depth = keypoint_prediction_conv_depth
+        super(MaskRCNNKeypointHead, self).__init__()
+        self._num_keypoints = num_keypoints
+        self._conv_hyperparams_fn = conv_hyperparams_fn
+        self._keypoint_heatmap_height = keypoint_heatmap_height
+        self._keypoint_heatmap_width = keypoint_heatmap_width
+        self._keypoint_prediction_num_conv_layers = (
+            keypoint_prediction_num_conv_layers)
+        self._keypoint_prediction_conv_depth = keypoint_prediction_conv_depth
 
-  def predict(self, features, num_predictions_per_location=1):
-    """Performs keypoint prediction.
+    def predict(self, features, num_predictions_per_location=1):
+        """Performs keypoint prediction.
 
     Args:
       features: A float tensor of shape [batch_size, height, width,
@@ -85,25 +86,25 @@ class MaskRCNNKeypointHead(head.Head):
     Raises:
       ValueError: If num_predictions_per_location is not 1.
     """
-    if num_predictions_per_location != 1:
-      raise ValueError('Only num_predictions_per_location=1 is supported')
-    with slim.arg_scope(self._conv_hyperparams_fn()):
-      net = slim.conv2d(
-          features,
-          self._keypoint_prediction_conv_depth, [3, 3],
-          scope='conv_1')
-      for i in range(1, self._keypoint_prediction_num_conv_layers):
-        net = slim.conv2d(
-            net,
-            self._keypoint_prediction_conv_depth, [3, 3],
-            scope='conv_%d' % (i + 1))
-      net = slim.conv2d_transpose(
-          net, self._num_keypoints, [2, 2], scope='deconv1')
-      heatmaps_mask = tf.image.resize_bilinear(
-          net, [self._keypoint_heatmap_height, self._keypoint_heatmap_width],
-          align_corners=True,
-          name='upsample')
-      return tf.expand_dims(
-          tf.transpose(heatmaps_mask, perm=[0, 3, 1, 2]),
-          axis=1,
-          name='KeypointPredictor')
+        if num_predictions_per_location != 1:
+            raise ValueError('Only num_predictions_per_location=1 is supported')
+        with slim.arg_scope(self._conv_hyperparams_fn()):
+            net = slim.conv2d(
+                features,
+                self._keypoint_prediction_conv_depth, [3, 3],
+                scope='conv_1')
+            for i in range(1, self._keypoint_prediction_num_conv_layers):
+                net = slim.conv2d(
+                    net,
+                    self._keypoint_prediction_conv_depth, [3, 3],
+                    scope='conv_%d' % (i + 1))
+            net = slim.conv2d_transpose(
+                net, self._num_keypoints, [2, 2], scope='deconv1')
+            heatmaps_mask = tf.image.resize_bilinear(
+                net, [self._keypoint_heatmap_height, self._keypoint_heatmap_width],
+                align_corners=True,
+                name='upsample')
+            return tf.expand_dims(
+                tf.transpose(heatmaps_mask, perm=[0, 3, 1, 2]),
+                axis=1,
+                name='KeypointPredictor')

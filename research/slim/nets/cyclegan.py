@@ -29,7 +29,7 @@ def cyclegan_arg_scope(instance_norm_center=True,
                        instance_norm_epsilon=0.001,
                        weights_init_stddev=0.02,
                        weight_decay=0.0):
-  """Returns a default argument scope for all generators and discriminators.
+    """Returns a default argument scope for all generators and discriminators.
 
   Args:
     instance_norm_center: Whether instance normalization applies centering.
@@ -44,27 +44,27 @@ def cyclegan_arg_scope(instance_norm_center=True,
   Returns:
     An arg-scope.
   """
-  instance_norm_params = {
-      'center': instance_norm_center,
-      'scale': instance_norm_scale,
-      'epsilon': instance_norm_epsilon,
-  }
+    instance_norm_params = {
+        'center': instance_norm_center,
+        'scale': instance_norm_scale,
+        'epsilon': instance_norm_epsilon,
+    }
 
-  weights_regularizer = None
-  if weight_decay and weight_decay > 0.0:
-    weights_regularizer = layers.l2_regularizer(weight_decay)
+    weights_regularizer = None
+    if weight_decay and weight_decay > 0.0:
+        weights_regularizer = layers.l2_regularizer(weight_decay)
 
-  with tf.contrib.framework.arg_scope(
-      [layers.conv2d],
-      normalizer_fn=layers.instance_norm,
-      normalizer_params=instance_norm_params,
-      weights_initializer=tf.random_normal_initializer(0, weights_init_stddev),
-      weights_regularizer=weights_regularizer) as sc:
-    return sc
+    with tf.contrib.framework.arg_scope(
+            [layers.conv2d],
+            normalizer_fn=layers.instance_norm,
+            normalizer_params=instance_norm_params,
+            weights_initializer=tf.random_normal_initializer(0, weights_init_stddev),
+            weights_regularizer=weights_regularizer) as sc:
+        return sc
 
 
 def cyclegan_upsample(net, num_outputs, stride, method='conv2d_transpose'):
-  """Upsamples the given inputs.
+    """Upsamples the given inputs.
 
   Args:
     net: A Tensor of size [batch_size, height, width, filters].
@@ -82,44 +82,44 @@ def cyclegan_upsample(net, num_outputs, stride, method='conv2d_transpose'):
   Raises:
     ValueError: if `method` is not recognized.
   """
-  with tf.variable_scope('upconv'):
-    net_shape = tf.shape(net)
-    height = net_shape[1]
-    width = net_shape[2]
+    with tf.variable_scope('upconv'):
+        net_shape = tf.shape(net)
+        height = net_shape[1]
+        width = net_shape[2]
 
-    # Reflection pad by 1 in spatial dimensions (axes 1, 2 = h, w) to make a 3x3
-    # 'valid' convolution produce an output with the same dimension as the
-    # input.
-    spatial_pad_1 = np.array([[0, 0], [1, 1], [1, 1], [0, 0]])
+        # Reflection pad by 1 in spatial dimensions (axes 1, 2 = h, w) to make a 3x3
+        # 'valid' convolution produce an output with the same dimension as the
+        # input.
+        spatial_pad_1 = np.array([[0, 0], [1, 1], [1, 1], [0, 0]])
 
-    if method == 'nn_upsample_conv':
-      net = tf.image.resize_nearest_neighbor(
-          net, [stride[0] * height, stride[1] * width])
-      net = tf.pad(net, spatial_pad_1, 'REFLECT')
-      net = layers.conv2d(net, num_outputs, kernel_size=[3, 3], padding='valid')
-    elif method == 'bilinear_upsample_conv':
-      net = tf.image.resize_bilinear(
-          net, [stride[0] * height, stride[1] * width])
-      net = tf.pad(net, spatial_pad_1, 'REFLECT')
-      net = layers.conv2d(net, num_outputs, kernel_size=[3, 3], padding='valid')
-    elif method == 'conv2d_transpose':
-      # This corrects 1 pixel offset for images with even width and height.
-      # conv2d is left aligned and conv2d_transpose is right aligned for even
-      # sized images (while doing 'SAME' padding).
-      # Note: This doesn't reflect actual model in paper.
-      net = layers.conv2d_transpose(
-          net, num_outputs, kernel_size=[3, 3], stride=stride, padding='valid')
-      net = net[:, 1:, 1:, :]
-    else:
-      raise ValueError('Unknown method: [%s]', method)
+        if method == 'nn_upsample_conv':
+            net = tf.image.resize_nearest_neighbor(
+                net, [stride[0] * height, stride[1] * width])
+            net = tf.pad(net, spatial_pad_1, 'REFLECT')
+            net = layers.conv2d(net, num_outputs, kernel_size=[3, 3], padding='valid')
+        elif method == 'bilinear_upsample_conv':
+            net = tf.image.resize_bilinear(
+                net, [stride[0] * height, stride[1] * width])
+            net = tf.pad(net, spatial_pad_1, 'REFLECT')
+            net = layers.conv2d(net, num_outputs, kernel_size=[3, 3], padding='valid')
+        elif method == 'conv2d_transpose':
+            # This corrects 1 pixel offset for images with even width and height.
+            # conv2d is left aligned and conv2d_transpose is right aligned for even
+            # sized images (while doing 'SAME' padding).
+            # Note: This doesn't reflect actual model in paper.
+            net = layers.conv2d_transpose(
+                net, num_outputs, kernel_size=[3, 3], stride=stride, padding='valid')
+            net = net[:, 1:, 1:, :]
+        else:
+            raise ValueError('Unknown method: [%s]', method)
 
-    return net
+        return net
 
 
 def _dynamic_or_static_shape(tensor):
-  shape = tf.shape(tensor)
-  static_shape = tf.contrib.util.constant_value(shape)
-  return static_shape if static_shape is not None else shape
+    shape = tf.shape(tensor)
+    static_shape = tf.contrib.util.constant_value(shape)
+    return static_shape if static_shape is not None else shape
 
 
 def cyclegan_generator_resnet(images,
@@ -131,7 +131,7 @@ def cyclegan_generator_resnet(images,
                               num_outputs=3,
                               tanh_linear_slope=0.0,
                               is_training=False):
-  """Defines the cyclegan resnet network architecture.
+    """Defines the cyclegan resnet network architecture.
 
   As closely as possible following
   https://github.com/junyanz/CycleGAN/blob/master/models/architectures.lua#L232
@@ -165,109 +165,106 @@ def cyclegan_generator_resnet(images,
     ValueError: If the input height or width is known at graph construction time
       and not a multiple of 4.
   """
-  # Neither dropout nor batch norm -> dont need is_training
-  del is_training
+    # Neither dropout nor batch norm -> dont need is_training
+    del is_training
 
-  end_points = {}
+    end_points = {}
 
-  input_size = images.shape.as_list()
-  height, width = input_size[1], input_size[2]
-  if height and height % 4 != 0:
-    raise ValueError('The input height must be a multiple of 4.')
-  if width and width % 4 != 0:
-    raise ValueError('The input width must be a multiple of 4.')
+    input_size = images.shape.as_list()
+    height, width = input_size[1], input_size[2]
+    if height and height % 4 != 0:
+        raise ValueError('The input height must be a multiple of 4.')
+    if width and width % 4 != 0:
+        raise ValueError('The input width must be a multiple of 4.')
 
-  if not isinstance(kernel_size, (list, tuple)):
-    kernel_size = [kernel_size, kernel_size]
+    if not isinstance(kernel_size, (list, tuple)):
+        kernel_size = [kernel_size, kernel_size]
 
-  kernel_height = kernel_size[0]
-  kernel_width = kernel_size[1]
-  pad_top = (kernel_height - 1) // 2
-  pad_bottom = kernel_height // 2
-  pad_left = (kernel_width - 1) // 2
-  pad_right = kernel_width // 2
-  paddings = np.array(
-      [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]],
-      dtype=np.int32)
-  spatial_pad_3 = np.array([[0, 0], [3, 3], [3, 3], [0, 0]])
+    kernel_height = kernel_size[0]
+    kernel_width = kernel_size[1]
+    pad_top = (kernel_height - 1) // 2
+    pad_bottom = kernel_height // 2
+    pad_left = (kernel_width - 1) // 2
+    pad_right = kernel_width // 2
+    paddings = np.array(
+        [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]],
+        dtype=np.int32)
+    spatial_pad_3 = np.array([[0, 0], [3, 3], [3, 3], [0, 0]])
 
-  with tf.contrib.framework.arg_scope(arg_scope_fn()):
+    with tf.contrib.framework.arg_scope(arg_scope_fn()):
 
-    ###########
-    # Encoder #
-    ###########
-    with tf.variable_scope('input'):
-      # 7x7 input stage
-      net = tf.pad(images, spatial_pad_3, 'REFLECT')
-      net = layers.conv2d(net, num_filters, kernel_size=[7, 7], padding='VALID')
-      end_points['encoder_0'] = net
+        ###########
+        # Encoder #
+        ###########
+        with tf.variable_scope('input'):
+            # 7x7 input stage
+            net = tf.pad(images, spatial_pad_3, 'REFLECT')
+            net = layers.conv2d(net, num_filters, kernel_size=[7, 7], padding='VALID')
+            end_points['encoder_0'] = net
 
-    with tf.variable_scope('encoder'):
-      with tf.contrib.framework.arg_scope(
-          [layers.conv2d],
-          kernel_size=kernel_size,
-          stride=2,
-          activation_fn=tf.nn.relu,
-          padding='VALID'):
+        with tf.variable_scope('encoder'):
+            with tf.contrib.framework.arg_scope(
+                    [layers.conv2d],
+                    kernel_size=kernel_size,
+                    stride=2,
+                    activation_fn=tf.nn.relu,
+                    padding='VALID'):
+                net = tf.pad(net, paddings, 'REFLECT')
+                net = layers.conv2d(net, num_filters * 2)
+                end_points['encoder_1'] = net
+                net = tf.pad(net, paddings, 'REFLECT')
+                net = layers.conv2d(net, num_filters * 4)
+                end_points['encoder_2'] = net
 
-        net = tf.pad(net, paddings, 'REFLECT')
-        net = layers.conv2d(net, num_filters * 2)
-        end_points['encoder_1'] = net
-        net = tf.pad(net, paddings, 'REFLECT')
-        net = layers.conv2d(net, num_filters * 4)
-        end_points['encoder_2'] = net
+        ###################
+        # Residual Blocks #
+        ###################
+        with tf.variable_scope('residual_blocks'):
+            with tf.contrib.framework.arg_scope(
+                    [layers.conv2d],
+                    kernel_size=kernel_size,
+                    stride=1,
+                    activation_fn=tf.nn.relu,
+                    padding='VALID'):
+                for block_id in xrange(num_resnet_blocks):
+                    with tf.variable_scope('block_{}'.format(block_id)):
+                        res_net = tf.pad(net, paddings, 'REFLECT')
+                        res_net = layers.conv2d(res_net, num_filters * 4)
+                        res_net = tf.pad(res_net, paddings, 'REFLECT')
+                        res_net = layers.conv2d(res_net, num_filters * 4,
+                                                activation_fn=None)
+                        net += res_net
 
-    ###################
-    # Residual Blocks #
-    ###################
-    with tf.variable_scope('residual_blocks'):
-      with tf.contrib.framework.arg_scope(
-          [layers.conv2d],
-          kernel_size=kernel_size,
-          stride=1,
-          activation_fn=tf.nn.relu,
-          padding='VALID'):
-        for block_id in xrange(num_resnet_blocks):
-          with tf.variable_scope('block_{}'.format(block_id)):
-            res_net = tf.pad(net, paddings, 'REFLECT')
-            res_net = layers.conv2d(res_net, num_filters * 4)
-            res_net = tf.pad(res_net, paddings, 'REFLECT')
-            res_net = layers.conv2d(res_net, num_filters * 4,
-                                    activation_fn=None)
-            net += res_net
+                        end_points['resnet_block_%d' % block_id] = net
 
-            end_points['resnet_block_%d' % block_id] = net
+        ###########
+        # Decoder #
+        ###########
+        with tf.variable_scope('decoder'):
+            with tf.contrib.framework.arg_scope(
+                    [layers.conv2d],
+                    kernel_size=kernel_size,
+                    stride=1,
+                    activation_fn=tf.nn.relu):
+                with tf.variable_scope('decoder1'):
+                    net = upsample_fn(net, num_outputs=num_filters * 2, stride=[2, 2])
+                end_points['decoder1'] = net
 
-    ###########
-    # Decoder #
-    ###########
-    with tf.variable_scope('decoder'):
+                with tf.variable_scope('decoder2'):
+                    net = upsample_fn(net, num_outputs=num_filters, stride=[2, 2])
+                end_points['decoder2'] = net
 
-      with tf.contrib.framework.arg_scope(
-          [layers.conv2d],
-          kernel_size=kernel_size,
-          stride=1,
-          activation_fn=tf.nn.relu):
+        with tf.variable_scope('output'):
+            net = tf.pad(net, spatial_pad_3, 'REFLECT')
+            logits = layers.conv2d(
+                net,
+                num_outputs, [7, 7],
+                activation_fn=None,
+                normalizer_fn=None,
+                padding='valid')
+            logits = tf.reshape(logits, _dynamic_or_static_shape(images))
 
-        with tf.variable_scope('decoder1'):
-          net = upsample_fn(net, num_outputs=num_filters * 2, stride=[2, 2])
-        end_points['decoder1'] = net
+            end_points['logits'] = logits
+            end_points['predictions'] = tf.tanh(logits) + logits * tanh_linear_slope
 
-        with tf.variable_scope('decoder2'):
-          net = upsample_fn(net, num_outputs=num_filters, stride=[2, 2])
-        end_points['decoder2'] = net
-
-    with tf.variable_scope('output'):
-      net = tf.pad(net, spatial_pad_3, 'REFLECT')
-      logits = layers.conv2d(
-          net,
-          num_outputs, [7, 7],
-          activation_fn=None,
-          normalizer_fn=None,
-          padding='valid')
-      logits = tf.reshape(logits, _dynamic_or_static_shape(images))
-
-      end_points['logits'] = logits
-      end_points['predictions'] = tf.tanh(logits) + logits * tanh_linear_slope
-
-  return end_points['predictions'], end_points
+    return end_points['predictions'], end_points

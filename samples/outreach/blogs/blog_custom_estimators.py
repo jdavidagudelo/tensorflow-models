@@ -18,7 +18,6 @@
 
 import tensorflow as tf
 import os
-import sys
 
 import six.moves.urllib.request as request
 
@@ -39,6 +38,7 @@ FILE_TEST = PATH_DATASET + os.sep + "iris_test.csv"
 URL_TRAIN = "http://download.tensorflow.org/data/iris_training.csv"
 URL_TEST = "http://download.tensorflow.org/data/iris_test.csv"
 
+
 def downloadDataset(url, file):
     if not os.path.exists(PATH_DATASET):
         os.makedirs(PATH_DATASET)
@@ -47,6 +47,8 @@ def downloadDataset(url, file):
         with open(file, "wb") as f:
             f.write(data)
             f.close()
+
+
 downloadDataset(URL_TRAIN, FILE_TRAIN)
 downloadDataset(URL_TEST, FILE_TEST)
 
@@ -56,6 +58,7 @@ feature_names = [
     'SepalWidth',
     'PetalLength',
     'PetalWidth']
+
 
 # Create an input function reading a file using the Dataset API
 # Then provide the results to the Estimator API
@@ -69,22 +72,23 @@ def my_input_fn(file_path, repeat_count=1, shuffle_count=1):
         return d
 
     dataset = (tf.data.TextLineDataset(file_path)  # Read text file
-        .skip(1)  # Skip header row
-        .map(decode_csv, num_parallel_calls=4)  # Decode each line
-        .cache() # Warning: Caches entire dataset, can cause out of memory
-        .shuffle(shuffle_count)  # Randomize elems (1 == no operation)
-        .repeat(repeat_count)    # Repeats dataset this # times
-        .batch(32)
-        .prefetch(1)  # Make sure you always have 1 batch ready to serve
-    )
+               .skip(1)  # Skip header row
+               .map(decode_csv, num_parallel_calls=4)  # Decode each line
+               .cache()  # Warning: Caches entire dataset, can cause out of memory
+               .shuffle(shuffle_count)  # Randomize elems (1 == no operation)
+               .repeat(repeat_count)  # Repeats dataset this # times
+               .batch(32)
+               .prefetch(1)  # Make sure you always have 1 batch ready to serve
+               )
     iterator = dataset.make_one_shot_iterator()
     batch_features, batch_labels = iterator.get_next()
     return batch_features, batch_labels
 
+
 def my_model_fn(
-    features, # This is batch_features from input_fn
-    labels,   # This is batch_labels from input_fn
-    mode):    # And instance of tf.estimator.ModeKeys, see below
+        features,  # This is batch_features from input_fn
+        labels,  # This is batch_labels from input_fn
+        mode):  # And instance of tf.estimator.ModeKeys, see below
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         tf.logging.info("my_model_fn: PREDICT, {}".format(mode))
@@ -120,7 +124,7 @@ def my_model_fn(
 
     # class_ids will be the model prediction for the class (Iris flower type)
     # The output node with the highest value is our prediction
-    predictions = { 'class_ids': tf.argmax(input=logits, axis=1) }
+    predictions = {'class_ids': tf.argmax(input=logits, axis=1)}
 
     # 1. Prediction mode
     # Return our prediction
@@ -170,6 +174,7 @@ def my_model_fn(
         loss=loss,
         train_op=train_op)
 
+
 # Create a custom estimator using my_model_fn to define the model
 tf.logging.info("Before classifier construction")
 classifier = tf.estimator.Estimator(
@@ -214,6 +219,7 @@ prediction_input = [[5.9, 3.0, 4.2, 1.5],  # -> 1, Iris Versicolor
                     [6.9, 3.1, 5.4, 2.1],  # -> 2, Iris Virginica
                     [5.1, 3.3, 1.7, 0.5]]  # -> 0, Iris Setosa
 
+
 def new_input_fn():
     def decode(x):
         x = tf.split(x, 4)  # Need to split into our 4 features
@@ -224,6 +230,7 @@ def new_input_fn():
     iterator = dataset.make_one_shot_iterator()
     next_feature_batch = iterator.get_next()
     return next_feature_batch, None  # In prediction, we have no labels
+
 
 # Predict all our prediction_input
 predict_results = classifier.predict(input_fn=new_input_fn)

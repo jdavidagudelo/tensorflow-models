@@ -24,7 +24,7 @@ from tensorflow.python.framework import ops
 
 @ops.RegisterGradient('Icp')
 def _icp_grad(op, grad_transform, grad_residual):
-  """The gradients for `icp`.
+    """The gradients for `icp`.
 
   Args:
     op: The `icp` `Operation` that we are differentiating, which we can use
@@ -36,13 +36,13 @@ def _icp_grad(op, grad_transform, grad_residual):
   Returns:
     Gradients with respect to the inputs of `icp`.
   """
-  unused_transform = op.outputs[0]
-  unused_residual = op.outputs[1]
-  unused_source = op.inputs[0]
-  unused_ego_motion = op.inputs[1]
-  unused_target = op.inputs[2]
+    unused_transform = op.outputs[0]
+    unused_residual = op.outputs[1]
+    unused_source = op.inputs[0]
+    unused_ego_motion = op.inputs[1]
+    unused_target = op.inputs[2]
 
-  grad_p = -grad_residual
-  grad_ego_motion = -grad_transform
+    grad_p = -grad_residual
+    grad_ego_motion = -grad_transform
 
-  return [grad_p, grad_ego_motion, None]
+    return [grad_p, grad_ego_motion, None]

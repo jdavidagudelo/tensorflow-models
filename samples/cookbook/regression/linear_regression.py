@@ -23,7 +23,7 @@ import argparse
 import numpy as np
 import tensorflow as tf
 
-import automobile_data
+from . import automobile_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
@@ -34,69 +34,69 @@ parser.add_argument('--price_norm_factor', default=1000., type=float,
 
 
 def main(argv):
-  """Builds, trains, and evaluates the model."""
-  args = parser.parse_args(argv[1:])
+    """Builds, trains, and evaluates the model."""
+    args = parser.parse_args(argv[1:])
 
-  (train_x,train_y), (test_x, test_y) = automobile_data.load_data()
+    (train_x, train_y), (test_x, test_y) = automobile_data.load_data()
 
-  train_y /= args.price_norm_factor
-  test_y /= args.price_norm_factor
+    train_y /= args.price_norm_factor
+    test_y /= args.price_norm_factor
 
-  # Provide the training input dataset.
-  train_input_fn = automobile_data.make_dataset(args.batch_size, train_x, train_y, True, 1000)
+    # Provide the training input dataset.
+    train_input_fn = automobile_data.make_dataset(args.batch_size, train_x, train_y, True, 1000)
 
-  # Provide the validation input dataset.
-  test_input_fn = automobile_data.make_dataset(args.batch_size, test_x, test_y)
+    # Provide the validation input dataset.
+    test_input_fn = automobile_data.make_dataset(args.batch_size, test_x, test_y)
 
-  feature_columns = [
-      # "curb-weight" and "highway-mpg" are numeric columns.
-      tf.feature_column.numeric_column(key="curb-weight"),
-      tf.feature_column.numeric_column(key="highway-mpg"),
-  ]
+    feature_columns = [
+        # "curb-weight" and "highway-mpg" are numeric columns.
+        tf.feature_column.numeric_column(key="curb-weight"),
+        tf.feature_column.numeric_column(key="highway-mpg"),
+    ]
 
-  # Build the Estimator.
-  model = tf.estimator.LinearRegressor(feature_columns=feature_columns)
+    # Build the Estimator.
+    model = tf.estimator.LinearRegressor(feature_columns=feature_columns)
 
-  # Train the model.
-  # By default, the Estimators log output every 100 steps.
-  model.train(input_fn=train_input_fn, steps=args.train_steps)
+    # Train the model.
+    # By default, the Estimators log output every 100 steps.
+    model.train(input_fn=train_input_fn, steps=args.train_steps)
 
-  # Evaluate how the model performs on data it has not yet seen.
-  eval_result = model.evaluate(input_fn=test_input_fn)
+    # Evaluate how the model performs on data it has not yet seen.
+    eval_result = model.evaluate(input_fn=test_input_fn)
 
-  # The evaluation returns a Python dictionary. The "average_loss" key holds the
-  # Mean Squared Error (MSE).
-  average_loss = eval_result["average_loss"]
+    # The evaluation returns a Python dictionary. The "average_loss" key holds the
+    # Mean Squared Error (MSE).
+    average_loss = eval_result["average_loss"]
 
-  # Convert MSE to Root Mean Square Error (RMSE).
-  print("\n" + 80 * "*")
-  print("\nRMS error for the test set: ${:.0f}"
-        .format(args.price_norm_factor * average_loss**0.5))
+    # Convert MSE to Root Mean Square Error (RMSE).
+    print("\n" + 80 * "*")
+    print("\nRMS error for the test set: ${:.0f}"
+          .format(args.price_norm_factor * average_loss ** 0.5))
 
-  # Run the model in prediction mode.
-  input_dict = {
-      "curb-weight": np.array([2000, 3000]),
-      "highway-mpg": np.array([30, 40])
-  }
+    # Run the model in prediction mode.
+    input_dict = {
+        "curb-weight": np.array([2000, 3000]),
+        "highway-mpg": np.array([30, 40])
+    }
 
-  # Provide the predict input dataset.
-  predict_input_fn = automobile_data.make_dataset(1, input_dict)
-  predict_results = model.predict(input_fn=predict_input_fn)
+    # Provide the predict input dataset.
+    predict_input_fn = automobile_data.make_dataset(1, input_dict)
+    predict_results = model.predict(input_fn=predict_input_fn)
 
-  # Print the prediction results.
-  print("\nPrediction results:")
-  for i, prediction in enumerate(predict_results):
-    msg = ("Curb weight: {: 4d}lbs, "
-           "Highway: {: 0d}mpg, "
-           "Prediction: ${: 9.2f}")
-    msg = msg.format(input_dict["curb-weight"][i], input_dict["highway-mpg"][i],
-                     args.price_norm_factor * prediction["predictions"][0])
+    # Print the prediction results.
+    print("\nPrediction results:")
+    for i, prediction in enumerate(predict_results):
+        msg = ("Curb weight: {: 4d}lbs, "
+               "Highway: {: 0d}mpg, "
+               "Prediction: ${: 9.2f}")
+        msg = msg.format(input_dict["curb-weight"][i], input_dict["highway-mpg"][i],
+                         args.price_norm_factor * prediction["predictions"][0])
 
-    print("    " + msg)
-  print()
+        print("    " + msg)
+    print()
 
 
 if __name__ == "__main__":
-  # The Estimator periodically generates "INFO" logs; make these logs visible.
-  tf.logging.set_verbosity(tf.logging.INFO)
-  tf.app.run(main=main)
+    # The Estimator periodically generates "INFO" logs; make these logs visible.
+    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.app.run(main=main)

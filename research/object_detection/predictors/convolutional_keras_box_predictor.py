@@ -18,8 +18,8 @@ import collections
 
 import tensorflow as tf
 
-from object_detection.core import box_predictor
-from object_detection.utils import static_shape
+from research.object_detection.core import box_predictor
+from research.object_detection.utils import static_shape
 
 keras = tf.keras.layers
 
@@ -30,17 +30,17 @@ MASK_PREDICTIONS = box_predictor.MASK_PREDICTIONS
 
 
 class _NoopVariableScope(object):
-  """A dummy class that does not push any scope."""
+    """A dummy class that does not push any scope."""
 
-  def __enter__(self):
-    return None
+    def __enter__(self):
+        return None
 
-  def __exit__(self, exc_type, exc_value, traceback):
-    return False
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
 
 
 class ConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
-  """Convolutional Keras Box Predictor.
+    """Convolutional Keras Box Predictor.
 
   Optionally add an intermediate 1x1 convolutional layer after features and
   predict in parallel branches box_encodings and
@@ -51,20 +51,20 @@ class ConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
   on class.
   """
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               box_prediction_heads,
-               class_prediction_heads,
-               other_heads,
-               conv_hyperparams,
-               num_layers_before_predictor,
-               min_depth,
-               max_depth,
-               freeze_batchnorm,
-               inplace_batchnorm_update,
-               name=None):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 box_prediction_heads,
+                 class_prediction_heads,
+                 other_heads,
+                 conv_hyperparams,
+                 num_layers_before_predictor,
+                 min_depth,
+                 max_depth,
+                 freeze_batchnorm,
+                 inplace_batchnorm_update,
+                 name=None):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -99,65 +99,65 @@ class ConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
     Raises:
       ValueError: if min_depth > max_depth.
     """
-    super(ConvolutionalBoxPredictor, self).__init__(
-        is_training, num_classes, freeze_batchnorm=freeze_batchnorm,
-        inplace_batchnorm_update=inplace_batchnorm_update,
-        name=name)
-    if min_depth > max_depth:
-      raise ValueError('min_depth should be less than or equal to max_depth')
-    if len(box_prediction_heads) != len(class_prediction_heads):
-      raise ValueError('All lists of heads must be the same length.')
-    for other_head_list in other_heads.values():
-      if len(box_prediction_heads) != len(other_head_list):
-        raise ValueError('All lists of heads must be the same length.')
+        super(ConvolutionalBoxPredictor, self).__init__(
+            is_training, num_classes, freeze_batchnorm=freeze_batchnorm,
+            inplace_batchnorm_update=inplace_batchnorm_update,
+            name=name)
+        if min_depth > max_depth:
+            raise ValueError('min_depth should be less than or equal to max_depth')
+        if len(box_prediction_heads) != len(class_prediction_heads):
+            raise ValueError('All lists of heads must be the same length.')
+        for other_head_list in other_heads.values():
+            if len(box_prediction_heads) != len(other_head_list):
+                raise ValueError('All lists of heads must be the same length.')
 
-    self._prediction_heads = {
-        BOX_ENCODINGS: box_prediction_heads,
-        CLASS_PREDICTIONS_WITH_BACKGROUND: class_prediction_heads,
-    }
+        self._prediction_heads = {
+            BOX_ENCODINGS: box_prediction_heads,
+            CLASS_PREDICTIONS_WITH_BACKGROUND: class_prediction_heads,
+        }
 
-    if other_heads:
-      self._prediction_heads.update(other_heads)
+        if other_heads:
+            self._prediction_heads.update(other_heads)
 
-    self._conv_hyperparams = conv_hyperparams
-    self._min_depth = min_depth
-    self._max_depth = max_depth
-    self._num_layers_before_predictor = num_layers_before_predictor
+        self._conv_hyperparams = conv_hyperparams
+        self._min_depth = min_depth
+        self._max_depth = max_depth
+        self._num_layers_before_predictor = num_layers_before_predictor
 
-    self._shared_nets = []
+        self._shared_nets = []
 
-  def build(self, input_shapes):
-    """Creates the variables of the layer."""
-    if len(input_shapes) != len(self._prediction_heads[BOX_ENCODINGS]):
-      raise ValueError('This box predictor was constructed with %d heads,'
-                       'but there are %d inputs.' %
-                       (len(self._prediction_heads[BOX_ENCODINGS]),
-                        len(input_shapes)))
-    for stack_index, input_shape in enumerate(input_shapes):
-      net = tf.keras.Sequential(name='PreHeadConvolutions_%d' % stack_index)
-      self._shared_nets.append(net)
+    def build(self, input_shapes):
+        """Creates the variables of the layer."""
+        if len(input_shapes) != len(self._prediction_heads[BOX_ENCODINGS]):
+            raise ValueError('This box predictor was constructed with %d heads,'
+                             'but there are %d inputs.' %
+                             (len(self._prediction_heads[BOX_ENCODINGS]),
+                              len(input_shapes)))
+        for stack_index, input_shape in enumerate(input_shapes):
+            net = tf.keras.Sequential(name='PreHeadConvolutions_%d' % stack_index)
+            self._shared_nets.append(net)
 
-      # Add additional conv layers before the class predictor.
-      features_depth = static_shape.get_depth(input_shape)
-      depth = max(min(features_depth, self._max_depth), self._min_depth)
-      tf.logging.info(
-          'depth of additional conv before box predictor: {}'.format(depth))
-      if depth > 0 and self._num_layers_before_predictor > 0:
-        for i in range(self._num_layers_before_predictor):
-          net.add(keras.Conv2D(depth, [1, 1],
-                               name='Conv2d_%d_1x1_%d' % (i, depth),
-                               padding='SAME',
-                               **self._conv_hyperparams.params()))
-          net.add(self._conv_hyperparams.build_batch_norm(
-              training=(self._is_training and not self._freeze_batchnorm),
-              name='Conv2d_%d_1x1_%d_norm' % (i, depth)))
-          net.add(self._conv_hyperparams.build_activation_layer(
-              name='Conv2d_%d_1x1_%d_activation' % (i, depth),
-          ))
-    self.built = True
+            # Add additional conv layers before the class predictor.
+            features_depth = static_shape.get_depth(input_shape)
+            depth = max(min(features_depth, self._max_depth), self._min_depth)
+            tf.logging.info(
+                'depth of additional conv before box predictor: {}'.format(depth))
+            if depth > 0 and self._num_layers_before_predictor > 0:
+                for i in range(self._num_layers_before_predictor):
+                    net.add(keras.Conv2D(depth, [1, 1],
+                                         name='Conv2d_%d_1x1_%d' % (i, depth),
+                                         padding='SAME',
+                                         **self._conv_hyperparams.params()))
+                    net.add(self._conv_hyperparams.build_batch_norm(
+                        training=(self._is_training and not self._freeze_batchnorm),
+                        name='Conv2d_%d_1x1_%d_norm' % (i, depth)))
+                    net.add(self._conv_hyperparams.build_activation_layer(
+                        name='Conv2d_%d_1x1_%d_activation' % (i, depth),
+                    ))
+        self.built = True
 
-  def _predict(self, image_features):
-    """Computes encoded object locations and corresponding confidences.
+    def _predict(self, image_features, **kwargs):
+        """Computes encoded object locations and corresponding confidences.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
@@ -172,17 +172,18 @@ class ConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
         [batch_size, num_anchors_i, num_classes + 1] representing the class
         predictions for the proposals. Each entry in the list corresponds to a
         feature map in the input `image_features` list.
+        :param **kwargs:
     """
-    predictions = collections.defaultdict(list)
+        predictions = collections.defaultdict(list)
 
-    for (index, image_feature) in enumerate(image_features):
+        for (index, image_feature) in enumerate(image_features):
 
-      # Apply shared conv layers before the head predictors.
-      net = self._shared_nets[index](image_feature)
+            # Apply shared conv layers before the head predictors.
+            net = self._shared_nets[index](image_feature)
 
-      for head_name in self._prediction_heads:
-        head_obj = self._prediction_heads[head_name][index]
-        prediction = head_obj(net)
-        predictions[head_name].append(prediction)
+            for head_name in self._prediction_heads:
+                head_obj = self._prediction_heads[head_name][index]
+                prediction = head_obj(net)
+                predictions[head_name].append(prediction)
 
-    return predictions
+        return predictions

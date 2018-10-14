@@ -16,7 +16,7 @@
 """Mask R-CNN Box Predictor."""
 import tensorflow as tf
 
-from object_detection.core import box_predictor
+from research.object_detection.core import box_predictor
 
 slim = tf.contrib.slim
 
@@ -27,7 +27,7 @@ MASK_PREDICTIONS = box_predictor.MASK_PREDICTIONS
 
 
 class MaskRCNNBoxPredictor(box_predictor.BoxPredictor):
-  """Mask R-CNN Box Predictor.
+    """Mask R-CNN Box Predictor.
 
   See Mask R-CNN: He, K., Gkioxari, G., Dollar, P., & Girshick, R. (2017).
   Mask R-CNN. arXiv preprint arXiv:1703.06870.
@@ -44,13 +44,13 @@ class MaskRCNNBoxPredictor(box_predictor.BoxPredictor):
   anchor makes a separate box prediction for each class.
   """
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               box_prediction_head,
-               class_prediction_head,
-               third_stage_heads):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 box_prediction_head,
+                 class_prediction_head,
+                 third_stage_heads):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -63,26 +63,27 @@ class MaskRCNNBoxPredictor(box_predictor.BoxPredictor):
       third_stage_heads: A dictionary mapping head names to mask rcnn head
         classes.
     """
-    super(MaskRCNNBoxPredictor, self).__init__(is_training, num_classes)
-    self._box_prediction_head = box_prediction_head
-    self._class_prediction_head = class_prediction_head
-    self._third_stage_heads = third_stage_heads
+        super(MaskRCNNBoxPredictor, self).__init__(is_training, num_classes)
+        self._box_prediction_head = box_prediction_head
+        self._class_prediction_head = class_prediction_head
+        self._third_stage_heads = third_stage_heads
 
-  @property
-  def num_classes(self):
-    return self._num_classes
+    @property
+    def num_classes(self):
+        return self._num_classes
 
-  def get_second_stage_prediction_heads(self):
-    return BOX_ENCODINGS, CLASS_PREDICTIONS_WITH_BACKGROUND
+    @staticmethod
+    def get_second_stage_prediction_heads():
+        return BOX_ENCODINGS, CLASS_PREDICTIONS_WITH_BACKGROUND
 
-  def get_third_stage_prediction_heads(self):
-    return sorted(self._third_stage_heads.keys())
+    def get_third_stage_prediction_heads(self):
+        return sorted(self._third_stage_heads.keys())
 
-  def _predict(self,
-               image_features,
-               num_predictions_per_location,
-               prediction_stage=2):
-    """Optionally computes encoded object locations, confidences, and masks.
+    def _predict(self,
+                 image_features,
+                 num_predictions_per_location,
+                 prediction_stage=2):
+        """Optionally computes encoded object locations, confidences, and masks.
 
     Predicts the heads belonging to the given prediction stage.
 
@@ -114,31 +115,31 @@ class MaskRCNNBoxPredictor(box_predictor.BoxPredictor):
         len(image_features) is not 1.
       ValueError: if prediction_stage is not 2 or 3.
     """
-    if (len(num_predictions_per_location) != 1 or
-        num_predictions_per_location[0] != 1):
-      raise ValueError('Currently FullyConnectedBoxPredictor only supports '
-                       'predicting a single box per class per location.')
-    if len(image_features) != 1:
-      raise ValueError('length of `image_features` must be 1. Found {}'.format(
-          len(image_features)))
-    image_feature = image_features[0]
-    predictions_dict = {}
+        if (len(num_predictions_per_location) != 1 or
+                num_predictions_per_location[0] != 1):
+            raise ValueError('Currently FullyConnectedBoxPredictor only supports '
+                             'predicting a single box per class per location.')
+        if len(image_features) != 1:
+            raise ValueError('length of `image_features` must be 1. Found {}'.format(
+                len(image_features)))
+        image_feature = image_features[0]
+        predictions_dict = {}
 
-    if prediction_stage == 2:
-      predictions_dict[BOX_ENCODINGS] = self._box_prediction_head.predict(
-          features=image_feature,
-          num_predictions_per_location=num_predictions_per_location[0])
-      predictions_dict[CLASS_PREDICTIONS_WITH_BACKGROUND] = (
-          self._class_prediction_head.predict(
-              features=image_feature,
-              num_predictions_per_location=num_predictions_per_location[0]))
-    elif prediction_stage == 3:
-      for prediction_head in self.get_third_stage_prediction_heads():
-        head_object = self._third_stage_heads[prediction_head]
-        predictions_dict[prediction_head] = head_object.predict(
-            features=image_feature,
-            num_predictions_per_location=num_predictions_per_location[0])
-    else:
-      raise ValueError('prediction_stage should be either 2 or 3.')
+        if prediction_stage == 2:
+            predictions_dict[BOX_ENCODINGS] = self._box_prediction_head.predict(
+                features=image_feature,
+                num_predictions_per_location=num_predictions_per_location[0])
+            predictions_dict[CLASS_PREDICTIONS_WITH_BACKGROUND] = (
+                self._class_prediction_head.predict(
+                    features=image_feature,
+                    num_predictions_per_location=num_predictions_per_location[0]))
+        elif prediction_stage == 3:
+            for prediction_head in self.get_third_stage_prediction_heads():
+                head_object = self._third_stage_heads[prediction_head]
+                predictions_dict[prediction_head] = head_object.predict(
+                    features=image_feature,
+                    num_predictions_per_location=num_predictions_per_location[0])
+        else:
+            raise ValueError('prediction_stage should be either 2 or 3.')
 
-    return predictions_dict
+        return predictions_dict

@@ -15,14 +15,14 @@
 
 """Functions to make unit testing easier."""
 
-import StringIO
+import io as StringIO
 import numpy as np
 from PIL import Image as PILImage
 import tensorflow as tf
 
 
 def create_random_image(image_format, shape):
-  """Creates an image with random values.
+    """Creates an image with random values.
 
   Args:
     image_format: An image format (PNG or JPEG).
@@ -31,15 +31,15 @@ def create_random_image(image_format, shape):
   Returns:
     A tuple (<numpy ndarray>, <a string with encoded image>)
   """
-  image = np.random.randint(low=0, high=255, size=shape, dtype='uint8')
-  io = StringIO.StringIO()
-  image_pil = PILImage.fromarray(image)
-  image_pil.save(io, image_format, subsampling=0, quality=100)
-  return image, io.getvalue()
+    image = np.random.randint(low=0, high=255, size=shape, dtype='uint8')
+    io = StringIO.BytesIO()
+    image_pil = PILImage.fromarray(image)
+    image_pil.save(io, image_format, subsampling=0, quality=100)
+    return image, io.getvalue()
 
 
 def create_serialized_example(name_to_values):
-  """Creates a tf.Example proto using a dictionary.
+    """Creates a tf.Example proto using a dictionary.
 
   It automatically detects type of values and define a corresponding feature.
 
@@ -49,16 +49,17 @@ def create_serialized_example(name_to_values):
   Returns:
     tf.Example proto.
   """
-  example = tf.train.Example()
-  for name, values in name_to_values.items():
-    feature = example.features.feature[name]
-    if isinstance(values[0], str):
-      add = feature.bytes_list.value.extend
-    elif isinstance(values[0], float):
-      add = feature.float32_list.value.extend
-    elif isinstance(values[0], int):
-      add = feature.int64_list.value.extend
-    else:
-      raise AssertionError('Unsupported type: %s' % type(values[0]))
-    add(values)
-  return example.SerializeToString()
+    example = tf.train.Example()
+    for name, values in name_to_values.items():
+        print(name, values)
+        feature = example.features.feature[name]
+        if isinstance(values[0], (str, bytes)):
+            add = feature.bytes_list.value.extend
+        elif isinstance(values[0], float):
+            add = feature.float32_list.value.extend
+        elif isinstance(values[0], int):
+            add = feature.int64_list.value.extend
+        else:
+            raise AssertionError('Unsupported type: %s' % type(values[0]))
+        add(values)
+    return example.SerializeToString()

@@ -37,7 +37,7 @@ def generate_pgd_common(x,
                         attack_params,
                         one_hot_labels,
                         perturbation_multiplier):
-  """Common code for generating PGD adversarial examples.
+    """Common code for generating PGD adversarial examples.
 
   Args:
     x: original examples.
@@ -54,125 +54,125 @@ def generate_pgd_common(x,
   Raises:
     ValueError: if attack parameters are invalid.
   """
-  # parse attack_params
-  # Format of attack_params: 'EPS_STEP_NITER'
-  # where EPS - epsilon, STEP - step size, NITER - number of iterations
-  params_list = attack_params.split('_')
-  if len(params_list) != 3:
-    raise ValueError('Invalid parameters of PGD attack: %s' % attack_params)
-  epsilon = int(params_list[0])
-  step_size = int(params_list[1])
-  niter = int(params_list[2])
+    # parse attack_params
+    # Format of attack_params: 'EPS_STEP_NITER'
+    # where EPS - epsilon, STEP - step size, NITER - number of iterations
+    params_list = attack_params.split('_')
+    if len(params_list) != 3:
+        raise ValueError('Invalid parameters of PGD attack: %s' % attack_params)
+    epsilon = int(params_list[0])
+    step_size = int(params_list[1])
+    niter = int(params_list[2])
 
-  # rescale epsilon and step size to image bounds
-  epsilon = float(epsilon) / 255.0 * (bounds[1] - bounds[0])
-  step_size = float(step_size) / 255.0 * (bounds[1] - bounds[0])
+    # rescale epsilon and step size to image bounds
+    epsilon = float(epsilon) / 255.0 * (bounds[1] - bounds[0])
+    step_size = float(step_size) / 255.0 * (bounds[1] - bounds[0])
 
-  # clipping boundaries
-  clip_min = tf.maximum(x - epsilon, bounds[0])
-  clip_max = tf.minimum(x + epsilon, bounds[1])
+    # clipping boundaries
+    clip_min = tf.maximum(x - epsilon, bounds[0])
+    clip_max = tf.minimum(x + epsilon, bounds[1])
 
-  # compute starting point
-  start_x = x + tf.random_uniform(tf.shape(x), -epsilon, epsilon)
-  start_x = tf.clip_by_value(start_x, clip_min, clip_max)
+    # compute starting point
+    start_x = x + tf.random_uniform(tf.shape(x), -epsilon, epsilon)
+    start_x = tf.clip_by_value(start_x, clip_min, clip_max)
 
-  # main iteration of PGD
-  loop_vars = [0, start_x]
+    # main iteration of PGD
+    loop_vars = [0, start_x]
 
-  def loop_cond(index, _):
-    return index < niter
+    def loop_cond(index, _):
+        return index < niter
 
-  def loop_body(index, adv_images):
-    logits = model_fn(adv_images)
-    loss = tf.reduce_sum(
-        tf.nn.softmax_cross_entropy_with_logits_v2(
-            labels=one_hot_labels,
-            logits=logits))
-    perturbation = step_size * tf.sign(tf.gradients(loss, adv_images)[0])
-    new_adv_images = adv_images + perturbation_multiplier * perturbation
-    new_adv_images = tf.clip_by_value(new_adv_images, clip_min, clip_max)
-    return index + 1, new_adv_images
+    def loop_body(index, adv_images):
+        logits = model_fn(adv_images)
+        loss = tf.reduce_sum(
+            tf.nn.softmax_cross_entropy_with_logits_v2(
+                labels=one_hot_labels,
+                logits=logits))
+        perturbation = step_size * tf.sign(tf.gradients(loss, adv_images)[0])
+        new_adv_images = adv_images + perturbation_multiplier * perturbation
+        new_adv_images = tf.clip_by_value(new_adv_images, clip_min, clip_max)
+        return index + 1, new_adv_images
 
-  with tf.control_dependencies([start_x]):
-    _, result = tf.while_loop(
-        loop_cond,
-        loop_body,
-        loop_vars,
-        back_prop=False,
-        parallel_iterations=1)
-    return result
+    with tf.control_dependencies([start_x]):
+        _, result = tf.while_loop(
+            loop_cond,
+            loop_body,
+            loop_vars,
+            back_prop=False,
+            parallel_iterations=1)
+        return result
 
 
 def generate_pgd_ll(x, bounds, model_fn, attack_params):
-  # pylint: disable=g-doc-args
-  """Generats targeted PGD adversarial examples with least likely target class.
+    # pylint: disable=g-doc-args
+    """Generats targeted PGD adversarial examples with least likely target class.
 
   See generate_pgd_common for description of arguments.
 
   Returns:
     Tensor with adversarial examples.
   """
-  # pylint: enable=g-doc-args
+    # pylint: enable=g-doc-args
 
-  # compute one hot least likely class
-  logits = model_fn(x)
-  num_classes = tf.shape(logits)[1]
-  one_hot_labels = tf.one_hot(tf.argmin(model_fn(x), axis=1), num_classes)
+    # compute one hot least likely class
+    logits = model_fn(x)
+    num_classes = tf.shape(logits)[1]
+    one_hot_labels = tf.one_hot(tf.argmin(model_fn(x), axis=1), num_classes)
 
-  return generate_pgd_common(x, bounds, model_fn, attack_params,
-                             one_hot_labels=one_hot_labels,
-                             perturbation_multiplier=-1.0)
+    return generate_pgd_common(x, bounds, model_fn, attack_params,
+                               one_hot_labels=one_hot_labels,
+                               perturbation_multiplier=-1.0)
 
 
 def generate_pgd_rand(x, bounds, model_fn, attack_params):
-  # pylint: disable=g-doc-args
-  """Generats targeted PGD adversarial examples with random target class.
+    # pylint: disable=g-doc-args
+    """Generats targeted PGD adversarial examples with random target class.
 
   See generate_pgd_common for description of arguments.
 
   Returns:
     Tensor with adversarial examples.
   """
-  # pylint: enable=g-doc-args
+    # pylint: enable=g-doc-args
 
-  # compute one hot random class
-  logits = model_fn(x)
-  batch_size = tf.shape(logits)[0]
-  num_classes = tf.shape(logits)[1]
-  random_labels = tf.random_uniform(shape=[batch_size],
-                                    minval=0,
-                                    maxval=num_classes,
-                                    dtype=tf.int32)
-  one_hot_labels = tf.one_hot(random_labels, num_classes)
+    # compute one hot random class
+    logits = model_fn(x)
+    batch_size = tf.shape(logits)[0]
+    num_classes = tf.shape(logits)[1]
+    random_labels = tf.random_uniform(shape=[batch_size],
+                                      minval=0,
+                                      maxval=num_classes,
+                                      dtype=tf.int32)
+    one_hot_labels = tf.one_hot(random_labels, num_classes)
 
-  return generate_pgd_common(x, bounds, model_fn, attack_params,
-                             one_hot_labels=one_hot_labels,
-                             perturbation_multiplier=-1.0)
+    return generate_pgd_common(x, bounds, model_fn, attack_params,
+                               one_hot_labels=one_hot_labels,
+                               perturbation_multiplier=-1.0)
 
 
 def generate_pgd(x, bounds, model_fn, attack_params):
-  # pylint: disable=g-doc-args
-  """Generats non-targeted PGD adversarial examples.
+    # pylint: disable=g-doc-args
+    """Generats non-targeted PGD adversarial examples.
 
   See generate_pgd_common for description of arguments.
 
   Returns:
     tensor with adversarial examples.
   """
-  # pylint: enable=g-doc-args
+    # pylint: enable=g-doc-args
 
-  # compute one hot predicted class
-  logits = model_fn(x)
-  num_classes = tf.shape(logits)[1]
-  one_hot_labels = tf.one_hot(tf.argmax(model_fn(x), axis=1), num_classes)
+    # compute one hot predicted class
+    logits = model_fn(x)
+    num_classes = tf.shape(logits)[1]
+    one_hot_labels = tf.one_hot(tf.argmax(model_fn(x), axis=1), num_classes)
 
-  return generate_pgd_common(x, bounds, model_fn, attack_params,
-                             one_hot_labels=one_hot_labels,
-                             perturbation_multiplier=1.0)
+    return generate_pgd_common(x, bounds, model_fn, attack_params,
+                               one_hot_labels=one_hot_labels,
+                               perturbation_multiplier=1.0)
 
 
 def generate_adversarial_examples(x, bounds, model_fn, attack_description):
-  """Generates adversarial examples.
+    """Generates adversarial examples.
 
   Args:
     x: original examples.
@@ -199,21 +199,20 @@ def generate_adversarial_examples(x, bounds, model_fn, attack_description):
   - STEP - step size of one iteration of PGD, between 0 and 255.
   - NITER - number of iterations.
   """
-  if attack_description == 'clean':
-    return x
-  idx = attack_description.find('_')
-  if idx < 0:
-    raise ValueError('Invalid value of attack description %s'
-                     % attack_description)
-  attack_name = attack_description[:idx]
-  attack_params = attack_description[idx+1:]
-  if attack_name == 'pgdll':
-    return generate_pgd_ll(x, bounds, model_fn, attack_params)
-  elif attack_name == 'pgdrnd':
-    return generate_pgd_rand(x, bounds, model_fn, attack_params)
-  elif attack_name == 'pgd':
-    return generate_pgd(x, bounds, model_fn, attack_params)
-  else:
-    raise ValueError('Invalid value of attack description %s'
-                     % attack_description)
-
+    if attack_description == 'clean':
+        return x
+    idx = attack_description.find('_')
+    if idx < 0:
+        raise ValueError('Invalid value of attack description %s'
+                         % attack_description)
+    attack_name = attack_description[:idx]
+    attack_params = attack_description[idx + 1:]
+    if attack_name == 'pgdll':
+        return generate_pgd_ll(x, bounds, model_fn, attack_params)
+    elif attack_name == 'pgdrnd':
+        return generate_pgd_rand(x, bounds, model_fn, attack_params)
+    elif attack_name == 'pgd':
+        return generate_pgd(x, bounds, model_fn, attack_params)
+    else:
+        raise ValueError('Invalid value of attack description %s'
+                         % attack_description)

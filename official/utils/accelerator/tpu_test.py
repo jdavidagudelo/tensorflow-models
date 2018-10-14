@@ -19,7 +19,6 @@ import tensorflow as tf
 
 from official.utils.accelerator import tpu as tpu_utils
 
-
 TEST_CASES = [
     dict(embedding_dim=256, vocab_size=1000, sequence_length=64,
          batch_size=32, seed=54131),
@@ -31,78 +30,79 @@ TEST_CASES = [
 
 
 class TPUBaseTester(tf.test.TestCase):
-  def construct_embedding_and_values(self, embedding_dim, vocab_size,
-                                     sequence_length, batch_size, seed):
-    np.random.seed(seed)
+    @staticmethod
+    def construct_embedding_and_values(embedding_dim, vocab_size,
+                                       sequence_length, batch_size, seed):
+        np.random.seed(seed)
 
-    embeddings = np.random.random(size=(vocab_size, embedding_dim))
-    embedding_table = tf.convert_to_tensor(embeddings, dtype=tf.float32)
+        embeddings = np.random.random(size=(vocab_size, embedding_dim))
+        embedding_table = tf.convert_to_tensor(embeddings, dtype=tf.float32)
 
-    tokens = np.random.randint(low=1, high=vocab_size-1,
-                               size=(batch_size, sequence_length))
-    for i in range(batch_size):
-      tokens[i, np.random.randint(low=0, high=sequence_length-1):] = 0
-    values = tf.convert_to_tensor(tokens, dtype=tf.int32)
-    mask = tf.to_float(tf.not_equal(values, 0))
-    return embedding_table, values, mask
+        tokens = np.random.randint(low=1, high=vocab_size - 1,
+                                   size=(batch_size, sequence_length))
+        for i in range(batch_size):
+            tokens[i, np.random.randint(low=0, high=sequence_length - 1):] = 0
+        values = tf.convert_to_tensor(tokens, dtype=tf.int32)
+        mask = tf.to_float(tf.not_equal(values, 0))
+        return embedding_table, values, mask
 
-  def _test_embedding(self, embedding_dim, vocab_size,
+    def _test_embedding(self, embedding_dim, vocab_size,
+                        sequence_length, batch_size, seed):
+        """Test that matmul embedding matches embedding lookup (gather)."""
+
+        with self.test_session():
+            embedding_table, values, mask = self.construct_embedding_and_values(
+                embedding_dim=embedding_dim,
+                vocab_size=vocab_size,
+                sequence_length=sequence_length,
+                batch_size=batch_size,
+                seed=seed
+            )
+
+            embedding = (tf.nn.embedding_lookup(params=embedding_table, ids=values) *
+                         tf.expand_dims(mask, -1))
+
+            matmul_embedding = tpu_utils.embedding_matmul(
+                embedding_table=embedding_table, values=values, mask=mask)
+
+            self.assertAllClose(embedding, matmul_embedding)
+
+    def _test_masking(self, embedding_dim, vocab_size,
                       sequence_length, batch_size, seed):
-    """Test that matmul embedding matches embedding lookup (gather)."""
+        """Test that matmul embedding properly zeros masked positions."""
+        with self.test_session():
+            embedding_table, values, mask = self.construct_embedding_and_values(
+                embedding_dim=embedding_dim,
+                vocab_size=vocab_size,
+                sequence_length=sequence_length,
+                batch_size=batch_size,
+                seed=seed
+            )
 
-    with self.test_session():
-      embedding_table, values, mask = self.construct_embedding_and_values(
-          embedding_dim=embedding_dim,
-          vocab_size=vocab_size,
-          sequence_length=sequence_length,
-          batch_size=batch_size,
-          seed=seed
-      )
+            matmul_embedding = tpu_utils.embedding_matmul(
+                embedding_table=embedding_table, values=values, mask=mask)
 
-      embedding = (tf.nn.embedding_lookup(params=embedding_table, ids=values) *
-                   tf.expand_dims(mask, -1))
+            self.assertAllClose(matmul_embedding,
+                                matmul_embedding * tf.expand_dims(mask, -1))
 
-      matmul_embedding = tpu_utils.embedding_matmul(
-          embedding_table=embedding_table, values=values, mask=mask)
+    def test_embedding_0(self):
+        self._test_embedding(**TEST_CASES[0])
 
-      self.assertAllClose(embedding, matmul_embedding)
+    def test_embedding_1(self):
+        self._test_embedding(**TEST_CASES[1])
 
-  def _test_masking(self, embedding_dim, vocab_size,
-                    sequence_length, batch_size, seed):
-    """Test that matmul embedding properly zeros masked positions."""
-    with self.test_session():
-      embedding_table, values, mask = self.construct_embedding_and_values(
-          embedding_dim=embedding_dim,
-          vocab_size=vocab_size,
-          sequence_length=sequence_length,
-          batch_size=batch_size,
-          seed=seed
-      )
+    def test_embedding_2(self):
+        self._test_embedding(**TEST_CASES[2])
 
-      matmul_embedding = tpu_utils.embedding_matmul(
-          embedding_table=embedding_table, values=values, mask=mask)
+    def test_masking_0(self):
+        self._test_masking(**TEST_CASES[0])
 
-      self.assertAllClose(matmul_embedding,
-                          matmul_embedding * tf.expand_dims(mask, -1))
+    def test_masking_1(self):
+        self._test_masking(**TEST_CASES[1])
 
-  def test_embedding_0(self):
-    self._test_embedding(**TEST_CASES[0])
-
-  def test_embedding_1(self):
-    self._test_embedding(**TEST_CASES[1])
-
-  def test_embedding_2(self):
-    self._test_embedding(**TEST_CASES[2])
-
-  def test_masking_0(self):
-    self._test_masking(**TEST_CASES[0])
-
-  def test_masking_1(self):
-    self._test_masking(**TEST_CASES[1])
-
-  def test_masking_2(self):
-    self._test_masking(**TEST_CASES[2])
+    def test_masking_2(self):
+        self._test_masking(**TEST_CASES[2])
 
 
 if __name__ == "__main__":
-  tf.test.main()
+    tf.test.main()

@@ -18,5 +18,5 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import reader
-import util
+from . import reader
+from . import util

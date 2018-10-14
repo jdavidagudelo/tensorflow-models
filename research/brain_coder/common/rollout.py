@@ -12,11 +12,11 @@ from collections import namedtuple
 import numpy as np
 import scipy.signal
 
-from common import utils  # brain coder
+from . import utils  # brain coder
 
 
 class Rollout(object):
-  """Holds a rollout for an episode.
+    """Holds a rollout for an episode.
 
   A rollout is a record of the states observed in some environment and actions
   taken by the agent to arrive at those states. Other information includes
@@ -42,16 +42,16 @@ class Rollout(object):
   time steps are still being added to it.
   """
 
-  def __init__(self):
-    self.states = []
-    self.actions = []
-    self.rewards = []
-    self.values = []
-    self.total_reward = 0.0
-    self.terminated = False
+    def __init__(self):
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.values = []
+        self.total_reward = 0.0
+        self.terminated = False
 
-  def add(self, state, action, reward, value=0.0, terminated=False):
-    """Add the next timestep to this rollout.
+    def add(self, state, action, reward, value=0.0, terminated=False):
+        """Add the next timestep to this rollout.
 
     Args:
       state: The state observed at the start of this timestep.
@@ -64,18 +64,18 @@ class Rollout(object):
       ValueError: If this.terminated is already True, meaning that the episode
           has already ended.
     """
-    if self.terminated:
-      raise ValueError(
-          'Trying to add timestep to an already terminal rollout.')
-    self.states += [state]
-    self.actions += [action]
-    self.rewards += [reward]
-    self.values += [value]
-    self.terminated = terminated
-    self.total_reward += reward
+        if self.terminated:
+            raise ValueError(
+                'Trying to add timestep to an already terminal rollout.')
+        self.states += [state]
+        self.actions += [action]
+        self.rewards += [reward]
+        self.values += [value]
+        self.terminated = terminated
+        self.total_reward += reward
 
-  def add_many(self, states, actions, rewards, values=None, terminated=False):
-    """Add many timesteps to this rollout.
+    def add_many(self, states, actions, rewards, values=None, terminated=False):
+        """Add many timesteps to this rollout.
 
     Arguments are the same as `add`, but are lists of equal size.
 
@@ -91,41 +91,41 @@ class Rollout(object):
       ValueError: If this.terminated is already True, meaning that the episode
           has already ended.
     """
-    if len(states) != len(actions):
-      raise ValueError(
-          'Number of states and actions must be the same. Got %d states and '
-          '%d actions' % (len(states), len(actions)))
-    if len(states) != len(rewards):
-      raise ValueError(
-          'Number of states and rewards must be the same. Got %d states and '
-          '%d rewards' % (len(states), len(rewards)))
-    if values is not None and len(states) != len(values):
-      raise ValueError(
-          'Number of states and values must be the same. Got %d states and '
-          '%d values' % (len(states), len(values)))
-    if self.terminated:
-      raise ValueError(
-          'Trying to add timesteps to an already terminal rollout.')
-    self.states += states
-    self.actions += actions
-    self.rewards += rewards
-    self.values += values if values is not None else [0.0] * len(states)
-    self.terminated = terminated
-    self.total_reward += sum(rewards)
+        if len(states) != len(actions):
+            raise ValueError(
+                'Number of states and actions must be the same. Got %d states and '
+                '%d actions' % (len(states), len(actions)))
+        if len(states) != len(rewards):
+            raise ValueError(
+                'Number of states and rewards must be the same. Got %d states and '
+                '%d rewards' % (len(states), len(rewards)))
+        if values is not None and len(states) != len(values):
+            raise ValueError(
+                'Number of states and values must be the same. Got %d states and '
+                '%d values' % (len(states), len(values)))
+        if self.terminated:
+            raise ValueError(
+                'Trying to add timesteps to an already terminal rollout.')
+        self.states += states
+        self.actions += actions
+        self.rewards += rewards
+        self.values += values if values is not None else [0.0] * len(states)
+        self.terminated = terminated
+        self.total_reward += sum(rewards)
 
-  def extend(self, other):
-    """Append another rollout to this rollout."""
-    assert not self.terminated
-    self.states.extend(other.states)
-    self.actions.extend(other.actions)
-    self.rewards.extend(other.rewards)
-    self.values.extend(other.values)
-    self.terminated = other.terminated
-    self.total_reward += other.total_reward
+    def extend(self, other):
+        """Append another rollout to this rollout."""
+        assert not self.terminated
+        self.states.extend(other.states)
+        self.actions.extend(other.actions)
+        self.rewards.extend(other.rewards)
+        self.values.extend(other.values)
+        self.terminated = other.terminated
+        self.total_reward += other.total_reward
 
 
 def discount(x, gamma):
-  """Returns discounted sums for each value in x, with discount factor gamma.
+    """Returns discounted sums for each value in x, with discount factor gamma.
 
   This can be used to compute the return (discounted sum of rewards) at each
   timestep given a sequence of rewards. See the definitions for return and
@@ -147,11 +147,11 @@ def discount(x, gamma):
   Returns:
     List of discounted sums.
   """
-  return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
+    return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
 
 
 def discounted_advantage_and_rewards(rewards, values, gamma, lambda_=1.0):
-  """Compute advantages and returns (discounted sum of rewards).
+    """Compute advantages and returns (discounted sum of rewards).
 
   For an episode of length T, rewards = [r_0, ..., r_(T-1)].
   Each reward r_t is observed after taking action a_t at state s_t. A final
@@ -199,30 +199,30 @@ def discounted_advantage_and_rewards(rewards, values, gamma, lambda_=1.0):
     ValueError: If shapes of `rewards` and `values` are not rank 1.
     ValueError: If len(values) not in (len(rewards), len(rewards) + 1).
   """
-  rewards = np.asarray(rewards, dtype=np.float32)
-  values = np.asarray(values, dtype=np.float32)
-  if rewards.ndim != 1:
-    raise ValueError('Single episode only. rewards must be rank 1.')
-  if values.ndim != 1:
-    raise ValueError('Single episode only. values must be rank 1.')
-  if len(values) == len(rewards):
-    # No bootstrapping.
-    values = np.append(values, 0)
-    empirical_values = discount(rewards, gamma)
-  elif len(values) == len(rewards) + 1:
-    # With bootstrapping.
-    # Last value is for the terminal state (final state after last action was
-    # taken).
-    empirical_values = discount(np.append(rewards, values[-1]), gamma)[:-1]
-  else:
-    raise ValueError('values should contain the same number of items or one '
-                     'more item than rewards')
-  delta = rewards + gamma * values[1:] - values[:-1]
-  generalized_advantage = discount(delta, gamma * lambda_)
+    rewards = np.asarray(rewards, dtype=np.float32)
+    values = np.asarray(values, dtype=np.float32)
+    if rewards.ndim != 1:
+        raise ValueError('Single episode only. rewards must be rank 1.')
+    if values.ndim != 1:
+        raise ValueError('Single episode only. values must be rank 1.')
+    if len(values) == len(rewards):
+        # No bootstrapping.
+        values = np.append(values, 0)
+        empirical_values = discount(rewards, gamma)
+    elif len(values) == len(rewards) + 1:
+        # With bootstrapping.
+        # Last value is for the terminal state (final state after last action was
+        # taken).
+        empirical_values = discount(np.append(rewards, values[-1]), gamma)[:-1]
+    else:
+        raise ValueError('values should contain the same number of items or one '
+                         'more item than rewards')
+    delta = rewards + gamma * values[1:] - values[:-1]
+    generalized_advantage = discount(delta, gamma * lambda_)
 
-  # empirical_values is the discounted sum of rewards into the future.
-  # generalized_advantage is the target for each policy update.
-  return empirical_values, generalized_advantage
+    # empirical_values is the discounted sum of rewards into the future.
+    # generalized_advantage is the target for each policy update.
+    return empirical_values, generalized_advantage
 
 
 """Batch holds a minibatch of episodes.
@@ -253,7 +253,7 @@ Batch = namedtuple(
 
 
 def process_rollouts(rollouts, gamma, lambda_=1.0):
-  """Convert a batch of rollouts into tensors ready to be fed into a model.
+    """Convert a batch of rollouts into tensors ready to be fed into a model.
 
   Lists from each episode are stacked into 2D tensors and padded with 0s up to
   the maximum timestep in the batch.
@@ -273,34 +273,34 @@ def process_rollouts(rollouts, gamma, lambda_=1.0):
   Raises:
     ValueError: If any of the rollouts are not terminal.
   """
-  for ro in rollouts:
-    if not ro.terminated:
-      raise ValueError('Can only process terminal rollouts.')
+    for ro in rollouts:
+        if not ro.terminated:
+            raise ValueError('Can only process terminal rollouts.')
 
-  episode_lengths = [len(ro.states) for ro in rollouts]
-  batch_size = len(rollouts)
-  max_time = max(episode_lengths)
+    episode_lengths = [len(ro.states) for ro in rollouts]
+    batch_size = len(rollouts)
+    max_time = max(episode_lengths)
 
-  states = utils.stack_pad([ro.states for ro in rollouts], 0, max_time)
-  actions = utils.stack_pad([ro.actions for ro in rollouts], 0, max_time)
+    states = utils.stack_pad([ro.states for ro in rollouts], 0, max_time)
+    actions = utils.stack_pad([ro.actions for ro in rollouts], 0, max_time)
 
-  discounted_rewards = [None] * batch_size
-  discounted_adv = [None] * batch_size
-  for i, ro in enumerate(rollouts):
-    disc_r, disc_adv = discounted_advantage_and_rewards(
-        ro.rewards, ro.values, gamma, lambda_)
-    discounted_rewards[i] = disc_r
-    discounted_adv[i] = disc_adv
-  discounted_rewards = utils.stack_pad(discounted_rewards, 0, max_time)
-  discounted_adv = utils.stack_pad(discounted_adv, 0, max_time)
+    discounted_rewards = [None] * batch_size
+    discounted_adv = [None] * batch_size
+    for i, ro in enumerate(rollouts):
+        disc_r, disc_adv = discounted_advantage_and_rewards(
+            ro.rewards, ro.values, gamma, lambda_)
+        discounted_rewards[i] = disc_r
+        discounted_adv[i] = disc_adv
+    discounted_rewards = utils.stack_pad(discounted_rewards, 0, max_time)
+    discounted_adv = utils.stack_pad(discounted_adv, 0, max_time)
 
-  total_rewards = [sum(ro.rewards) for ro in rollouts]
+    total_rewards = [sum(ro.rewards) for ro in rollouts]
 
-  return Batch(states=states,
-               actions=actions,
-               discounted_adv=discounted_adv,
-               discounted_r=discounted_rewards,
-               total_rewards=total_rewards,
-               episode_lengths=episode_lengths,
-               batch_size=batch_size,
-               max_time=max_time)
+    return Batch(states=states,
+                 actions=actions,
+                 discounted_adv=discounted_adv,
+                 discounted_r=discounted_rewards,
+                 total_rewards=total_rewards,
+                 episode_lengths=episode_lengths,
+                 batch_size=batch_size,
+                 max_time=max_time)

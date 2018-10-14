@@ -1,8 +1,9 @@
 import tensorflow as tf
 
+
 class VariationalAutoencoder(object):
 
-    def __init__(self, n_input, n_hidden, optimizer = tf.train.AdamOptimizer()):
+    def __init__(self, n_input, n_hidden, optimizer=tf.train.AdamOptimizer()):
         self.n_input = n_input
         self.n_hidden = n_hidden
 
@@ -15,7 +16,7 @@ class VariationalAutoencoder(object):
         self.z_log_sigma_sq = tf.add(tf.matmul(self.x, self.weights['log_sigma_w1']), self.weights['log_sigma_b1'])
 
         # sample from gaussian distribution
-        eps = tf.random_normal(tf.stack([tf.shape(self.x)[0], self.n_hidden]), 0, 1, dtype = tf.float32)
+        eps = tf.random_normal(tf.stack([tf.shape(self.x)[0], self.n_hidden]), 0, 1, dtype=tf.float32)
         self.z = tf.add(self.z_mean, tf.multiply(tf.sqrt(tf.exp(self.z_log_sigma_sq)), eps))
 
         self.reconstruction = tf.add(tf.matmul(self.z, self.weights['w2']), self.weights['b2'])
@@ -35,9 +36,9 @@ class VariationalAutoencoder(object):
     def _initialize_weights(self):
         all_weights = dict()
         all_weights['w1'] = tf.get_variable("w1", shape=[self.n_input, self.n_hidden],
-            initializer=tf.contrib.layers.xavier_initializer())
+                                            initializer=tf.contrib.layers.xavier_initializer())
         all_weights['log_sigma_w1'] = tf.get_variable("log_sigma_w1", shape=[self.n_input, self.n_hidden],
-            initializer=tf.contrib.layers.xavier_initializer())
+                                                      initializer=tf.contrib.layers.xavier_initializer())
         all_weights['b1'] = tf.Variable(tf.zeros([self.n_hidden], dtype=tf.float32))
         all_weights['log_sigma_b1'] = tf.Variable(tf.zeros([self.n_hidden], dtype=tf.float32))
         all_weights['w2'] = tf.Variable(tf.zeros([self.n_hidden, self.n_input], dtype=tf.float32))
@@ -49,12 +50,12 @@ class VariationalAutoencoder(object):
         return cost
 
     def calc_total_cost(self, X):
-        return self.sess.run(self.cost, feed_dict = {self.x: X})
+        return self.sess.run(self.cost, feed_dict={self.x: X})
 
     def transform(self, X):
         return self.sess.run(self.z_mean, feed_dict={self.x: X})
 
-    def generate(self, hidden = None):
+    def generate(self, hidden=None):
         if hidden is None:
             hidden = self.sess.run(tf.random_normal([1, self.n_hidden]))
         return self.sess.run(self.reconstruction, feed_dict={self.z: hidden})
@@ -67,4 +68,3 @@ class VariationalAutoencoder(object):
 
     def getBiases(self):
         return self.sess.run(self.weights['b1'])
-

@@ -22,79 +22,79 @@ from official.utils.flags import core as flags_core  # pylint: disable=g-bad-imp
 
 
 def define_flags():
-  flags_core.define_base(num_gpu=False)
-  flags_core.define_performance()
-  flags_core.define_image()
-  flags_core.define_benchmark()
+    flags_core.define_base(num_gpu=False)
+    flags_core.define_performance()
+    flags_core.define_image()
+    flags_core.define_benchmark()
 
 
 class BaseTester(unittest.TestCase):
 
-  @classmethod
-  def setUpClass(cls):
-    super(BaseTester, cls).setUpClass()
-    define_flags()
+    @classmethod
+    def setUpClass(cls):
+        super(BaseTester, cls).setUpClass()
+        define_flags()
 
-  def test_default_setting(self):
-    """Test to ensure fields exist and defaults can be set.
+    def test_default_setting(self):
+        """Test to ensure fields exist and defaults can be set.
     """
 
-    defaults = dict(
-        data_dir="dfgasf",
-        model_dir="dfsdkjgbs",
-        train_epochs=534,
-        epochs_between_evals=15,
-        batch_size=256,
-        hooks=["LoggingTensorHook"],
-        num_parallel_calls=18,
-        inter_op_parallelism_threads=5,
-        intra_op_parallelism_threads=10,
-        data_format="channels_first"
-    )
+        defaults = dict(
+            data_dir="dfgasf",
+            model_dir="dfsdkjgbs",
+            train_epochs=534,
+            epochs_between_evals=15,
+            batch_size=256,
+            hooks=["LoggingTensorHook"],
+            num_parallel_calls=18,
+            inter_op_parallelism_threads=5,
+            intra_op_parallelism_threads=10,
+            data_format="channels_first"
+        )
 
-    flags_core.set_defaults(**defaults)
-    flags_core.parse_flags()
+        flags_core.set_defaults(**defaults)
+        flags_core.parse_flags()
 
-    for key, value in defaults.items():
-      assert flags.FLAGS.get_flag_value(name=key, default=None) == value
+        for key, value in defaults.items():
+            assert flags.FLAGS.get_flag_value(name=key, default=None) == value
 
-  def test_benchmark_setting(self):
-    defaults = dict(
-        hooks=["LoggingMetricHook"],
-        benchmark_log_dir="/tmp/12345",
-        gcp_project="project_abc",
-    )
+    def test_benchmark_setting(self):
+        defaults = dict(
+            hooks=["LoggingMetricHook"],
+            benchmark_log_dir="/tmp/12345",
+            gcp_project="project_abc",
+        )
 
-    flags_core.set_defaults(**defaults)
-    flags_core.parse_flags()
+        flags_core.set_defaults(**defaults)
+        flags_core.parse_flags()
 
-    for key, value in defaults.items():
-      assert flags.FLAGS.get_flag_value(name=key, default=None) == value
+        for key, value in defaults.items():
+            assert flags.FLAGS.get_flag_value(name=key, default=None) == value
 
-  def test_booleans(self):
-    """Test to ensure boolean flags trigger as expected.
+    def test_booleans(self):
+        """Test to ensure boolean flags trigger as expected.
     """
 
-    flags_core.parse_flags([__file__, "--use_synthetic_data"])
+        flags_core.parse_flags([__file__, "--use_synthetic_data"])
 
-    assert flags.FLAGS.use_synthetic_data
+        assert flags.FLAGS.use_synthetic_data
 
-  def test_parse_dtype_info(self):
-    for dtype_str, tf_dtype, loss_scale in [["fp16", tf.float16, 128],
-                                            ["fp32", tf.float32, 1]]:
-      flags_core.parse_flags([__file__, "--dtype", dtype_str])
+    def test_parse_dtype_info(self):
+        for dtype_str, tf_dtype, loss_scale in [["fp16", tf.float16, 128],
+                                                ["fp32", tf.float32, 1]]:
+            flags_core.parse_flags([__file__, "--dtype", dtype_str])
 
-      self.assertEqual(flags_core.get_tf_dtype(flags.FLAGS), tf_dtype)
-      self.assertEqual(flags_core.get_loss_scale(flags.FLAGS), loss_scale)
+            self.assertEqual(flags_core.get_tf_dtype(flags.FLAGS), tf_dtype)
+            self.assertEqual(flags_core.get_loss_scale(flags.FLAGS), loss_scale)
 
-      flags_core.parse_flags(
-          [__file__, "--dtype", dtype_str, "--loss_scale", "5"])
+            flags_core.parse_flags(
+                [__file__, "--dtype", dtype_str, "--loss_scale", "5"])
 
-      self.assertEqual(flags_core.get_loss_scale(flags.FLAGS), 5)
+            self.assertEqual(flags_core.get_loss_scale(flags.FLAGS), 5)
 
-    with self.assertRaises(SystemExit):
-      flags_core.parse_flags([__file__, "--dtype", "int8"])
+        with self.assertRaises(SystemExit):
+            flags_core.parse_flags([__file__, "--dtype", "int8"])
 
 
 if __name__ == "__main__":
-  unittest.main()
+    unittest.main()

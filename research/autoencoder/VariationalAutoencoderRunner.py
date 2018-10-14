@@ -7,16 +7,16 @@ import sklearn.preprocessing as prep
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from autoencoder_models.VariationalAutoencoder import VariationalAutoencoder
+from .autoencoder_models.VariationalAutoencoder import VariationalAutoencoder
 
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 
-def min_max_scale(X_train, X_test):
-    preprocessor = prep.MinMaxScaler().fit(X_train)
-    X_train = preprocessor.transform(X_train)
-    X_test = preprocessor.transform(X_test)
-    return X_train, X_test
+def min_max_scale(x_train, x_test):
+    preprocessor = prep.MinMaxScaler().fit(x_train)
+    x_train = preprocessor.transform(x_train)
+    x_test = preprocessor.transform(x_test)
+    return x_train, x_test
 
 
 def get_random_block_from_data(data, batch_size):

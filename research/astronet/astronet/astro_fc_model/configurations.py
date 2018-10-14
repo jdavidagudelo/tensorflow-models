@@ -25,66 +25,66 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from astronet.astro_model import configurations as parent_configs
+from ..astro_model import configurations as parent_configs
 
 
 def base():
-  """Base config for a fully connected model with a single global view."""
-  config = parent_configs.base()
+    """Base config for a fully connected model with a single global view."""
+    config = parent_configs.base()
 
-  # Add configuration for the fully-connected layers of the global_view feature.
-  config["hparams"]["time_series_hidden"] = {
-      "global_view": {
-          "num_local_layers": 0,
-          "local_layer_size": 128,
+    # Add configuration for the fully-connected layers of the global_view feature.
+    config["hparams"]["time_series_hidden"] = {
+        "global_view": {
+            "num_local_layers": 0,
+            "local_layer_size": 128,
 
-          # If > 0, the first layer is implemented as a wide convolutional layer
-          # for invariance to small translations.
-          "translation_delta": 0,
+            # If > 0, the first layer is implemented as a wide convolutional layer
+            # for invariance to small translations.
+            "translation_delta": 0,
 
-          # Pooling type following the wide convolutional layer.
-          "pooling_type": "max",
+            # Pooling type following the wide convolutional layer.
+            "pooling_type": "max",
 
-          # Dropout rate for the fully connected layers.
-          "dropout_rate": 0.0,
-      },
-  }
-  return config
+            # Dropout rate for the fully connected layers.
+            "dropout_rate": 0.0,
+        },
+    }
+    return config
 
 
 def local_global():
-  """Base config for a locally fully connected model with local/global views."""
-  config = parent_configs.base()
+    """Base config for a locally fully connected model with local/global views."""
+    config = parent_configs.base()
 
-  # Override the model features to be local_view and global_view time series.
-  config["inputs"]["features"] = {
-      "local_view": {
-          "length": 201,
-          "is_time_series": True,
-      },
-      "global_view": {
-          "length": 2001,
-          "name_in_proto": "light_curve",
-          "is_time_series": True,
-          "data_source": "",
-      },
-  }
+    # Override the model features to be local_view and global_view time series.
+    config["inputs"]["features"] = {
+        "local_view": {
+            "length": 201,
+            "is_time_series": True,
+        },
+        "global_view": {
+            "length": 2001,
+            "name_in_proto": "light_curve",
+            "is_time_series": True,
+            "data_source": "",
+        },
+    }
 
-  # Add configurations for the fully-connected layers of time series features.
-  config["hparams"]["time_series_hidden"] = {
-      "local_view": {
-          "num_local_layers": 0,
-          "local_layer_size": 128,
-          "translation_delta": 0,  # For wide convolution.
-          "pooling_type": "max",  # For wide convolution.
-          "dropout_rate": 0.0,
-      },
-      "global_view": {
-          "num_local_layers": 0,
-          "local_layer_size": 128,
-          "translation_delta": 0,  # For wide convolution.
-          "pooling_type": "max",  # For wide convolution.
-          "dropout_rate": 0.0,
-      },
-  }
-  return config
+    # Add configurations for the fully-connected layers of time series features.
+    config["hparams"]["time_series_hidden"] = {
+        "local_view": {
+            "num_local_layers": 0,
+            "local_layer_size": 128,
+            "translation_delta": 0,  # For wide convolution.
+            "pooling_type": "max",  # For wide convolution.
+            "dropout_rate": 0.0,
+        },
+        "global_view": {
+            "num_local_layers": 0,
+            "local_layer_size": 128,
+            "translation_delta": 0,  # For wide convolution.
+            "pooling_type": "max",  # For wide convolution.
+            "dropout_rate": 0.0,
+        },
+    }
+    return config

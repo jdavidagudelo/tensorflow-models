@@ -33,10 +33,9 @@ from __future__ import print_function
 
 import sys
 
-import tensorflow as tf   # pylint: disable=g-bad-import-order
+import tensorflow as tf  # pylint: disable=g-bad-import-order
 from official.resnet import resnet_model
 from official.utils.testing import reference_data
-
 
 DATA_FORMAT = "channels_last"  # CPU instructions often preclude channels_first
 BATCH_SIZE = 32
@@ -61,32 +60,32 @@ BLOCK_TESTS = [
 
 
 class BaseTest(reference_data.BaseTest):
-  """Tests for core ResNet layers."""
+    """Tests for core ResNet layers."""
 
-  @property
-  def test_name(self):
-    return "resnet"
+    @property
+    def test_name(self):
+        return "resnet"
 
-  def _batch_norm_ops(self, test=False):
-    name = "batch_norm"
+    def _batch_norm_ops(self, test=False):
+        name = "batch_norm"
 
-    g = tf.Graph()
-    with g.as_default():
-      tf.set_random_seed(self.name_to_seed(name))
-      input_tensor = tf.get_variable(
-          "input_tensor", dtype=tf.float32,
-          initializer=tf.random_uniform((32, 16, 16, 3), maxval=1)
-      )
-      layer = resnet_model.batch_norm(
-          inputs=input_tensor, data_format=DATA_FORMAT, training=True)
+        g = tf.Graph()
+        with g.as_default():
+            tf.set_random_seed(self.name_to_seed(name))
+            input_tensor = tf.get_variable(
+                "input_tensor", dtype=tf.float32,
+                initializer=tf.random_uniform((32, 16, 16, 3), maxval=1)
+            )
+            layer = resnet_model.batch_norm(
+                inputs=input_tensor, data_format=DATA_FORMAT, training=True)
 
-    self._save_or_test_ops(
-        name=name, graph=g, ops_to_eval=[input_tensor, layer], test=test,
-        correctness_function=self.default_correctness_function
-    )
+        self._save_or_test_ops(
+            name=name, graph=g, ops_to_eval=[input_tensor, layer], test=test,
+            correctness_function=self.default_correctness_function
+        )
 
-  def make_projection(self, filters_out, strides, data_format):
-    """1D convolution with stride projector.
+    def make_projection(self, filters_out, strides, data_format):
+        """1D convolution with stride projector.
 
     Args:
       filters_out: Number of filters in the projection.
@@ -96,15 +95,17 @@ class BaseTest(reference_data.BaseTest):
     Returns:
       A CNN projector function with kernel_size 1.
     """
-    def projection_shortcut(inputs):
-      return resnet_model.conv2d_fixed_padding(
-          inputs=inputs, filters=filters_out, kernel_size=1, strides=strides,
-          data_format=data_format)
-    return projection_shortcut
 
-  def _resnet_block_ops(self, test, batch_size, bottleneck, projection,
-                        resnet_version, width, channels):
-    """Test whether resnet block construction has changed.
+        def projection_shortcut(inputs):
+            return resnet_model.conv2d_fixed_padding(
+                inputs=inputs, filters=filters_out, kernel_size=1, strides=strides,
+                data_format=data_format)
+
+        return projection_shortcut
+
+    def _resnet_block_ops(self, test, batch_size, bottleneck, projection,
+                          resnet_version, width, channels):
+        """Test whether resnet block construction has changed.
 
     Args:
       test: Whether or not to run as a test case.
@@ -117,88 +118,88 @@ class BaseTest(reference_data.BaseTest):
       channels: The number of channels in the fake image.
     """
 
-    name = "batch-size-{}_{}{}_version-{}_width-{}_channels-{}".format(
-        batch_size,
-        "bottleneck" if bottleneck else "building",
-        "_projection" if projection else "",
-        resnet_version,
-        width,
-        channels
-    )
+        name = "batch-size-{}_{}{}_version-{}_width-{}_channels-{}".format(
+            batch_size,
+            "bottleneck" if bottleneck else "building",
+            "_projection" if projection else "",
+            resnet_version,
+            width,
+            channels
+        )
 
-    if resnet_version == 1:
-      block_fn = resnet_model._building_block_v1
-      if bottleneck:
-        block_fn = resnet_model._bottleneck_block_v1
-    else:
-      block_fn = resnet_model._building_block_v2
-      if bottleneck:
-        block_fn = resnet_model._bottleneck_block_v2
+        if resnet_version == 1:
+            block_fn = resnet_model._building_block_v1
+            if bottleneck:
+                block_fn = resnet_model._bottleneck_block_v1
+        else:
+            block_fn = resnet_model._building_block_v2
+            if bottleneck:
+                block_fn = resnet_model._bottleneck_block_v2
 
-    g = tf.Graph()
-    with g.as_default():
-      tf.set_random_seed(self.name_to_seed(name))
-      strides = 1
-      channels_out = channels
-      projection_shortcut = None
-      if projection:
-        strides = 2
-        channels_out *= strides
-        projection_shortcut = self.make_projection(
-            filters_out=channels_out, strides=strides, data_format=DATA_FORMAT)
+        g = tf.Graph()
+        with g.as_default():
+            tf.set_random_seed(self.name_to_seed(name))
+            strides = 1
+            channels_out = channels
+            projection_shortcut = None
+            if projection:
+                strides = 2
+                channels_out *= strides
+                projection_shortcut = self.make_projection(
+                    filters_out=channels_out, strides=strides, data_format=DATA_FORMAT)
 
-      filters = channels_out
-      if bottleneck:
-        filters = channels_out // 4
+            filters = channels_out
+            if bottleneck:
+                filters = channels_out // 4
 
-      input_tensor = tf.get_variable(
-          "input_tensor", dtype=tf.float32,
-          initializer=tf.random_uniform((batch_size, width, width, channels),
-                                        maxval=1)
-      )
+            input_tensor = tf.get_variable(
+                "input_tensor", dtype=tf.float32,
+                initializer=tf.random_uniform((batch_size, width, width, channels),
+                                              maxval=1)
+            )
 
-      layer = block_fn(inputs=input_tensor, filters=filters, training=True,
-                       projection_shortcut=projection_shortcut, strides=strides,
-                       data_format=DATA_FORMAT)
+            layer = block_fn(inputs=input_tensor, filters=filters, training=True,
+                             projection_shortcut=projection_shortcut, strides=strides,
+                             data_format=DATA_FORMAT)
 
-    self._save_or_test_ops(
-        name=name, graph=g, ops_to_eval=[input_tensor, layer], test=test,
-        correctness_function=self.default_correctness_function
-    )
+        self._save_or_test_ops(
+            name=name, graph=g, ops_to_eval=[input_tensor, layer], test=test,
+            correctness_function=self.default_correctness_function
+        )
 
-  def test_batch_norm(self):
-    self._batch_norm_ops(test=True)
+    def test_batch_norm(self):
+        self._batch_norm_ops(test=True)
 
-  def test_block_0(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[0])
+    def test_block_0(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[0])
 
-  def test_block_1(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[1])
+    def test_block_1(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[1])
 
-  def test_block_2(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[2])
+    def test_block_2(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[2])
 
-  def test_block_3(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[3])
+    def test_block_3(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[3])
 
-  def test_block_4(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[4])
+    def test_block_4(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[4])
 
-  def test_block_5(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[5])
+    def test_block_5(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[5])
 
-  def test_block_6(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[6])
+    def test_block_6(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[6])
 
-  def test_block_7(self):
-    self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[7])
+    def test_block_7(self):
+        self._resnet_block_ops(test=True, batch_size=BATCH_SIZE, **BLOCK_TESTS[7])
 
-  def regenerate(self):
-    """Create reference data files for ResNet layer tests."""
-    self._batch_norm_ops(test=False)
-    for block_params in BLOCK_TESTS:
-      self._resnet_block_ops(test=False, batch_size=BATCH_SIZE, **block_params)
+    def regenerate(self):
+        """Create reference data files for ResNet layer tests."""
+        self._batch_norm_ops(test=False)
+        for block_params in BLOCK_TESTS:
+            self._resnet_block_ops(test=False, batch_size=BATCH_SIZE, **block_params)
 
 
 if __name__ == "__main__":
-  reference_data.main(argv=sys.argv, test_class=BaseTest)
+    reference_data.main(argv=sys.argv, test_class=BaseTest)

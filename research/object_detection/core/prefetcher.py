@@ -18,7 +18,7 @@ import tensorflow as tf
 
 
 def prefetch(tensor_dict, capacity):
-  """Creates a prefetch queue for tensors.
+    """Creates a prefetch queue for tensors.
 
   Creates a FIFO queue to asynchronously enqueue tensor_dicts and returns a
   dequeue op that evaluates to a tensor_dict. This function is useful in
@@ -45,17 +45,17 @@ def prefetch(tensor_dict, capacity):
   Returns:
     a FIFO prefetcher queue
   """
-  names = list(tensor_dict.keys())
-  dtypes = [t.dtype for t in tensor_dict.values()]
-  shapes = [t.get_shape() for t in tensor_dict.values()]
-  prefetch_queue = tf.PaddingFIFOQueue(capacity, dtypes=dtypes,
-                                       shapes=shapes,
-                                       names=names,
-                                       name='prefetch_queue')
-  enqueue_op = prefetch_queue.enqueue(tensor_dict)
-  tf.train.queue_runner.add_queue_runner(tf.train.queue_runner.QueueRunner(
-      prefetch_queue, [enqueue_op]))
-  tf.summary.scalar('queue/%s/fraction_of_%d_full' % (prefetch_queue.name,
-                                                      capacity),
-                    tf.to_float(prefetch_queue.size()) * (1. / capacity))
-  return prefetch_queue
+    names = list(tensor_dict.keys())
+    dtypes = [t.dtype for t in tensor_dict.values()]
+    shapes = [t.get_shape() for t in tensor_dict.values()]
+    prefetch_queue = tf.PaddingFIFOQueue(capacity, dtypes=dtypes,
+                                         shapes=shapes,
+                                         names=names,
+                                         name='prefetch_queue')
+    enqueue_op = prefetch_queue.enqueue(tensor_dict)
+    tf.train.queue_runner.add_queue_runner(tf.train.queue_runner.QueueRunner(
+        prefetch_queue, [enqueue_op]))
+    tf.summary.scalar('queue/%s/fraction_of_%d_full' % (prefetch_queue.name,
+                                                        capacity),
+                      tf.to_float(prefetch_queue.size()) * (1. / capacity))
+    return prefetch_queue

@@ -15,8 +15,8 @@
 
 """RFCN Box Predictor."""
 import tensorflow as tf
-from object_detection.core import box_predictor
-from object_detection.utils import ops
+from research.object_detection.core import box_predictor
+from research.object_detection.utils import ops
 
 slim = tf.contrib.slim
 
@@ -27,7 +27,7 @@ MASK_PREDICTIONS = box_predictor.MASK_PREDICTIONS
 
 
 class RfcnBoxPredictor(box_predictor.BoxPredictor):
-  """RFCN Box Predictor.
+    """RFCN Box Predictor.
 
   Applies a position sensitive ROI pooling on position sensitive feature maps to
   predict classes and refined locations. See https://arxiv.org/abs/1605.06409
@@ -38,15 +38,15 @@ class RfcnBoxPredictor(box_predictor.BoxPredictor):
   prediction is made for each class.
   """
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               conv_hyperparams_fn,
-               num_spatial_bins,
-               depth,
-               crop_size,
-               box_code_size):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 conv_hyperparams_fn,
+                 num_spatial_bins,
+                 depth,
+                 crop_size,
+                 box_code_size):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -62,20 +62,20 @@ class RfcnBoxPredictor(box_predictor.BoxPredictor):
       crop_size: A list of two integers `[crop_height, crop_width]`.
       box_code_size: Size of encoding for each box.
     """
-    super(RfcnBoxPredictor, self).__init__(is_training, num_classes)
-    self._conv_hyperparams_fn = conv_hyperparams_fn
-    self._num_spatial_bins = num_spatial_bins
-    self._depth = depth
-    self._crop_size = crop_size
-    self._box_code_size = box_code_size
+        super(RfcnBoxPredictor, self).__init__(is_training, num_classes)
+        self._conv_hyperparams_fn = conv_hyperparams_fn
+        self._num_spatial_bins = num_spatial_bins
+        self._depth = depth
+        self._crop_size = crop_size
+        self._box_code_size = box_code_size
 
-  @property
-  def num_classes(self):
-    return self._num_classes
+    @property
+    def num_classes(self):
+        return self._num_classes
 
-  def _predict(self, image_features, num_predictions_per_location,
-               proposal_boxes):
-    """Computes encoded object locations and corresponding confidences.
+    def _predict(self, image_features, num_predictions_per_location,
+                 **kwargs):
+        """Computes encoded object locations and corresponding confidences.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
@@ -100,60 +100,61 @@ class RfcnBoxPredictor(box_predictor.BoxPredictor):
       ValueError: if num_predictions_per_location is not 1 or if
         len(image_features) is not 1.
     """
-    if (len(num_predictions_per_location) != 1 or
-        num_predictions_per_location[0] != 1):
-      raise ValueError('Currently RfcnBoxPredictor only supports '
-                       'predicting a single box per class per location.')
-    if len(image_features) != 1:
-      raise ValueError('length of `image_features` must be 1. Found {}'.
-                       format(len(image_features)))
-    image_feature = image_features[0]
-    num_predictions_per_location = num_predictions_per_location[0]
-    batch_size = tf.shape(proposal_boxes)[0]
-    num_boxes = tf.shape(proposal_boxes)[1]
-    net = image_feature
-    with slim.arg_scope(self._conv_hyperparams_fn()):
-      net = slim.conv2d(net, self._depth, [1, 1], scope='reduce_depth')
-      # Location predictions.
-      location_feature_map_depth = (self._num_spatial_bins[0] *
-                                    self._num_spatial_bins[1] *
-                                    self.num_classes *
-                                    self._box_code_size)
-      location_feature_map = slim.conv2d(net, location_feature_map_depth,
-                                         [1, 1], activation_fn=None,
-                                         scope='refined_locations')
-      box_encodings = ops.batch_position_sensitive_crop_regions(
-          location_feature_map,
-          boxes=proposal_boxes,
-          crop_size=self._crop_size,
-          num_spatial_bins=self._num_spatial_bins,
-          global_pool=True)
-      box_encodings = tf.squeeze(box_encodings, squeeze_dims=[2, 3])
-      box_encodings = tf.reshape(box_encodings,
-                                 [batch_size * num_boxes, 1, self.num_classes,
-                                  self._box_code_size])
+        proposal_boxes = kwargs.get('proposal_boxes')
+        if (len(num_predictions_per_location) != 1 or
+                num_predictions_per_location[0] != 1):
+            raise ValueError('Currently RfcnBoxPredictor only supports '
+                             'predicting a single box per class per location.')
+        if len(image_features) != 1:
+            raise ValueError('length of `image_features` must be 1. Found {}'.
+                             format(len(image_features)))
+        image_feature = image_features[0]
+        num_predictions_per_location = num_predictions_per_location[0]
+        batch_size = tf.shape(proposal_boxes)[0]
+        num_boxes = tf.shape(proposal_boxes)[1]
+        net = image_feature
+        with slim.arg_scope(self._conv_hyperparams_fn()):
+            net = slim.conv2d(net, self._depth, [1, 1], scope='reduce_depth')
+            # Location predictions.
+            location_feature_map_depth = (self._num_spatial_bins[0] *
+                                          self._num_spatial_bins[1] *
+                                          self.num_classes *
+                                          self._box_code_size)
+            location_feature_map = slim.conv2d(net, location_feature_map_depth,
+                                               [1, 1], activation_fn=None,
+                                               scope='refined_locations')
+            box_encodings = ops.batch_position_sensitive_crop_regions(
+                location_feature_map,
+                boxes=proposal_boxes,
+                crop_size=self._crop_size,
+                num_spatial_bins=self._num_spatial_bins,
+                global_pool=True)
+            box_encodings = tf.squeeze(box_encodings, axis=[2, 3])
+            box_encodings = tf.reshape(box_encodings,
+                                       [batch_size * num_boxes, 1, self.num_classes,
+                                        self._box_code_size])
 
-      # Class predictions.
-      total_classes = self.num_classes + 1  # Account for background class.
-      class_feature_map_depth = (self._num_spatial_bins[0] *
-                                 self._num_spatial_bins[1] *
-                                 total_classes)
-      class_feature_map = slim.conv2d(net, class_feature_map_depth, [1, 1],
-                                      activation_fn=None,
-                                      scope='class_predictions')
-      class_predictions_with_background = (
-          ops.batch_position_sensitive_crop_regions(
-              class_feature_map,
-              boxes=proposal_boxes,
-              crop_size=self._crop_size,
-              num_spatial_bins=self._num_spatial_bins,
-              global_pool=True))
-      class_predictions_with_background = tf.squeeze(
-          class_predictions_with_background, squeeze_dims=[2, 3])
-      class_predictions_with_background = tf.reshape(
-          class_predictions_with_background,
-          [batch_size * num_boxes, 1, total_classes])
+            # Class predictions.
+            total_classes = self.num_classes + 1  # Account for background class.
+            class_feature_map_depth = (self._num_spatial_bins[0] *
+                                       self._num_spatial_bins[1] *
+                                       total_classes)
+            class_feature_map = slim.conv2d(net, class_feature_map_depth, [1, 1],
+                                            activation_fn=None,
+                                            scope='class_predictions')
+            class_predictions_with_background = (
+                ops.batch_position_sensitive_crop_regions(
+                    class_feature_map,
+                    boxes=proposal_boxes,
+                    crop_size=self._crop_size,
+                    num_spatial_bins=self._num_spatial_bins,
+                    global_pool=True))
+            class_predictions_with_background = tf.squeeze(
+                class_predictions_with_background, axis=[2, 3])
+            class_predictions_with_background = tf.reshape(
+                class_predictions_with_background,
+                [batch_size * num_boxes, 1, total_classes])
 
-    return {BOX_ENCODINGS: [box_encodings],
-            CLASS_PREDICTIONS_WITH_BACKGROUND:
-            [class_predictions_with_background]}
+        return {BOX_ENCODINGS: [box_encodings],
+                CLASS_PREDICTIONS_WITH_BACKGROUND:
+                    [class_predictions_with_background]}

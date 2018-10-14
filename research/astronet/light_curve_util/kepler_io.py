@@ -80,7 +80,7 @@ def kepler_filenames(base_dir,
                      quarters=None,
                      injected_group=None,
                      check_existence=True):
-  """Returns the light curve filenames for a Kepler target star.
+    """Returns the light curve filenames for a Kepler target star.
 
   This function assumes the directory structure of the Mikulski Archive for
   Space Telescopes (http://archive.stsci.edu/pub/kepler/lightcurves).
@@ -111,41 +111,41 @@ def kepler_filenames(base_dir,
   Returns:
     A list of filenames.
   """
-  # Pad the Kepler id with zeros to length 9.
-  kep_id = "%.9d" % int(kep_id)
+    # Pad the Kepler id with zeros to length 9.
+    kep_id = "%.9d" % int(kep_id)
 
-  quarter_prefixes, cadence_suffix = ((LONG_CADENCE_QUARTER_PREFIXES, "llc")
-                                      if long_cadence else
-                                      (SHORT_CADENCE_QUARTER_PREFIXES, "slc"))
+    quarter_prefixes, cadence_suffix = ((LONG_CADENCE_QUARTER_PREFIXES, "llc")
+                                        if long_cadence else
+                                        (SHORT_CADENCE_QUARTER_PREFIXES, "slc"))
 
-  if quarters is None:
-    quarters = quarter_prefixes.keys()
+    if quarters is None:
+        quarters = quarter_prefixes.keys()
 
-  quarters = sorted(quarters)  # Sort quarters chronologically.
+    quarters = sorted(quarters)  # Sort quarters chronologically.
 
-  filenames = []
-  base_dir = os.path.join(base_dir, kep_id[0:4], kep_id)
-  for quarter in quarters:
-    for quarter_prefix in quarter_prefixes[quarter]:
-      if injected_group:
-        base_name = "kplr%s-%s_INJECTED-%s_%s.fits" % (kep_id, quarter_prefix,
-                                                       injected_group,
-                                                       cadence_suffix)
-      else:
-        base_name = "kplr%s-%s_%s.fits" % (kep_id, quarter_prefix,
-                                           cadence_suffix)
-      filename = os.path.join(base_dir, base_name)
-      # Not all stars have data for all quarters.
-      if not check_existence or gfile.Exists(filename):
-        filenames.append(filename)
+    filenames = []
+    base_dir = os.path.join(base_dir, kep_id[0:4], kep_id)
+    for quarter in quarters:
+        for quarter_prefix in quarter_prefixes[quarter]:
+            if injected_group:
+                base_name = "kplr%s-%s_INJECTED-%s_%s.fits" % (kep_id, quarter_prefix,
+                                                               injected_group,
+                                                               cadence_suffix)
+            else:
+                base_name = "kplr%s-%s_%s.fits" % (kep_id, quarter_prefix,
+                                                   cadence_suffix)
+            filename = os.path.join(base_dir, base_name)
+            # Not all stars have data for all quarters.
+            if not check_existence or gfile.Exists(filename):
+                filenames.append(filename)
 
-  return filenames
+    return filenames
 
 
 def read_kepler_light_curve(filenames,
                             light_curve_extension="LIGHTCURVE",
                             invert=False):
-  """Reads time and flux measurements for a Kepler target star.
+    """Reads time and flux measurements for a Kepler target star.
 
   Args:
     filenames: A list of .fits files containing time and flux measurements.
@@ -157,25 +157,25 @@ def read_kepler_light_curve(filenames,
     all_flux: A list of numpy arrays corresponding to the time arrays in
         all_time.
   """
-  all_time = []
-  all_flux = []
+    all_time = []
+    all_flux = []
 
-  for filename in filenames:
-    with fits.open(gfile.Open(filename, "rb")) as hdu_list:
-      light_curve = hdu_list[light_curve_extension].data
-      time = light_curve.TIME
-      flux = light_curve.PDCSAP_FLUX
+    for filename in filenames:
+        with fits.open(gfile.Open(filename, "rb")) as hdu_list:
+            light_curve = hdu_list[light_curve_extension].data
+            time = light_curve.TIME
+            flux = light_curve.PDCSAP_FLUX
 
-    # Remove NaN flux values.
-    valid_indices = np.where(np.isfinite(flux))
-    time = time[valid_indices]
-    flux = flux[valid_indices]
+        # Remove NaN flux values.
+        valid_indices = np.where(np.isfinite(flux))
+        time = time[valid_indices]
+        flux = flux[valid_indices]
 
-    if invert:
-      flux *= -1
+        if invert:
+            flux *= -1
 
-    if time.size:
-      all_time.append(time)
-      all_flux.append(flux)
+        if time.size:
+            all_time.append(time)
+            all_flux.append(flux)
 
-  return all_time, all_flux
+    return all_time, all_flux

@@ -21,25 +21,25 @@ All the class prediction heads have a predict function that receives the
 """
 import tensorflow as tf
 
-from object_detection.predictors.heads import head
+from research.object_detection.predictors.heads import head
 
 
 class ConvolutionalClassHead(head.KerasHead):
-  """Convolutional class prediction head."""
+    """Convolutional class prediction head."""
 
-  def __init__(self,
-               is_training,
-               num_classes,
-               use_dropout,
-               dropout_keep_prob,
-               kernel_size,
-               num_predictions_per_location,
-               conv_hyperparams,
-               freeze_batchnorm,
-               class_prediction_bias_init=0.0,
-               use_depthwise=False,
-               name=None):
-    """Constructor.
+    def __init__(self,
+                 is_training,
+                 num_classes,
+                 use_dropout,
+                 dropout_keep_prob,
+                 kernel_size,
+                 num_predictions_per_location,
+                 conv_hyperparams,
+                 freeze_batchnorm,
+                 class_prediction_bias_init=0.0,
+                 use_depthwise=False,
+                 name=None):
+        """Constructor.
 
     Args:
       is_training: Indicates whether the BoxPredictor is in training mode.
@@ -71,59 +71,59 @@ class ConvolutionalClassHead(head.KerasHead):
     Raises:
       ValueError: if min_depth > max_depth.
     """
-    super(ConvolutionalClassHead, self).__init__(name=name)
-    self._is_training = is_training
-    self._num_classes = num_classes
-    self._use_dropout = use_dropout
-    self._dropout_keep_prob = dropout_keep_prob
-    self._kernel_size = kernel_size
-    self._class_prediction_bias_init = class_prediction_bias_init
-    self._use_depthwise = use_depthwise
-    self._num_class_slots = self._num_classes + 1
+        super(ConvolutionalClassHead, self).__init__(name=name)
+        self._is_training = is_training
+        self._num_classes = num_classes
+        self._use_dropout = use_dropout
+        self._dropout_keep_prob = dropout_keep_prob
+        self._kernel_size = kernel_size
+        self._class_prediction_bias_init = class_prediction_bias_init
+        self._use_depthwise = use_depthwise
+        self._num_class_slots = self._num_classes + 1
 
-    self._class_predictor_layers = []
+        self._class_predictor_layers = []
 
-    if self._use_dropout:
-      self._class_predictor_layers.append(
-          # The Dropout layer's `training` parameter for the call method must
-          # be set implicitly by the Keras set_learning_phase. The object
-          # detection training code takes care of this.
-          tf.keras.layers.Dropout(rate=1.0 - self._dropout_keep_prob))
-    if self._use_depthwise:
-      self._class_predictor_layers.append(
-          tf.keras.layers.DepthwiseConv2D(
-              [self._kernel_size, self._kernel_size],
-              padding='SAME',
-              depth_multiplier=1,
-              strides=1,
-              dilation_rate=1,
-              name='ClassPredictor_depthwise',
-              **conv_hyperparams.params()))
-      self._class_predictor_layers.append(
-          conv_hyperparams.build_batch_norm(
-              training=(is_training and not freeze_batchnorm),
-              name='ClassPredictor_depthwise_batchnorm'))
-      self._class_predictor_layers.append(
-          conv_hyperparams.build_activation_layer(
-              name='ClassPredictor_depthwise_activation'))
-      self._class_predictor_layers.append(
-          tf.keras.layers.Conv2D(
-              num_predictions_per_location * self._num_class_slots, [1, 1],
-              name='ClassPredictor',
-              **conv_hyperparams.params(activation=None)))
-    else:
-      self._class_predictor_layers.append(
-          tf.keras.layers.Conv2D(
-              num_predictions_per_location * self._num_class_slots,
-              [self._kernel_size, self._kernel_size],
-              padding='SAME',
-              name='ClassPredictor',
-              bias_initializer=tf.constant_initializer(
-                  self._class_prediction_bias_init),
-              **conv_hyperparams.params(activation=None)))
+        if self._use_dropout:
+            self._class_predictor_layers.append(
+                # The Dropout layer's `training` parameter for the call method must
+                # be set implicitly by the Keras set_learning_phase. The object
+                # detection training code takes care of this.
+                tf.keras.layers.Dropout(rate=1.0 - self._dropout_keep_prob))
+        if self._use_depthwise:
+            self._class_predictor_layers.append(
+                tf.keras.layers.DepthwiseConv2D(
+                    [self._kernel_size, self._kernel_size],
+                    padding='SAME',
+                    depth_multiplier=1,
+                    strides=1,
+                    dilation_rate=1,
+                    name='ClassPredictor_depthwise',
+                    **conv_hyperparams.params()))
+            self._class_predictor_layers.append(
+                conv_hyperparams.build_batch_norm(
+                    training=(is_training and not freeze_batchnorm),
+                    name='ClassPredictor_depthwise_batchnorm'))
+            self._class_predictor_layers.append(
+                conv_hyperparams.build_activation_layer(
+                    name='ClassPredictor_depthwise_activation'))
+            self._class_predictor_layers.append(
+                tf.keras.layers.Conv2D(
+                    num_predictions_per_location * self._num_class_slots, [1, 1],
+                    name='ClassPredictor',
+                    **conv_hyperparams.params(activation=None)))
+        else:
+            self._class_predictor_layers.append(
+                tf.keras.layers.Conv2D(
+                    num_predictions_per_location * self._num_class_slots,
+                    [self._kernel_size, self._kernel_size],
+                    padding='SAME',
+                    name='ClassPredictor',
+                    bias_initializer=tf.constant_initializer(
+                        self._class_prediction_bias_init),
+                    **conv_hyperparams.params(activation=None)))
 
-  def _predict(self, features):
-    """Predicts boxes.
+    def _predict(self, features):
+        """Predicts boxes.
 
     Args:
       features: A float tensor of shape [batch_size, height, width, channels]
@@ -134,15 +134,15 @@ class ConvolutionalClassHead(head.KerasHead):
         [batch_size, num_anchors, num_classes + 1] representing the class
         predictions for the proposals.
     """
-    # Add a slot for the background class.
-    class_predictions_with_background = features
-    for layer in self._class_predictor_layers:
-      class_predictions_with_background = layer(
-          class_predictions_with_background)
-    batch_size = features.get_shape().as_list()[0]
-    if batch_size is None:
-      batch_size = tf.shape(features)[0]
-    class_predictions_with_background = tf.reshape(
-        class_predictions_with_background,
-        [batch_size, -1, self._num_class_slots])
-    return class_predictions_with_background
+        # Add a slot for the background class.
+        class_predictions_with_background = features
+        for layer in self._class_predictor_layers:
+            class_predictions_with_background = layer(
+                class_predictions_with_background)
+        batch_size = features.get_shape().as_list()[0]
+        if batch_size is None:
+            batch_size = tf.shape(features)[0]
+        class_predictions_with_background = tf.reshape(
+            class_predictions_with_background,
+            [batch_size, -1, self._num_class_slots])
+        return class_predictions_with_background

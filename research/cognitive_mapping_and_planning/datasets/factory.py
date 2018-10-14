@@ -16,98 +16,95 @@
 r"""Wrapper for selecting the navigation environment that we want to train and
 test on.
 """
-import numpy as np
-import os, glob
-import platform
-
+import os
+import glob
 import logging
-from tensorflow.python.platform import app
-from tensorflow.python.platform import flags
 
-import render.swiftshader_renderer as renderer 
-import src.file_utils as fu
-import src.utils as utils
+from ..render import swiftshader_renderer as renderer
+from ..src import file_utils as fu
+from ..src import utils as utils
+
 
 def get_dataset(dataset_name):
-  if dataset_name == 'sbpd':
-    dataset = StanfordBuildingParserDataset(dataset_name)
-  else:
-    logging.fatal('Not one of sbpd')
-  return dataset
+    dataset = None
+    if dataset_name == 'sbpd':
+        dataset = StanfordBuildingParserDataset(dataset_name)
+    else:
+        logging.fatal('Not one of sbpd')
+    return dataset
+
 
 class Loader():
-  def get_data_dir():
-    pass
+    def get_data_dir(self):
+        pass
 
-  def get_meta_data(self, file_name, data_dir=None):
-    if data_dir is None:
-      data_dir = self.get_data_dir()
-    full_file_name = os.path.join(data_dir, 'meta', file_name)
-    assert(fu.exists(full_file_name)), \
-      '{:s} does not exist'.format(full_file_name)
-    ext = os.path.splitext(full_file_name)[1]
-    if ext == '.txt':
-      ls = []
-      with fu.fopen(full_file_name, 'r') as f:
-        for l in f:
-          ls.append(l.rstrip())
-    elif ext == '.pkl':
-      ls = utils.load_variables(full_file_name)
-    return ls
+    def get_meta_data(self, file_name, data_dir=None):
+        if data_dir is None:
+            data_dir = self.get_data_dir()
+        full_file_name = os.path.join(data_dir, 'meta', file_name)
+        assert (fu.exists(full_file_name)), \
+            '{:s} does not exist'.format(full_file_name)
+        ext = os.path.splitext(full_file_name)[1]
+        ls = None
+        if ext == '.txt':
+            ls = []
+            with fu.fopen(full_file_name, 'r') as f:
+                for l in f:
+                    ls.append(l.rstrip())
+        elif ext == '.pkl':
+            ls = utils.load_variables(full_file_name)
+        return ls
 
-  def load_building(self, name, data_dir=None):
-    if data_dir is None:
-      data_dir = self.get_data_dir()
-    out = {}
-    out['name'] = name
-    out['data_dir'] = data_dir
-    out['room_dimension_file'] = os.path.join(data_dir, 'room-dimension',
-                                              name+'.pkl')
-    out['class_map_folder'] = os.path.join(data_dir, 'class-maps')
-    return out
+    def load_building(self, name, data_dir=None):
+        if data_dir is None:
+            data_dir = self.get_data_dir()
+        out = {'name': name, 'data_dir': data_dir,
+               'room_dimension_file': os.path.join(data_dir, 'room-dimension',
+                                                   name + '.pkl'),
+               'class_map_folder': os.path.join(data_dir, 'class-maps')}
+        return out
 
-  def load_building_meshes(self, building):
-    dir_name = os.path.join(building['data_dir'], 'mesh', building['name'])
-    mesh_file_name = glob.glob1(dir_name, '*.obj')[0]
-    mesh_file_name_full = os.path.join(dir_name, mesh_file_name)
-    logging.error('Loading building from obj file: %s', mesh_file_name_full)
-    shape = renderer.Shape(mesh_file_name_full, load_materials=True, 
-                           name_prefix=building['name']+'_')
-    return [shape]
+    def load_building_meshes(self, building):
+        dir_name = os.path.join(building['data_dir'], 'mesh', building['name'])
+        mesh_file_name = glob.glob1(dir_name, '*.obj')[0]
+        mesh_file_name_full = os.path.join(dir_name, mesh_file_name)
+        logging.error('Loading building from obj file: %s', mesh_file_name_full)
+        shape = renderer.Shape(mesh_file_name_full, load_materials=True,
+                               name_prefix=building['name'] + '_')
+        return [shape]
+
 
 class StanfordBuildingParserDataset(Loader):
-  def __init__(self, ver):
-    self.ver = ver
-    self.data_dir = None
-  
-  def get_data_dir(self):
-    if self.data_dir is None:
-      self.data_dir = 'data/stanford_building_parser_dataset/'
-    return self.data_dir
+    def __init__(self, ver):
+        self.ver = ver
+        self.data_dir = None
 
-  def get_benchmark_sets(self):
-    return self._get_benchmark_sets()
+    def get_data_dir(self):
+        if self.data_dir is None:
+            self.data_dir = 'data/stanford_building_parser_dataset/'
+        return self.data_dir
 
-  def get_split(self, split_name):
-    if self.ver == 'sbpd':
-      return self._get_split(split_name)
-    else:
-      logging.fatal('Unknown version.')
+    def get_benchmark_sets(self):
+        return self._get_benchmark_sets()
 
-  def _get_benchmark_sets(self):
-    sets = ['train1', 'val', 'test']
-    return sets
+    def get_split(self, split_name):
+        if self.ver == 'sbpd':
+            return self._get_split(split_name)
+        else:
+            logging.fatal('Unknown version.')
 
-  def _get_split(self, split_name):
-    train = ['area1', 'area5a', 'area5b', 'area6']
-    train1 = ['area1']
-    val = ['area3']
-    test = ['area4']
+    @staticmethod
+    def _get_benchmark_sets():
+        sets = ['train1', 'val', 'test']
+        return sets
 
-    sets = {}
-    sets['train'] = train
-    sets['train1'] = train1
-    sets['val'] = val
-    sets['test'] = test
-    sets['all'] = sorted(list(set(train + val + test)))
-    return sets[split_name]
+    @staticmethod
+    def _get_split(split_name):
+        train = ['area1', 'area5a', 'area5b', 'area6']
+        train1 = ['area1']
+        val = ['area3']
+        test = ['area4']
+
+        sets = {'train': train, 'train1': train1, 'val': val, 'test': test,
+                'all': sorted(list(set(train + val + test)))}
+        return sets[split_name]
