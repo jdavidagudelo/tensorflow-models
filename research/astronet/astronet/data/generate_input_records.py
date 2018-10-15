@@ -86,7 +86,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from ..data import preprocess
+from research.astronet.astronet.data import preprocess
 
 parser = argparse.ArgumentParser()
 

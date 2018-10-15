@@ -22,8 +22,8 @@ from __future__ import print_function
 from absl import flags
 import tensorflow as tf
 
-import data_provider
-import networks
+from research.gan.cifar import data_provider
+from research.gan.cifar import networks
 
 tfgan = tf.contrib.gan
 

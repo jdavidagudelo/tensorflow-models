@@ -15,7 +15,8 @@ from builtins import str
 # limitations under the License.
 # ==============================================================================
 
-import argparse, json, util, traceback
+import argparse
+from research.steve import util
 
 parser = argparse.ArgumentParser()
 parser.add_argument("config")
@@ -31,8 +32,10 @@ config["resume"] = args.resume
 
 cstr = str(config)
 
+
 def log_config():
-  HPS_PATH = util.create_directory("output/" + config["env"]["name"] + "/" + config["name"] + "/" + config["log_path"]) + "/hps.json"
-  print("ROOT GPU: " + str(args.root_gpu) + "\n" + str(cstr))
-  with open(HPS_PATH, "w") as f:
-    f.write("ROOT GPU: " + str(args.root_gpu) + "\n" + str(cstr))
+    HPS_PATH = util.create_directory(
+        "output/" + config["env"]["name"] + "/" + config["name"] + "/" + config["log_path"]) + "/hps.json"
+    print("ROOT GPU: " + str(args.root_gpu) + "\n" + str(cstr))
+    with open(HPS_PATH, "w") as f:
+        f.write("ROOT GPU: " + str(args.root_gpu) + "\n" + str(cstr))

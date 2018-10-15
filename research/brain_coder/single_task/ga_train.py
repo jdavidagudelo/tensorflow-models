@@ -21,11 +21,11 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-from ..common import utils  # brain coder
-from ..single_task import data  # brain coder
-from ..single_task import defaults  # brain coder
-from ..single_task import ga_lib  # brain coder
-from ..single_task import results_lib  # brain coder
+from research.brain_coder.common import utils  # brain coder
+from research.brain_coder.single_task import data  # brain coder
+from research.brain_coder.single_task import defaults  # brain coder
+from research.brain_coder.single_task import ga_lib  # brain coder
+from research.brain_coder.single_task import results_lib  # brain coder
 
 FLAGS = flags.FLAGS
 

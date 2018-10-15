@@ -18,9 +18,9 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-from ..common import rollout as rollout_lib  # brain coder
-from ..common import utils  # brain coder
-from ..single_task import misc  # brain coder
+from research.brain_coder.common import rollout as rollout_lib  # brain coder
+from research.brain_coder.common import utils  # brain coder
+from research.brain_coder.single_task import misc  # brain coder
 
 # Experiments in the ICLR 2018 paper used reduce_sum instead of reduce_mean for
 # some losses. We make all loses be batch_size independent, and multiply the
@@ -117,6 +117,8 @@ class LMAgent(object):
     """Language model agent."""
     action_space = misc.bf_num_tokens()
     observation_space = misc.bf_num_tokens()
+    sampled_tokens = None
+    episode_lengths = None
 
     def __init__(self, global_config, task_id=0,
                  logging_file=None,

@@ -251,6 +251,8 @@ class KittiRaw(object):
         """Returns a sequence with requested target frame."""
         start_index, end_index = get_seq_start_end(target_index, self.seq_length)
         image_seq = []
+        zoom_x = None
+        zoom_y = None
         for index in range(start_index, end_index + 1):
             drive, cam_id, frame_id = frames[index].split(' ')
             img = self.load_image_raw(drive, cam_id, frame_id)
@@ -396,6 +398,7 @@ class KittiOdom(object):
         start_index, end_index = get_seq_start_end(target_frame_index,
                                                    self.seq_length)
         image_seq = []
+        zoom_y, zoom_x = None, None
         for index in range(start_index, end_index + 1):
             drive, frame_id = frames[index].split(' ')
             img = self.load_image(drive, frame_id)
@@ -552,6 +555,7 @@ class Cityscapes(object):
         start_index, end_index = get_seq_start_end(
             int(target_local_frame_id), self.seq_length, self.sample_every)
         image_seq = []
+        zoom_x, zoom_y = None, None
         for index in range(start_index, end_index + 1, self.sample_every):
             local_frame_id = '%.6d' % index
             frame_id = '%s_%s_%s_' % (city, snippet_id, local_frame_id)

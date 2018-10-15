@@ -16,8 +16,8 @@
 
 from tensorflow.python.platform import flags
 import logging
-from ..src import utils as utils
-from ..cfgs import config_common as cc
+from research.cognitive_mapping_and_planning.src import utils as utils
+from research.cognitive_mapping_and_planning.cfgs import config_common as cc
 
 import tensorflow as tf
 

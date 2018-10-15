@@ -122,6 +122,8 @@ def multiclass_non_max_suppression(boxes,
         selected_boxes_list = []
         num_valid_nms_boxes_cumulative = tf.constant(0)
         per_class_boxes_list = tf.unstack(boxes, axis=1)
+        per_class_masks_list = None
+        per_class_boundaries_list = None
         if masks is not None:
             per_class_masks_list = tf.unstack(masks, axis=1)
         if boundaries is not None:

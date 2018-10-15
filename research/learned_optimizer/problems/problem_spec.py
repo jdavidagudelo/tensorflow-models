@@ -23,11 +23,11 @@ from collections import namedtuple
 
 
 class Spec(namedtuple("Spec", "callable args kwargs")):
-  """Syntactic sugar for keeping track of a function/class + args."""
+    """Syntactic sugar for keeping track of a function/class + args."""
 
-  # Since this is an immutable object, we don't need to reserve slots.
-  __slots__ = ()
+    # Since this is an immutable object, we don't need to reserve slots.
+    __slots__ = ()
 
-  def build(self):
-    """Returns the output of the callable."""
-    return self.callable(*self.args, **self.kwargs)
+    def build(self):
+        """Returns the output of the callable."""
+        return self.callable(*self.args, **self.kwargs)

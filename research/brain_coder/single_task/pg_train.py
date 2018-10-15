@@ -11,7 +11,6 @@ import marshal
 import os
 import time
 
-from absl import flags
 from absl import logging
 import tensorflow as tf
 
@@ -22,6 +21,7 @@ from ..single_task import defaults  # brain coder
 from ..single_task import pg_agent as agent_lib  # brain coder
 from ..single_task import results_lib  # brain coder
 
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
     'master', '',

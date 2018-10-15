@@ -7,7 +7,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from . import rollout as rollout_lib  # brain coder
+from research.brain_coder.common import rollout as rollout_lib  # brain coder
 
 
 class RolloutTest(tf.test.TestCase):

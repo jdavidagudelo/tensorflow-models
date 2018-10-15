@@ -27,9 +27,9 @@ from functools import partial
 
 import tensorflow as tf
 
-import losses
-import models
-import utils
+from research.domain_adaptation.domain_separation import losses
+from research.domain_adaptation.domain_separation import models
+from research.domain_adaptation.domain_separation import utils
 
 slim = tf.contrib.slim
 
@@ -38,7 +38,7 @@ slim = tf.contrib.slim
 # HELPER FUNCTIONS
 ################################################################################
 def dsn_loss_coefficient(params):
-  """The global_step-dependent weight that specifies when to kick in DSN losses.
+    """The global_step-dependent weight that specifies when to kick in DSN losses.
 
   Args:
     params: A dictionary of parameters. Expecting 'domain_separation_startpoint'
@@ -47,9 +47,9 @@ def dsn_loss_coefficient(params):
     A weight to that effectively enables or disables the DSN-related losses,
     i.e. similarity, difference, and reconstruction losses.
   """
-  return tf.where(
-      tf.less(slim.get_or_create_global_step(),
-              params['domain_separation_startpoint']), 1e-10, 1.0)
+    return tf.where(
+        tf.less(slim.get_or_create_global_step(),
+                params['domain_separation_startpoint']), 1e-10, 1.0)
 
 
 ################################################################################
@@ -58,7 +58,7 @@ def dsn_loss_coefficient(params):
 def create_model(source_images, source_labels, domain_selection_mask,
                  target_images, target_labels, similarity_loss, params,
                  basic_tower_name):
-  """Creates a DSN model.
+    """Creates a DSN model.
 
   Args:
     source_images: images from the source domain, a tensor of size
@@ -81,55 +81,55 @@ def create_model(source_images, source_labels, domain_selection_mask,
   Raises:
     ValueError: if the arch is not one of the available architectures.
   """
-  network = getattr(models, basic_tower_name)
-  num_classes = source_labels['classes'].get_shape().as_list()[1]
+    network = getattr(models, basic_tower_name)
+    num_classes = source_labels['classes'].get_shape().as_list()[1]
 
-  # Make sure we are using the appropriate number of classes.
-  network = partial(network, num_classes=num_classes)
+    # Make sure we are using the appropriate number of classes.
+    network = partial(network, num_classes=num_classes)
 
-  # Add the classification/pose estimation loss to the source domain.
-  source_endpoints = add_task_loss(source_images, source_labels, network,
-                                   params)
+    # Add the classification/pose estimation loss to the source domain.
+    source_endpoints = add_task_loss(source_images, source_labels, network,
+                                     params)
 
-  if similarity_loss == 'none':
-    # No domain adaptation, we can stop here.
-    return
+    if similarity_loss == 'none':
+        # No domain adaptation, we can stop here.
+        return
 
-  with tf.variable_scope('towers', reuse=True):
-    target_logits, target_endpoints = network(
-        target_images, weight_decay=params['weight_decay'], prefix='target')
+    with tf.variable_scope('towers', reuse=True):
+        target_logits, target_endpoints = network(
+            target_images, weight_decay=params['weight_decay'], prefix='target')
 
-  # Plot target accuracy of the train set.
-  target_accuracy = utils.accuracy(
-      tf.argmax(target_logits, 1), tf.argmax(target_labels['classes'], 1))
+    # Plot target accuracy of the train set.
+    target_accuracy = utils.accuracy(
+        tf.argmax(target_logits, 1), tf.argmax(target_labels['classes'], 1))
 
-  if 'quaternions' in target_labels:
-    target_quaternion_loss = losses.log_quaternion_loss(
-        target_labels['quaternions'], target_endpoints['quaternion_pred'],
-        params)
-    tf.summary.scalar('eval/Target quaternions', target_quaternion_loss)
+    if 'quaternions' in target_labels:
+        target_quaternion_loss = losses.log_quaternion_loss(
+            target_labels['quaternions'], target_endpoints['quaternion_pred'],
+            params)
+        tf.summary.scalar('eval/Target quaternions', target_quaternion_loss)
 
-  tf.summary.scalar('eval/Target accuracy', target_accuracy)
+    tf.summary.scalar('eval/Target accuracy', target_accuracy)
 
-  source_shared = source_endpoints[params['layers_to_regularize']]
-  target_shared = target_endpoints[params['layers_to_regularize']]
+    source_shared = source_endpoints[params['layers_to_regularize']]
+    target_shared = target_endpoints[params['layers_to_regularize']]
 
-  # When using the semisupervised model we include labeled target data in the
-  # source classifier. We do not want to include these target domain when
-  # we use the similarity loss.
-  indices = tf.range(0, source_shared.get_shape().as_list()[0])
-  indices = tf.boolean_mask(indices, domain_selection_mask)
-  add_similarity_loss(similarity_loss,
-                      tf.gather(source_shared, indices),
-                      tf.gather(target_shared, indices), params)
+    # When using the semisupervised model we include labeled target data in the
+    # source classifier. We do not want to include these target domain when
+    # we use the similarity loss.
+    indices = tf.range(0, source_shared.get_shape().as_list()[0])
+    indices = tf.boolean_mask(indices, domain_selection_mask)
+    add_similarity_loss(similarity_loss,
+                        tf.gather(source_shared, indices),
+                        tf.gather(target_shared, indices), params)
 
-  if params['use_separation']:
-    add_autoencoders(
-        source_images,
-        source_shared,
-        target_images,
-        target_shared,
-        params=params,)
+    if params['use_separation']:
+        add_autoencoders(
+            source_images,
+            source_shared,
+            target_images,
+            target_shared,
+            params=params, )
 
 
 def add_similarity_loss(method_name,
@@ -137,7 +137,7 @@ def add_similarity_loss(method_name,
                         target_samples,
                         params,
                         scope=None):
-  """Adds a loss encouraging the shared encoding from each domain to be similar.
+    """Adds a loss encouraging the shared encoding from each domain to be similar.
 
   Args:
     method_name: the name of the encoding similarity method to use. Valid
@@ -149,13 +149,13 @@ def add_similarity_loss(method_name,
   Raises:
     ValueError: if `method_name` is not recognized.
   """
-  weight = dsn_loss_coefficient(params) * params['gamma_weight']
-  method = getattr(losses, method_name)
-  method(source_samples, target_samples, weight, scope)
+    weight = dsn_loss_coefficient(params) * params['gamma_weight']
+    method = getattr(losses, method_name)
+    method(source_samples, target_samples, weight, scope)
 
 
 def add_reconstruction_loss(recon_loss_name, images, recons, weight, domain):
-  """Adds a reconstruction loss.
+    """Adds a reconstruction loss.
 
   Args:
     recon_loss_name: The name of the reconstruction loss.
@@ -167,23 +167,23 @@ def add_reconstruction_loss(recon_loss_name, images, recons, weight, domain):
   Raises:
     ValueError: If `recon_loss_name` is not recognized.
   """
-  if recon_loss_name == 'sum_of_pairwise_squares':
-    loss_fn = tf.contrib.losses.mean_pairwise_squared_error
-  elif recon_loss_name == 'sum_of_squares':
-    loss_fn = tf.contrib.losses.mean_squared_error
-  else:
-    raise ValueError('recon_loss_name value [%s] not recognized.' %
-                     recon_loss_name)
+    if recon_loss_name == 'sum_of_pairwise_squares':
+        loss_fn = tf.contrib.losses.mean_pairwise_squared_error
+    elif recon_loss_name == 'sum_of_squares':
+        loss_fn = tf.contrib.losses.mean_squared_error
+    else:
+        raise ValueError('recon_loss_name value [%s] not recognized.' %
+                         recon_loss_name)
 
-  loss = loss_fn(recons, images, weight)
-  assert_op = tf.Assert(tf.is_finite(loss), [loss])
-  with tf.control_dependencies([assert_op]):
-    tf.summary.scalar('losses/%s Recon Loss' % domain, loss)
+    loss = loss_fn(recons, images, weight)
+    assert_op = tf.Assert(tf.is_finite(loss), [loss])
+    with tf.control_dependencies([assert_op]):
+        tf.summary.scalar('losses/%s Recon Loss' % domain, loss)
 
 
 def add_autoencoders(source_data, source_shared, target_data, target_shared,
                      params):
-  """Adds the encoders/decoders for our domain separation model w/ incoherence.
+    """Adds the encoders/decoders for our domain separation model w/ incoherence.
 
   Args:
     source_data: images from the source domain, a tensor of size
@@ -197,124 +197,124 @@ def add_autoencoders(source_data, source_shared, target_data, target_shared,
       'encoder_name', 'weight_decay'
   """
 
-  def normalize_images(images):
-    images -= tf.reduce_min(images)
-    return images / tf.reduce_max(images)
+    def normalize_images(images):
+        images -= tf.reduce_min(images)
+        return images / tf.reduce_max(images)
 
-  def concat_operation(shared_repr, private_repr):
-    return shared_repr + private_repr
+    def concat_operation(shared_repr, private_repr):
+        return shared_repr + private_repr
 
-  mu = dsn_loss_coefficient(params)
+    mu = dsn_loss_coefficient(params)
 
-  # The layer to concatenate the networks at.
-  concat_layer = params['layers_to_regularize']
+    # The layer to concatenate the networks at.
+    concat_layer = params['layers_to_regularize']
 
-  # The coefficient for modulating the private/shared difference loss.
-  difference_loss_weight = params['beta_weight'] * mu
+    # The coefficient for modulating the private/shared difference loss.
+    difference_loss_weight = params['beta_weight'] * mu
 
-  # The reconstruction weight.
-  recon_loss_weight = params['alpha_weight'] * mu
+    # The reconstruction weight.
+    recon_loss_weight = params['alpha_weight'] * mu
 
-  # The reconstruction loss to use.
-  recon_loss_name = params['recon_loss_name']
+    # The reconstruction loss to use.
+    recon_loss_name = params['recon_loss_name']
 
-  # The decoder/encoder to use.
-  decoder_name = params['decoder_name']
-  encoder_name = params['encoder_name']
+    # The decoder/encoder to use.
+    decoder_name = params['decoder_name']
+    encoder_name = params['encoder_name']
 
-  _, height, width, _ = source_data.get_shape().as_list()
-  code_size = source_shared.get_shape().as_list()[-1]
-  weight_decay = params['weight_decay']
+    _, height, width, _ = source_data.get_shape().as_list()
+    code_size = source_shared.get_shape().as_list()[-1]
+    weight_decay = params['weight_decay']
 
-  encoder_fn = getattr(models, encoder_name)
-  # Target Auto-encoding.
-  with tf.variable_scope('source_encoder'):
-    source_endpoints = encoder_fn(
-        source_data, code_size, weight_decay=weight_decay)
+    encoder_fn = getattr(models, encoder_name)
+    # Target Auto-encoding.
+    with tf.variable_scope('source_encoder'):
+        source_endpoints = encoder_fn(
+            source_data, code_size, weight_decay=weight_decay)
 
-  with tf.variable_scope('target_encoder'):
-    target_endpoints = encoder_fn(
-        target_data, code_size, weight_decay=weight_decay)
+    with tf.variable_scope('target_encoder'):
+        target_endpoints = encoder_fn(
+            target_data, code_size, weight_decay=weight_decay)
 
-  decoder_fn = getattr(models, decoder_name)
+    decoder_fn = getattr(models, decoder_name)
 
-  decoder = partial(
-      decoder_fn,
-      height=height,
-      width=width,
-      channels=source_data.get_shape().as_list()[-1],
-      weight_decay=weight_decay)
+    decoder = partial(
+        decoder_fn,
+        height=height,
+        width=width,
+        channels=source_data.get_shape().as_list()[-1],
+        weight_decay=weight_decay)
 
-  # Source Auto-encoding.
-  source_private = source_endpoints[concat_layer]
-  target_private = target_endpoints[concat_layer]
-  with tf.variable_scope('decoder'):
-    source_recons = decoder(concat_operation(source_shared, source_private))
+    # Source Auto-encoding.
+    source_private = source_endpoints[concat_layer]
+    target_private = target_endpoints[concat_layer]
+    with tf.variable_scope('decoder'):
+        source_recons = decoder(concat_operation(source_shared, source_private))
 
-  with tf.variable_scope('decoder', reuse=True):
-    source_private_recons = decoder(
-        concat_operation(tf.zeros_like(source_private), source_private))
-    source_shared_recons = decoder(
-        concat_operation(source_shared, tf.zeros_like(source_shared)))
+    with tf.variable_scope('decoder', reuse=True):
+        source_private_recons = decoder(
+            concat_operation(tf.zeros_like(source_private), source_private))
+        source_shared_recons = decoder(
+            concat_operation(source_shared, tf.zeros_like(source_shared)))
 
-  with tf.variable_scope('decoder', reuse=True):
-    target_recons = decoder(concat_operation(target_shared, target_private))
-    target_shared_recons = decoder(
-        concat_operation(target_shared, tf.zeros_like(target_shared)))
-    target_private_recons = decoder(
-        concat_operation(tf.zeros_like(target_private), target_private))
+    with tf.variable_scope('decoder', reuse=True):
+        target_recons = decoder(concat_operation(target_shared, target_private))
+        target_shared_recons = decoder(
+            concat_operation(target_shared, tf.zeros_like(target_shared)))
+        target_private_recons = decoder(
+            concat_operation(tf.zeros_like(target_private), target_private))
 
-  losses.difference_loss(
-      source_private,
-      source_shared,
-      weight=difference_loss_weight,
-      name='Source')
-  losses.difference_loss(
-      target_private,
-      target_shared,
-      weight=difference_loss_weight,
-      name='Target')
+    losses.difference_loss(
+        source_private,
+        source_shared,
+        weight=difference_loss_weight,
+        name='Source')
+    losses.difference_loss(
+        target_private,
+        target_shared,
+        weight=difference_loss_weight,
+        name='Target')
 
-  add_reconstruction_loss(recon_loss_name, source_data, source_recons,
-                          recon_loss_weight, 'source')
-  add_reconstruction_loss(recon_loss_name, target_data, target_recons,
-                          recon_loss_weight, 'target')
+    add_reconstruction_loss(recon_loss_name, source_data, source_recons,
+                            recon_loss_weight, 'source')
+    add_reconstruction_loss(recon_loss_name, target_data, target_recons,
+                            recon_loss_weight, 'target')
 
-  # Add summaries
-  source_reconstructions = tf.concat(
-      axis=2,
-      values=map(normalize_images, [
-          source_data, source_recons, source_shared_recons,
-          source_private_recons
-      ]))
-  target_reconstructions = tf.concat(
-      axis=2,
-      values=map(normalize_images, [
-          target_data, target_recons, target_shared_recons,
-          target_private_recons
-      ]))
-  tf.summary.image(
-      'Source Images:Recons:RGB',
-      source_reconstructions[:, :, :, :3],
-      max_outputs=10)
-  tf.summary.image(
-      'Target Images:Recons:RGB',
-      target_reconstructions[:, :, :, :3],
-      max_outputs=10)
-
-  if source_reconstructions.get_shape().as_list()[3] == 4:
+    # Add summaries
+    source_reconstructions = tf.concat(
+        axis=2,
+        values=map(normalize_images, [
+            source_data, source_recons, source_shared_recons,
+            source_private_recons
+        ]))
+    target_reconstructions = tf.concat(
+        axis=2,
+        values=map(normalize_images, [
+            target_data, target_recons, target_shared_recons,
+            target_private_recons
+        ]))
     tf.summary.image(
-        'Source Images:Recons:Depth',
-        source_reconstructions[:, :, :, 3:4],
+        'Source Images:Recons:RGB',
+        source_reconstructions[:, :, :, :3],
         max_outputs=10)
     tf.summary.image(
-        'Target Images:Recons:Depth',
-        target_reconstructions[:, :, :, 3:4],
+        'Target Images:Recons:RGB',
+        target_reconstructions[:, :, :, :3],
         max_outputs=10)
+
+    if source_reconstructions.get_shape().as_list()[3] == 4:
+        tf.summary.image(
+            'Source Images:Recons:Depth',
+            source_reconstructions[:, :, :, 3:4],
+            max_outputs=10)
+        tf.summary.image(
+            'Target Images:Recons:Depth',
+            target_reconstructions[:, :, :, 3:4],
+            max_outputs=10)
 
 
 def add_task_loss(source_images, source_labels, basic_tower, params):
-  """Adds a classification and/or pose estimation loss to the model.
+    """Adds a classification and/or pose estimation loss to the model.
 
   Args:
     source_images: images from the source domain, a tensor of size
@@ -329,27 +329,27 @@ def add_task_loss(source_images, source_labels, basic_tower, params):
   Raises:
     RuntimeError: if basic tower does not support pose estimation.
   """
-  with tf.variable_scope('towers'):
-    source_logits, source_endpoints = basic_tower(
-        source_images, weight_decay=params['weight_decay'], prefix='Source')
+    with tf.variable_scope('towers'):
+        source_logits, source_endpoints = basic_tower(
+            source_images, weight_decay=params['weight_decay'], prefix='Source')
 
-  if 'quaternions' in source_labels:  # We have pose estimation as well
-    if 'quaternion_pred' not in source_endpoints:
-      raise RuntimeError('Please use a model for estimation e.g. pose_mini')
+    if 'quaternions' in source_labels:  # We have pose estimation as well
+        if 'quaternion_pred' not in source_endpoints:
+            raise RuntimeError('Please use a model for estimation e.g. pose_mini')
 
-    loss = losses.log_quaternion_loss(source_labels['quaternions'],
-                                      source_endpoints['quaternion_pred'],
-                                      params)
+        loss = losses.log_quaternion_loss(source_labels['quaternions'],
+                                          source_endpoints['quaternion_pred'],
+                                          params)
 
-    assert_op = tf.Assert(tf.is_finite(loss), [loss])
-    with tf.control_dependencies([assert_op]):
-      quaternion_loss = loss
-      tf.summary.histogram('log_quaternion_loss_hist', quaternion_loss)
-    slim.losses.add_loss(quaternion_loss * params['pose_weight'])
-    tf.summary.scalar('losses/quaternion_loss', quaternion_loss)
+        assert_op = tf.Assert(tf.is_finite(loss), [loss])
+        with tf.control_dependencies([assert_op]):
+            quaternion_loss = loss
+            tf.summary.histogram('log_quaternion_loss_hist', quaternion_loss)
+        slim.losses.add_loss(quaternion_loss * params['pose_weight'])
+        tf.summary.scalar('losses/quaternion_loss', quaternion_loss)
 
-  classification_loss = tf.losses.softmax_cross_entropy(
-      source_labels['classes'], source_logits)
+    classification_loss = tf.losses.softmax_cross_entropy(
+        source_labels['classes'], source_logits)
 
-  tf.summary.scalar('losses/classification_loss', classification_loss)
-  return source_endpoints
+    tf.summary.scalar('losses/classification_loss', classification_loss)
+    return source_endpoints

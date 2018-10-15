@@ -55,7 +55,7 @@ def _build_random_vocabulary(vocab_size=100):
 
 def _build_random_sequence(vocab_ids):
     seq_len = random.randint(10, 200)
-    ids = vocab_ids.values()
+    ids = [vocab_ids.get(k) for k in vocab_ids]
     seq = data.SequenceWrapper()
     for token_id in [random.choice(ids) for _ in range(seq_len)]:
         seq.add_timestep().set_token(token_id)
@@ -64,7 +64,7 @@ def _build_random_sequence(vocab_ids):
 
 def _build_vocab_frequencies(seqs, vocab_ids):
     vocab_freqs = defaultdict(int)
-    ids_to_words = dict([(i, word) for word, i in vocab_ids.iteritems()])
+    ids_to_words = dict([(vocab_ids.get(word), word) for word in vocab_ids])
     for seq in seqs:
         for timestep in seq:
             vocab_freqs[ids_to_words[timestep.token]] += 1

@@ -21,14 +21,14 @@ from __future__ import print_function
 
 import numpy as np
 
-from bandits.core.bandit_algorithm import BanditAlgorithm
+from research.deep_contextual_bandits.bandits.core.bandit_algorithm import BanditAlgorithm
 
 
 class FixedPolicySampling(BanditAlgorithm):
-  """Defines a baseline; returns an action at random with probs given by p."""
+    """Defines a baseline; returns an action at random with probs given by p."""
 
-  def __init__(self, name, p, hparams):
-    """Creates a FixedPolicySampling object.
+    def __init__(self, name, p, hparams):
+        """Creates a FixedPolicySampling object.
 
     Args:
       name: Name of the algorithm.
@@ -39,13 +39,13 @@ class FixedPolicySampling(BanditAlgorithm):
       ValueError: when p dimension does not match the number of actions.
     """
 
-    self.name = name
-    self.p = p
-    self.hparams = hparams
+        self.name = name
+        self.p = p
+        self.hparams = hparams
 
-    if len(p) != self.hparams.num_actions:
-      raise ValueError('Policy needs k probabilities.')
+        if len(p) != self.hparams.num_actions:
+            raise ValueError('Policy needs k probabilities.')
 
-  def action(self, context):
-    """Selects an action at random according to distribution p."""
-    return np.random.choice(range(self.hparams.num_actions), p=self.p)
+    def action(self, context):
+        """Selects an action at random according to distribution p."""
+        return np.random.choice(range(self.hparams.num_actions), p=self.p)

@@ -26,7 +26,7 @@ import re
 import numpy as np
 import tensorflow as tf
 
-from . import utils
+from research.cvt_text.base import utils
 
 _CHARS = [
     # punctuation

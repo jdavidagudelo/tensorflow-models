@@ -19,9 +19,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from estimators.get_estimator import get_estimator
-from utils import util
+from research.tcn.estimators.get_estimator import get_estimator
+from research.tcn.utils import util
 import tensorflow as tf
+
 tf.logging.set_verbosity(tf.logging.INFO)
 
 tf.flags.DEFINE_string(
@@ -46,16 +47,17 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
-  """Runs main training loop."""
-  # Parse config dict from yaml config files / command line flags.
-  config = util.ParseConfigsToLuaTable(
-      FLAGS.config_paths, FLAGS.model_params, save=True, logdir=FLAGS.logdir)
+    """Runs main training loop."""
+    # Parse config dict from yaml config files / command line flags.
+    config = util.ParseConfigsToLuaTable(
+        FLAGS.config_paths, FLAGS.model_params, save=True, logdir=FLAGS.logdir)
 
-  # Choose an estimator based on training strategy.
-  estimator = get_estimator(config, FLAGS.logdir)
+    # Choose an estimator based on training strategy.
+    estimator = get_estimator(config, FLAGS.logdir)
 
-  # Run training
-  estimator.train()
+    # Run training
+    estimator.train()
+
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

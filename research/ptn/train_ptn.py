@@ -25,7 +25,7 @@ import tensorflow as tf
 
 from tensorflow import app
 
-import model_ptn
+from research.ptn import model_ptn
 
 flags = tf.app.flags
 slim = tf.contrib.slim
@@ -88,143 +88,143 @@ FLAGS = flags.FLAGS
 
 
 def main(_):
-  train_dir = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name, 'train')
-  save_image_dir = os.path.join(train_dir, 'images')
-  if not os.path.exists(train_dir):
-    os.makedirs(train_dir)
-  if not os.path.exists(save_image_dir):
-    os.makedirs(save_image_dir)
+    train_dir = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name, 'train')
+    save_image_dir = os.path.join(train_dir, 'images')
+    if not os.path.exists(train_dir):
+        os.makedirs(train_dir)
+    if not os.path.exists(save_image_dir):
+        os.makedirs(save_image_dir)
 
-  g = tf.Graph()
-  with g.as_default():
-    with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
-      global_step = slim.get_or_create_global_step()
-      ###########
-      ## model ##
-      ###########
-      model = model_ptn.model_PTN(FLAGS)
-      ##########
-      ## data ##
-      ##########
-      train_data = model.get_inputs(
-          FLAGS.inp_dir,
-          FLAGS.dataset_name,
-          'train',
-          FLAGS.batch_size,
-          FLAGS.image_size,
-          FLAGS.vox_size,
-          is_training=True)
-      inputs = model.preprocess(train_data, FLAGS.step_size)
-      ##############
-      ## model_fn ##
-      ##############
-      model_fn = model.get_model_fn(
-          is_training=True, reuse=False, run_projection=True)
-      outputs = model_fn(inputs)
-      ##################
-      ## train_scopes ##
-      ##################
-      if FLAGS.init_model:
-        train_scopes = ['decoder']
-        init_scopes = ['encoder']
-      else:
-        train_scopes = ['encoder', 'decoder']
+    g = tf.Graph()
+    with g.as_default():
+        with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
+            global_step = slim.get_or_create_global_step()
+            ###########
+            ## model ##
+            ###########
+            model = model_ptn.model_PTN(FLAGS)
+            ##########
+            ## data ##
+            ##########
+            train_data = model.get_inputs(
+                FLAGS.inp_dir,
+                FLAGS.dataset_name,
+                'train',
+                FLAGS.batch_size,
+                FLAGS.image_size,
+                FLAGS.vox_size,
+                is_training=True)
+            inputs = model.preprocess(train_data, FLAGS.step_size)
+            ##############
+            ## model_fn ##
+            ##############
+            model_fn = model.get_model_fn(
+                is_training=True, reuse=False, run_projection=True)
+            outputs = model_fn(inputs)
+            ##################
+            ## train_scopes ##
+            ##################
+            if FLAGS.init_model:
+                train_scopes = ['decoder']
+                init_scopes = ['encoder']
+            else:
+                train_scopes = ['encoder', 'decoder']
 
-      ##########
-      ## loss ##
-      ##########
-      task_loss = model.get_loss(inputs, outputs)
+            ##########
+            ## loss ##
+            ##########
+            task_loss = model.get_loss(inputs, outputs)
 
-      regularization_loss = model.get_regularization_loss(train_scopes)
-      loss = task_loss + regularization_loss
-      ###############
-      ## optimizer ##
-      ###############
-      optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
-      if FLAGS.sync_replicas:
-        optimizer = tf.train.SyncReplicasOptimizer(
-            optimizer,
-            replicas_to_aggregate=FLAGS.workers_replicas - FLAGS.backup_workers,
-            total_num_replicas=FLAGS.worker_replicas)
+            regularization_loss = model.get_regularization_loss(train_scopes)
+            loss = task_loss + regularization_loss
+            ###############
+            ## optimizer ##
+            ###############
+            optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
+            if FLAGS.sync_replicas:
+                optimizer = tf.train.SyncReplicasOptimizer(
+                    optimizer,
+                    replicas_to_aggregate=FLAGS.workers_replicas - FLAGS.backup_workers,
+                    total_num_replicas=FLAGS.worker_replicas)
 
-      ##############
-      ## train_op ##
-      ##############
-      train_op = model.get_train_op_for_scope(loss, optimizer, train_scopes)
-      ###########
-      ## saver ##
-      ###########
-      saver = tf.train.Saver(max_to_keep=np.minimum(5,
-                                                    FLAGS.worker_replicas + 1))
+            ##############
+            ## train_op ##
+            ##############
+            train_op = model.get_train_op_for_scope(loss, optimizer, train_scopes)
+            ###########
+            ## saver ##
+            ###########
+            saver = tf.train.Saver(max_to_keep=np.minimum(5,
+                                                          FLAGS.worker_replicas + 1))
 
-      if FLAGS.task == 0:
-        params = FLAGS
-        params.batch_size = params.num_views
-        params.step_size = 1
-        model.set_params(params)
-        val_data = model.get_inputs(
-            params.inp_dir,
-            params.dataset_name,
-            'val',
-            params.batch_size,
-            params.image_size,
-            params.vox_size,
-            is_training=False)
-        val_inputs = model.preprocess(val_data, params.step_size)
-        # Note: don't compute loss here
-        reused_model_fn = model.get_model_fn(is_training=False, reuse=True)
-        val_outputs = reused_model_fn(val_inputs)
+            if FLAGS.task == 0:
+                params = FLAGS
+                params.batch_size = params.num_views
+                params.step_size = 1
+                model.set_params(params)
+                val_data = model.get_inputs(
+                    params.inp_dir,
+                    params.dataset_name,
+                    'val',
+                    params.batch_size,
+                    params.image_size,
+                    params.vox_size,
+                    is_training=False)
+                val_inputs = model.preprocess(val_data, params.step_size)
+                # Note: don't compute loss here
+                reused_model_fn = model.get_model_fn(is_training=False, reuse=True)
+                val_outputs = reused_model_fn(val_inputs)
 
-        with tf.device(tf.DeviceSpec(device_type='CPU')):
-          vis_input_images = val_inputs['images_1'] * 255.0
-          vis_gt_projs = (val_outputs['masks_1'] * (-1) + 1) * 255.0
-          vis_pred_projs = (val_outputs['projs_1'] * (-1) + 1) * 255.0
+                with tf.device(tf.DeviceSpec(device_type='CPU')):
+                    vis_input_images = val_inputs['images_1'] * 255.0
+                    vis_gt_projs = (val_outputs['masks_1'] * (-1) + 1) * 255.0
+                    vis_pred_projs = (val_outputs['projs_1'] * (-1) + 1) * 255.0
 
-          vis_gt_projs = tf.concat([vis_gt_projs] * 3, axis=3)
-          vis_pred_projs = tf.concat([vis_pred_projs] * 3, axis=3)
-          # rescale
-          new_size = [FLAGS.image_size] * 2
-          vis_gt_projs = tf.image.resize_nearest_neighbor(
-              vis_gt_projs, new_size)
-          vis_pred_projs = tf.image.resize_nearest_neighbor(
-              vis_pred_projs, new_size)
-          # flip
-          # vis_gt_projs = utils.image_flipud(vis_gt_projs)
-          # vis_pred_projs = utils.image_flipud(vis_pred_projs)
-          # vis_gt_projs is of shape [batch, height, width, channels]
-          write_disk_op = model.write_disk_grid(
-              global_step=global_step,
-              log_dir=save_image_dir,
-              input_images=vis_input_images,
-              gt_projs=vis_gt_projs,
-              pred_projs=vis_pred_projs,
-              input_voxels=val_inputs['voxels'],
-              output_voxels=val_outputs['voxels_1'])
-        with tf.control_dependencies([write_disk_op]):
-          train_op = tf.identity(train_op)
+                    vis_gt_projs = tf.concat([vis_gt_projs] * 3, axis=3)
+                    vis_pred_projs = tf.concat([vis_pred_projs] * 3, axis=3)
+                    # rescale
+                    new_size = [FLAGS.image_size] * 2
+                    vis_gt_projs = tf.image.resize_nearest_neighbor(
+                        vis_gt_projs, new_size)
+                    vis_pred_projs = tf.image.resize_nearest_neighbor(
+                        vis_pred_projs, new_size)
+                    # flip
+                    # vis_gt_projs = utils.image_flipud(vis_gt_projs)
+                    # vis_pred_projs = utils.image_flipud(vis_pred_projs)
+                    # vis_gt_projs is of shape [batch, height, width, channels]
+                    write_disk_op = model.write_disk_grid(
+                        global_step=global_step,
+                        log_dir=save_image_dir,
+                        input_images=vis_input_images,
+                        gt_projs=vis_gt_projs,
+                        pred_projs=vis_pred_projs,
+                        input_voxels=val_inputs['voxels'],
+                        output_voxels=val_outputs['voxels_1'])
+                with tf.control_dependencies([write_disk_op]):
+                    train_op = tf.identity(train_op)
 
-      #############
-      ## init_fn ##
-      #############
-      if FLAGS.init_model:
-        init_fn = model.get_init_fn(init_scopes)
-      else:
-        init_fn = None
+            #############
+            ## init_fn ##
+            #############
+            if FLAGS.init_model:
+                init_fn = model.get_init_fn(init_scopes)
+            else:
+                init_fn = None
 
-      ##############
-      ## training ##
-      ##############
-      slim.learning.train(
-          train_op=train_op,
-          logdir=train_dir,
-          init_fn=init_fn,
-          master=FLAGS.master,
-          is_chief=(FLAGS.task == 0),
-          number_of_steps=FLAGS.max_number_of_steps,
-          saver=saver,
-          save_summaries_secs=FLAGS.save_summaries_secs,
-          save_interval_secs=FLAGS.save_interval_secs)
+            ##############
+            ## training ##
+            ##############
+            slim.learning.train(
+                train_op=train_op,
+                logdir=train_dir,
+                init_fn=init_fn,
+                master=FLAGS.master,
+                is_chief=(FLAGS.task == 0),
+                number_of_steps=FLAGS.max_number_of_steps,
+                saver=saver,
+                save_summaries_secs=FLAGS.save_summaries_secs,
+                save_interval_secs=FLAGS.save_interval_secs)
 
 
 if __name__ == '__main__':
-  app.run()
+    app.run()

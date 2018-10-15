@@ -22,7 +22,7 @@ import numpy as np
 import PIL.Image as img
 import tensorflow as tf
 
-from deeplab.utils import get_dataset_colormap
+from research.deeplab.utils import get_dataset_colormap
 
 
 def save_annotation(label,
@@ -30,7 +30,7 @@ def save_annotation(label,
                     filename,
                     add_colormap=True,
                     colormap_type=get_dataset_colormap.get_pascal_name()):
-  """Saves the given label to image on disk.
+    """Saves the given label to image on disk.
 
   Args:
     label: The numpy array to be saved. The data will be converted
@@ -40,13 +40,13 @@ def save_annotation(label,
     add_colormap: Add color map to the label or not.
     colormap_type: Colormap type for visualization.
   """
-  # Add colormap for visualizing the prediction.
-  if add_colormap:
-    colored_label = get_dataset_colormap.label_to_color_image(
-        label, colormap_type)
-  else:
-    colored_label = label
+    # Add colormap for visualizing the prediction.
+    if add_colormap:
+        colored_label = get_dataset_colormap.label_to_color_image(
+            label, colormap_type)
+    else:
+        colored_label = label
 
-  pil_image = img.fromarray(colored_label.astype(dtype=np.uint8))
-  with tf.gfile.Open('%s/%s.png' % (save_dir, filename), mode='w') as f:
-    pil_image.save(f, 'PNG')
+    pil_image = img.fromarray(colored_label.astype(dtype=np.uint8))
+    with tf.gfile.Open('%s/%s.png' % (save_dir, filename), mode='w') as f:
+        pil_image.save(f, 'PNG')

@@ -28,9 +28,9 @@ from tensorflow.contrib.slim.python.slim.nets import resnet_utils as resnet_util
 
 
 def get_embedder(
-    embedder_strategy, config, images, is_training, reuse=False,
-    l2_normalize_embedding=True):
-  """Returns an embedder based on config.
+        embedder_strategy, config, images, is_training, reuse=False,
+        l2_normalize_embedding=True):
+    """Returns an embedder based on config.
 
   Args:
     embedder_strategy: String, name of embedder version to return.
@@ -46,33 +46,33 @@ def get_embedder(
   Raises:
     ValueError: if unknown embedder_strategy specified.
   """
-  if embedder_strategy == 'inception_baseline':
-    pretrained_ckpt = config.inception_conv_ss_fc.pretrained_checkpoint
-    return InceptionBaselineEmbedder(
-        images,
-        pretrained_ckpt,
-        config.random_projection,
-        config.random_projection_dim)
+    if embedder_strategy == 'inception_baseline':
+        pretrained_ckpt = config.inception_conv_ss_fc.pretrained_checkpoint
+        return InceptionBaselineEmbedder(
+            images,
+            pretrained_ckpt,
+            config.random_projection,
+            config.random_projection_dim)
 
-  strategy_to_embedder = {
-      'inception_conv_ss_fc': InceptionConvSSFCEmbedder,
-      'resnet': ResnetEmbedder,
-  }
-  if embedder_strategy not in strategy_to_embedder:
-    raise ValueError('unknown embedder_strategy', embedder_strategy)
+    strategy_to_embedder = {
+        'inception_conv_ss_fc': InceptionConvSSFCEmbedder,
+        'resnet': ResnetEmbedder,
+    }
+    if embedder_strategy not in strategy_to_embedder:
+        raise ValueError('unknown embedder_strategy', embedder_strategy)
 
-  embedding_size = config.embedding_size
-  l2_reg_weight = config.learning.l2_reg_weight
-  embedder = strategy_to_embedder[embedder_strategy](
-      config[embedder_strategy], images, embedding_size,
-      is_training, embedding_l2=l2_normalize_embedding,
-      l2_reg_weight=l2_reg_weight, reuse=reuse)
-  return embedder
+    embedding_size = config.embedding_size
+    l2_reg_weight = config.learning.l2_reg_weight
+    embedder = strategy_to_embedder[embedder_strategy](
+        config[embedder_strategy], images, embedding_size,
+        is_training, embedding_l2=l2_normalize_embedding,
+        l2_reg_weight=l2_reg_weight, reuse=reuse)
+    return embedder
 
 
 def build_inceptionv3_graph(images, endpoint, is_training, checkpoint,
                             reuse=False):
-  """Builds an InceptionV3 model graph.
+    """Builds an InceptionV3 model graph.
 
   Args:
     images: A 4-D float32 `Tensor` of batch images.
@@ -85,52 +85,53 @@ def build_inceptionv3_graph(images, endpoint, is_training, checkpoint,
     inception_variables: List of inception variables.
     init_fn: Function to initialize the weights (if not reusing, then None).
   """
-  with slim.arg_scope(inception.inception_v3_arg_scope()):
-    _, endpoints = inception.inception_v3(
-        images, num_classes=1001, is_training=is_training)
-    inception_output = endpoints[endpoint]
-    inception_variables = slim.get_variables_to_restore()
-    inception_variables = [
-        i for i in inception_variables if 'global_step' not in i.name]
-    if is_training and not reuse:
-      init_saver = tf.train.Saver(inception_variables)
-      def init_fn(scaffold, sess):
-        del scaffold
-        init_saver.restore(sess, checkpoint)
-    else:
-      init_fn = None
-    return inception_output, inception_variables, init_fn
+    with slim.arg_scope(inception.inception_v3_arg_scope()):
+        _, endpoints = inception.inception_v3(
+            images, num_classes=1001, is_training=is_training)
+        inception_output = endpoints[endpoint]
+        inception_variables = slim.get_variables_to_restore()
+        inception_variables = [
+            i for i in inception_variables if 'global_step' not in i.name]
+        if is_training and not reuse:
+            init_saver = tf.train.Saver(inception_variables)
+
+            def init_fn(scaffold, sess):
+                del scaffold
+                init_saver.restore(sess, checkpoint)
+        else:
+            init_fn = None
+        return inception_output, inception_variables, init_fn
 
 
 class InceptionBaselineEmbedder(object):
-  """Produces pre-trained InceptionV3 embeddings."""
+    """Produces pre-trained InceptionV3 embeddings."""
 
-  def __init__(self, images, pretrained_ckpt, reuse=False,
-               random_projection=False, random_projection_dim=32):
-    # Build InceptionV3 graph.
-    (inception_output,
-     self.inception_variables,
-     self.init_fn) = build_inceptionv3_graph(
-         images, 'Mixed_7c', False, pretrained_ckpt, reuse)
+    def __init__(self, images, pretrained_ckpt, reuse=False,
+                 random_projection=False, random_projection_dim=32):
+        # Build InceptionV3 graph.
+        (inception_output,
+         self.inception_variables,
+         self.init_fn) = build_inceptionv3_graph(
+            images, 'Mixed_7c', False, pretrained_ckpt, reuse)
 
-    # Pool 8x8x2048 -> 1x1x2048.
-    embedding = slim.avg_pool2d(inception_output, [8, 8], stride=1)
-    embedding = tf.squeeze(embedding, [1, 2])
+        # Pool 8x8x2048 -> 1x1x2048.
+        embedding = slim.avg_pool2d(inception_output, [8, 8], stride=1)
+        embedding = tf.squeeze(embedding, [1, 2])
 
-    if random_projection:
-      embedding = tf.matmul(
-          embedding, tf.random_normal(
-              shape=[2048, random_projection_dim], seed=123))
-    self.embedding = embedding
+        if random_projection:
+            embedding = tf.matmul(
+                embedding, tf.random_normal(
+                    shape=[2048, random_projection_dim], seed=123))
+        self.embedding = embedding
 
 
 class PretrainedEmbedder(object):
-  """Base class for embedders that take pre-trained networks as input."""
-  __metaclass__ = ABCMeta
+    """Base class for embedders that take pre-trained networks as input."""
+    __metaclass__ = ABCMeta
 
-  def __init__(self, config, images, embedding_size, is_training,
-               embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
-    """Constructor.
+    def __init__(self, config, images, embedding_size, is_training,
+                 embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
+        """Constructor.
 
     Args:
       config: A T object holding training config.
@@ -142,35 +143,35 @@ class PretrainedEmbedder(object):
       l2_reg_weight: Float, weight applied to l2 weight regularization.
       reuse: Boolean, whether or not we're reusing this graph.
     """
-    # Pull out all the embedder hyperparameters.
-    self._config = config
-    self._embedding_size = embedding_size
-    self._l2_reg_weight = l2_reg_weight
-    self._embedding_l2 = embedding_l2
-    self._is_training = is_training
-    self._reuse = reuse
+        # Pull out all the embedder hyperparameters.
+        self._config = config
+        self._embedding_size = embedding_size
+        self._l2_reg_weight = l2_reg_weight
+        self._embedding_l2 = embedding_l2
+        self._is_training = is_training
+        self._reuse = reuse
 
-    # Pull out pretrained hparams.
-    pretrained_checkpoint = config.pretrained_checkpoint
-    pretrained_layer = config.pretrained_layer
-    pretrained_keep_prob = config.dropout.keep_pretrained
+        # Pull out pretrained hparams.
+        pretrained_checkpoint = config.pretrained_checkpoint
+        pretrained_layer = config.pretrained_layer
+        pretrained_keep_prob = config.dropout.keep_pretrained
 
-    # Build pretrained graph.
-    (pretrained_output,
-     self._pretrained_variables,
-     self.init_fn) = self.build_pretrained_graph(
-         images, pretrained_layer, pretrained_checkpoint, is_training, reuse)
+        # Build pretrained graph.
+        (pretrained_output,
+         self._pretrained_variables,
+         self.init_fn) = self.build_pretrained_graph(
+            images, pretrained_layer, pretrained_checkpoint, is_training, reuse)
 
-    # Optionally drop out the activations.
-    pretrained_output = slim.dropout(
-        pretrained_output, keep_prob=pretrained_keep_prob,
-        is_training=is_training)
-    self._pretrained_output = pretrained_output
+        # Optionally drop out the activations.
+        pretrained_output = slim.dropout(
+            pretrained_output, keep_prob=pretrained_keep_prob,
+            is_training=is_training)
+        self._pretrained_output = pretrained_output
 
-  @abstractmethod
-  def build_pretrained_graph(self, images, layer, pretrained_checkpoint,
-                             is_training, reuse):
-    """Builds the graph for the pre-trained network.
+    @abstractmethod
+    def build_pretrained_graph(self, images, layer, pretrained_checkpoint,
+                               is_training, reuse):
+        """Builds the graph for the pre-trained network.
 
     Method to be overridden by implementations.
 
@@ -187,11 +188,11 @@ class PretrainedEmbedder(object):
       pretrained_output: A 2 or 3-d tf.float32 `Tensor` holding pretrained
         activations.
     """
-    pass
+        pass
 
-  @abstractmethod
-  def construct_embedding(self):
-    """Builds an embedding function on top of images.
+    @abstractmethod
+    def construct_embedding(self):
+        """Builds an embedding function on top of images.
 
     Method to be overridden by implementations.
 
@@ -199,53 +200,54 @@ class PretrainedEmbedder(object):
       embeddings: A 2-d float32 `Tensor` of shape [batch_size, embedding_size]
         holding the embedded images.
     """
-    pass
+        pass
 
-  def get_trainable_variables(self):
-    """Gets a list of variables to optimize."""
-    if self._config.finetune:
-      return tf.trainable_variables()
-    else:
-      adaptation_only_vars = tf.get_collection(
-          tf.GraphKeys.TRAINABLE_VARIABLES, scope=self._adaptation_scope)
-      return adaptation_only_vars
+    def get_trainable_variables(self):
+        """Gets a list of variables to optimize."""
+        if self._config.finetune:
+            return tf.trainable_variables()
+        else:
+            adaptation_only_vars = tf.get_collection(
+                tf.GraphKeys.TRAINABLE_VARIABLES, scope=self._adaptation_scope)
+            return adaptation_only_vars
 
 
 class ResnetEmbedder(PretrainedEmbedder):
-  """Resnet TCN.
+    """Resnet TCN.
 
   ResnetV2 -> resnet adaptation layers -> optional l2 normalize -> embedding.
   """
 
-  def __init__(self, config, images, embedding_size, is_training,
-               embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
-    super(ResnetEmbedder, self).__init__(
-        config, images, embedding_size, is_training, embedding_l2,
-        l2_reg_weight, reuse)
+    def __init__(self, config, images, embedding_size, is_training,
+                 embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
+        super(ResnetEmbedder, self).__init__(
+            config, images, embedding_size, is_training, embedding_l2,
+            l2_reg_weight, reuse)
 
-  def build_pretrained_graph(
-      self, images, resnet_layer, checkpoint, is_training, reuse=False):
-    """See baseclass."""
-    with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-      _, endpoints = resnet_v2.resnet_v2_50(
-          images, is_training=is_training, reuse=reuse)
-      resnet_layer = 'resnet_v2_50/block%d' % resnet_layer
-      resnet_output = endpoints[resnet_layer]
-      resnet_variables = slim.get_variables_to_restore()
-      resnet_variables = [
-          i for i in resnet_variables if 'global_step' not in i.name]
-      if is_training and not reuse:
-        init_saver = tf.train.Saver(resnet_variables)
-        def init_fn(scaffold, sess):
-          del scaffold
-          init_saver.restore(sess, checkpoint)
-      else:
-        init_fn = None
+    def build_pretrained_graph(
+            self, images, resnet_layer, checkpoint, is_training, reuse=False):
+        """See baseclass."""
+        with slim.arg_scope(resnet_v2.resnet_arg_scope()):
+            _, endpoints = resnet_v2.resnet_v2_50(
+                images, is_training=is_training, reuse=reuse)
+            resnet_layer = 'resnet_v2_50/block%d' % resnet_layer
+            resnet_output = endpoints[resnet_layer]
+            resnet_variables = slim.get_variables_to_restore()
+            resnet_variables = [
+                i for i in resnet_variables if 'global_step' not in i.name]
+            if is_training and not reuse:
+                init_saver = tf.train.Saver(resnet_variables)
 
-      return resnet_output, resnet_variables, init_fn
+                def init_fn(scaffold, sess):
+                    del scaffold
+                    init_saver.restore(sess, checkpoint)
+            else:
+                init_fn = None
 
-  def construct_embedding(self):
-    """Builds an embedding function on top of images.
+            return resnet_output, resnet_variables, init_fn
+
+    def construct_embedding(self):
+        """Builds an embedding function on top of images.
 
     Method to be overridden by implementations.
 
@@ -253,158 +255,158 @@ class ResnetEmbedder(PretrainedEmbedder):
       embeddings: A 2-d float32 `Tensor` of shape [batch_size, embedding_size]
         holding the embedded images.
     """
-    with tf.variable_scope('tcn_net', reuse=self._reuse) as vs:
-      self._adaptation_scope = vs.name
-      net = self._pretrained_output
+        with tf.variable_scope('tcn_net', reuse=self._reuse) as vs:
+            self._adaptation_scope = vs.name
+            net = self._pretrained_output
 
-      # Define some adaptation blocks on top of the pre-trained resnet output.
-      adaptation_blocks = []
-      adaptation_block_params = [map(
-          int, i.split('_')) for i in self._config.adaptation_blocks.split('-')]
-      for i, (depth, num_units) in enumerate(adaptation_block_params):
-        block = resnet_v2.resnet_v2_block(
-            'adaptation_block_%d' % i, base_depth=depth, num_units=num_units,
-            stride=1)
-        adaptation_blocks.append(block)
+            # Define some adaptation blocks on top of the pre-trained resnet output.
+            adaptation_blocks = []
+            adaptation_block_params = [map(
+                int, i.split('_')) for i in self._config.adaptation_blocks.split('-')]
+            for i, (depth, num_units) in enumerate(adaptation_block_params):
+                block = resnet_v2.resnet_v2_block(
+                    'adaptation_block_%d' % i, base_depth=depth, num_units=num_units,
+                    stride=1)
+                adaptation_blocks.append(block)
 
-      # Stack them on top of the resent output.
-      net = resnet_utils.stack_blocks_dense(
-          net, adaptation_blocks, output_stride=None)
+            # Stack them on top of the resent output.
+            net = resnet_utils.stack_blocks_dense(
+                net, adaptation_blocks, output_stride=None)
 
-      # Average pool the output.
-      net = tf.reduce_mean(net, [1, 2], name='adaptation_pool', keep_dims=True)
+            # Average pool the output.
+            net = tf.reduce_mean(net, [1, 2], name='adaptation_pool', keep_dims=True)
 
-      if self._config.emb_connection == 'fc':
-        # Use fully connected layer to project to embedding layer.
-        fc_hidden_sizes = self._config.fc_hidden_sizes
-        if fc_hidden_sizes == 'None':
-          fc_hidden_sizes = []
+            if self._config.emb_connection == 'fc':
+                # Use fully connected layer to project to embedding layer.
+                fc_hidden_sizes = self._config.fc_hidden_sizes
+                if fc_hidden_sizes == 'None':
+                    fc_hidden_sizes = []
+                else:
+                    fc_hidden_sizes = map(int, fc_hidden_sizes.split('_'))
+                fc_hidden_keep_prob = self._config.dropout.keep_fc
+                net = tf.squeeze(net)
+                for fc_hidden_size in fc_hidden_sizes:
+                    net = slim.layers.fully_connected(net, fc_hidden_size)
+                    if fc_hidden_keep_prob < 1.0:
+                        net = slim.dropout(net, keep_prob=fc_hidden_keep_prob,
+                                           is_training=self._is_training)
+
+                # Connect last FC layer to embedding.
+                embedding = slim.layers.fully_connected(net, self._embedding_size,
+                                                        activation_fn=None)
+            else:
+                # Use 1x1 conv layer to project to embedding layer.
+                embedding = slim.conv2d(
+                    net, self._embedding_size, [1, 1], activation_fn=None,
+                    normalizer_fn=None, scope='embedding')
+                embedding = tf.squeeze(embedding)
+
+            # Optionally L2 normalize the embedding.
+            if self._embedding_l2:
+                embedding = tf.nn.l2_normalize(embedding, dim=1)
+
+            return embedding
+
+    def get_trainable_variables(self):
+        """Gets a list of variables to optimize."""
+        if self._config.finetune:
+            return tf.trainable_variables()
         else:
-          fc_hidden_sizes = map(int, fc_hidden_sizes.split('_'))
-        fc_hidden_keep_prob = self._config.dropout.keep_fc
-        net = tf.squeeze(net)
-        for fc_hidden_size in fc_hidden_sizes:
-          net = slim.layers.fully_connected(net, fc_hidden_size)
-          if fc_hidden_keep_prob < 1.0:
-            net = slim.dropout(net, keep_prob=fc_hidden_keep_prob,
-                               is_training=self._is_training)
-
-        # Connect last FC layer to embedding.
-        embedding = slim.layers.fully_connected(net, self._embedding_size,
-                                                activation_fn=None)
-      else:
-        # Use 1x1 conv layer to project to embedding layer.
-        embedding = slim.conv2d(
-            net, self._embedding_size, [1, 1], activation_fn=None,
-            normalizer_fn=None, scope='embedding')
-        embedding = tf.squeeze(embedding)
-
-      # Optionally L2 normalize the embedding.
-      if self._embedding_l2:
-        embedding = tf.nn.l2_normalize(embedding, dim=1)
-
-      return embedding
-
-  def get_trainable_variables(self):
-    """Gets a list of variables to optimize."""
-    if self._config.finetune:
-      return tf.trainable_variables()
-    else:
-      adaptation_only_vars = tf.get_collection(
-          tf.GraphKeys.TRAINABLE_VARIABLES, scope=self._adaptation_scope)
-      return adaptation_only_vars
+            adaptation_only_vars = tf.get_collection(
+                tf.GraphKeys.TRAINABLE_VARIABLES, scope=self._adaptation_scope)
+            return adaptation_only_vars
 
 
 class InceptionEmbedderBase(PretrainedEmbedder):
-  """Base class for embedders that take pre-trained InceptionV3 activations."""
+    """Base class for embedders that take pre-trained InceptionV3 activations."""
 
-  def __init__(self, config, images, embedding_size, is_training,
-               embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
-    super(InceptionEmbedderBase, self).__init__(
-        config, images, embedding_size, is_training, embedding_l2,
-        l2_reg_weight, reuse)
+    def __init__(self, config, images, embedding_size, is_training,
+                 embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
+        super(InceptionEmbedderBase, self).__init__(
+            config, images, embedding_size, is_training, embedding_l2,
+            l2_reg_weight, reuse)
 
-  def build_pretrained_graph(
-      self, images, inception_layer, checkpoint, is_training, reuse=False):
-    """See baseclass."""
-    # Build InceptionV3 graph.
-    inception_output, inception_variables, init_fn = build_inceptionv3_graph(
-        images, inception_layer, is_training, checkpoint, reuse)
-    return inception_output, inception_variables, init_fn
+    def build_pretrained_graph(
+            self, images, inception_layer, checkpoint, is_training, reuse=False):
+        """See baseclass."""
+        # Build InceptionV3 graph.
+        inception_output, inception_variables, init_fn = build_inceptionv3_graph(
+            images, inception_layer, is_training, checkpoint, reuse)
+        return inception_output, inception_variables, init_fn
 
 
 class InceptionConvSSFCEmbedder(InceptionEmbedderBase):
-  """TCN Embedder V1.
+    """TCN Embedder V1.
 
   InceptionV3 (mixed_5d) -> conv layers -> spatial softmax ->
     fully connected -> optional l2 normalize -> embedding.
   """
 
-  def __init__(self, config, images, embedding_size, is_training,
-               embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
-    super(InceptionConvSSFCEmbedder, self).__init__(
-        config, images, embedding_size, is_training, embedding_l2,
-        l2_reg_weight, reuse)
+    def __init__(self, config, images, embedding_size, is_training,
+                 embedding_l2=True, l2_reg_weight=1e-6, reuse=False):
+        super(InceptionConvSSFCEmbedder, self).__init__(
+            config, images, embedding_size, is_training, embedding_l2,
+            l2_reg_weight, reuse)
 
-    # Pull out all the hyperparameters specific to this embedder.
-    self._additional_conv_sizes = config.additional_conv_sizes
-    self._conv_hidden_keep_prob = config.dropout.keep_conv
-    self._fc_hidden_sizes = config.fc_hidden_sizes
-    self._fc_hidden_keep_prob = config.dropout.keep_fc
+        # Pull out all the hyperparameters specific to this embedder.
+        self._additional_conv_sizes = config.additional_conv_sizes
+        self._conv_hidden_keep_prob = config.dropout.keep_conv
+        self._fc_hidden_sizes = config.fc_hidden_sizes
+        self._fc_hidden_keep_prob = config.dropout.keep_fc
 
-  def construct_embedding(self):
-    """Builds a conv -> spatial softmax -> FC adaptation network."""
-    is_training = self._is_training
-    normalizer_params = {'is_training': is_training}
-    with tf.variable_scope('tcn_net', reuse=self._reuse) as vs:
-      self._adaptation_scope = vs.name
-      with slim.arg_scope(
-          [slim.layers.conv2d],
-          activation_fn=tf.nn.relu,
-          normalizer_fn=slim.batch_norm, normalizer_params=normalizer_params,
-          weights_regularizer=slim.regularizers.l2_regularizer(
-              self._l2_reg_weight),
-          biases_regularizer=slim.regularizers.l2_regularizer(
-              self._l2_reg_weight)):
-        with slim.arg_scope(
-            [slim.layers.fully_connected],
-            activation_fn=tf.nn.relu,
-            normalizer_fn=slim.batch_norm, normalizer_params=normalizer_params,
-            weights_regularizer=slim.regularizers.l2_regularizer(
-                self._l2_reg_weight),
-            biases_regularizer=slim.regularizers.l2_regularizer(
-                self._l2_reg_weight)):
+    def construct_embedding(self):
+        """Builds a conv -> spatial softmax -> FC adaptation network."""
+        is_training = self._is_training
+        normalizer_params = {'is_training': is_training}
+        with tf.variable_scope('tcn_net', reuse=self._reuse) as vs:
+            self._adaptation_scope = vs.name
+            with slim.arg_scope(
+                    [slim.layers.conv2d],
+                    activation_fn=tf.nn.relu,
+                    normalizer_fn=slim.batch_norm, normalizer_params=normalizer_params,
+                    weights_regularizer=slim.regularizers.l2_regularizer(
+                        self._l2_reg_weight),
+                    biases_regularizer=slim.regularizers.l2_regularizer(
+                        self._l2_reg_weight)):
+                with slim.arg_scope(
+                        [slim.layers.fully_connected],
+                        activation_fn=tf.nn.relu,
+                        normalizer_fn=slim.batch_norm, normalizer_params=normalizer_params,
+                        weights_regularizer=slim.regularizers.l2_regularizer(
+                            self._l2_reg_weight),
+                        biases_regularizer=slim.regularizers.l2_regularizer(
+                            self._l2_reg_weight)):
 
-          # Input to embedder is pre-trained inception output.
-          net = self._pretrained_output
+                    # Input to embedder is pre-trained inception output.
+                    net = self._pretrained_output
 
-          # Optionally add more conv layers.
-          for num_filters in self._additional_conv_sizes:
-            net = slim.layers.conv2d(
-                net, num_filters, kernel_size=[3, 3], stride=[1, 1])
-            net = slim.dropout(net, keep_prob=self._conv_hidden_keep_prob,
-                               is_training=is_training)
+                    # Optionally add more conv layers.
+                    for num_filters in self._additional_conv_sizes:
+                        net = slim.layers.conv2d(
+                            net, num_filters, kernel_size=[3, 3], stride=[1, 1])
+                        net = slim.dropout(net, keep_prob=self._conv_hidden_keep_prob,
+                                           is_training=is_training)
 
-          # Take the spatial soft arg-max of the last convolutional layer.
-          # This is a form of spatial attention over the activations.
-          # See more here: http://arxiv.org/abs/1509.06113.
-          net = tf.contrib.layers.spatial_softmax(net)
-          self.spatial_features = net
+                    # Take the spatial soft arg-max of the last convolutional layer.
+                    # This is a form of spatial attention over the activations.
+                    # See more here: http://arxiv.org/abs/1509.06113.
+                    net = tf.contrib.layers.spatial_softmax(net)
+                    self.spatial_features = net
 
-          # Add fully connected layers.
-          net = slim.layers.flatten(net)
-          for fc_hidden_size in self._fc_hidden_sizes:
-            net = slim.layers.fully_connected(net, fc_hidden_size)
-            if self._fc_hidden_keep_prob < 1.0:
-              net = slim.dropout(net, keep_prob=self._fc_hidden_keep_prob,
-                                 is_training=is_training)
+                    # Add fully connected layers.
+                    net = slim.layers.flatten(net)
+                    for fc_hidden_size in self._fc_hidden_sizes:
+                        net = slim.layers.fully_connected(net, fc_hidden_size)
+                        if self._fc_hidden_keep_prob < 1.0:
+                            net = slim.dropout(net, keep_prob=self._fc_hidden_keep_prob,
+                                               is_training=is_training)
 
-          # Connect last FC layer to embedding.
-          net = slim.layers.fully_connected(net, self._embedding_size,
-                                            activation_fn=None)
+                    # Connect last FC layer to embedding.
+                    net = slim.layers.fully_connected(net, self._embedding_size,
+                                                      activation_fn=None)
 
-          # Optionally L2 normalize the embedding.
-          if self._embedding_l2:
-            net = tf.nn.l2_normalize(net, dim=1)
+                    # Optionally L2 normalize the embedding.
+                    if self._embedding_l2:
+                        net = tf.nn.l2_normalize(net, dim=1)
 
-          return net
+                    return net

@@ -23,33 +23,34 @@ def fc_layer(name,
              weights_initializer=None,
              biases_initializer=None,
              reuse=None):
-  # flatten bottom input
-  shape = bottom.get_shape().as_list()
-  input_dim = 1
-  for d in shape[1:]:
-    input_dim *= d
-  flat_bottom = tf.reshape(bottom, [-1, input_dim])
+    # flatten bottom input
+    shape = bottom.get_shape().as_list()
+    input_dim = 1
+    biases = None
+    for d in shape[1:]:
+        input_dim *= d
+    flat_bottom = tf.reshape(bottom, [-1, input_dim])
 
-  # weights and biases variables
-  with tf.variable_scope(name, reuse=reuse):
-    # initialize the variables
-    if weights_initializer is None:
-      weights_initializer = tf.contrib.layers.xavier_initializer()
-    if bias_term and biases_initializer is None:
-      biases_initializer = tf.constant_initializer(0.)
+    # weights and biases variables
+    with tf.variable_scope(name, reuse=reuse):
+        # initialize the variables
+        if weights_initializer is None:
+            weights_initializer = tf.contrib.layers.xavier_initializer()
+        if bias_term and biases_initializer is None:
+            biases_initializer = tf.constant_initializer(0.)
 
-    # weights has shape [input_dim, output_dim]
-    weights = tf.get_variable(
-        'weights', [input_dim, output_dim], initializer=weights_initializer)
+        # weights has shape [input_dim, output_dim]
+        weights = tf.get_variable(
+            'weights', [input_dim, output_dim], initializer=weights_initializer)
+        if bias_term:
+            biases = tf.get_variable(
+                'biases', output_dim, initializer=biases_initializer)
+        if not reuse:
+            tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES,
+                                 tf.nn.l2_loss(weights))
+
     if bias_term:
-      biases = tf.get_variable(
-          'biases', output_dim, initializer=biases_initializer)
-    if not reuse:
-      tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES,
-                           tf.nn.l2_loss(weights))
-
-  if bias_term:
-    fc = tf.nn.xw_plus_b(flat_bottom, weights, biases)
-  else:
-    fc = tf.matmul(flat_bottom, weights)
-  return fc
+        fc = tf.nn.xw_plus_b(flat_bottom, weights, biases)
+    else:
+        fc = tf.matmul(flat_bottom, weights)
+    return fc

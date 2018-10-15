@@ -18,34 +18,32 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-from absl import flags
 from absl.testing import parameterized
 import tensorflow as tf
-import eval  # pylint:disable=redefined-builtin
+from research.gan.cifar import eval  # pylint:disable=redefined-builtin
 
-FLAGS = flags.FLAGS
+FLAGS = tf.app.flags.FLAGS
 mock = tf.test.mock
 
 
 class EvalTest(tf.test.TestCase, parameterized.TestCase):
 
-  @parameterized.named_parameters(
-      ('RealData', True, False),
-      ('GeneratedData', False, False),
-      ('GeneratedDataConditional', False, True))
-  def test_build_graph(self, eval_real_images, conditional_eval):
-    FLAGS.eval_real_images = eval_real_images
-    FLAGS.conditional_eval = conditional_eval
-    # Mock `frechet_inception_distance` and `inception_score`, which are
-    # expensive.
-    with mock.patch.object(
-        eval.util, 'get_frechet_inception_distance') as mock_fid:
-      with mock.patch.object(eval.util, 'get_inception_scores') as mock_iscore:
-        mock_fid.return_value = 1.0
-        mock_iscore.return_value = 1.0
-        eval.main(None, run_eval_loop=False)
+    @parameterized.named_parameters(
+        ('RealData', True, False),
+        ('GeneratedData', False, False),
+        ('GeneratedDataConditional', False, True))
+    def test_build_graph(self, eval_real_images, conditional_eval):
+        FLAGS.eval_real_images = eval_real_images
+        FLAGS.conditional_eval = conditional_eval
+        # Mock `frechet_inception_distance` and `inception_score`, which are
+        # expensive.
+        with mock.patch.object(
+                eval.util, 'get_frechet_inception_distance') as mock_fid:
+            with mock.patch.object(eval.util, 'get_inception_scores') as mock_iscore:
+                mock_fid.return_value = 1.0
+                mock_iscore.return_value = 1.0
+                eval.main(None, run_eval_loop=False)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

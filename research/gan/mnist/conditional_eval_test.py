@@ -19,14 +19,15 @@ from __future__ import division
 from __future__ import print_function
 
 from absl.testing import absltest
-import conditional_eval
+from research.gan.mnist import conditional_eval
 
 
 class ConditionalEvalTest(absltest.TestCase):
 
-  def test_build_graph(self):
-    conditional_eval.main(None, run_eval_loop=False)
+    @staticmethod
+    def test_build_graph():
+        conditional_eval.main(None, run_eval_loop=False)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

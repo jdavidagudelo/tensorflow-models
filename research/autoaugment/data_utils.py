@@ -22,9 +22,9 @@ from __future__ import print_function
 import copy
 import pickle
 import os
-from . import augmentation_transforms
+from research.autoaugment import augmentation_transforms
 import numpy as np
-from . import policies as found_policies
+from research.autoaugment import policies as found_policies
 import tensorflow as tf
 
 

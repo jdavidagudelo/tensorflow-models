@@ -12,8 +12,8 @@ nothing crashes.
 from absl import flags
 import tensorflow as tf
 
-from ..single_task import defaults  # brain coder
-from ..single_task import run  # brain coder
+from research.brain_coder.single_task import defaults  # brain coder
+from research.brain_coder.single_task import run  # brain coder
 
 FLAGS = flags.FLAGS
 

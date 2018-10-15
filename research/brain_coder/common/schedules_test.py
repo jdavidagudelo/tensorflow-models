@@ -10,8 +10,8 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-from . import config_lib  # brain coder
-from . import schedules  # brain coder
+from research.brain_coder.common import config_lib  # brain coder
+from research.brain_coder.common import schedules  # brain coder
 
 
 class SchedulesTest(tf.test.TestCase):

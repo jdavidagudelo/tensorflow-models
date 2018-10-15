@@ -20,8 +20,8 @@ from __future__ import print_function
 
 
 class _HParams(object):
-  """Wrapper for configuration parameters."""
-  pass
+    """Wrapper for configuration parameters."""
+    pass
 
 
 def model_config(input_file_pattern=None,
@@ -34,7 +34,7 @@ def model_config(input_file_pattern=None,
                  word_embedding_dim=620,
                  bidirectional_encoder=False,
                  encoder_dim=2400):
-  """Creates a model configuration object.
+    """Creates a model configuration object.
 
   Args:
     input_file_pattern: File pattern of sharded TFRecord files containing
@@ -54,18 +54,18 @@ def model_config(input_file_pattern=None,
   Returns:
     An object containing model configuration parameters.
   """
-  config = _HParams()
-  config.input_file_pattern = input_file_pattern
-  config.input_queue_capacity = input_queue_capacity
-  config.num_input_reader_threads = num_input_reader_threads
-  config.shuffle_input_data = shuffle_input_data
-  config.uniform_init_scale = uniform_init_scale
-  config.vocab_size = vocab_size
-  config.batch_size = batch_size
-  config.word_embedding_dim = word_embedding_dim
-  config.bidirectional_encoder = bidirectional_encoder
-  config.encoder_dim = encoder_dim
-  return config
+    config = _HParams()
+    config.input_file_pattern = input_file_pattern
+    config.input_queue_capacity = input_queue_capacity
+    config.num_input_reader_threads = num_input_reader_threads
+    config.shuffle_input_data = shuffle_input_data
+    config.uniform_init_scale = uniform_init_scale
+    config.vocab_size = vocab_size
+    config.batch_size = batch_size
+    config.word_embedding_dim = word_embedding_dim
+    config.bidirectional_encoder = bidirectional_encoder
+    config.encoder_dim = encoder_dim
+    return config
 
 
 def training_config(learning_rate=0.0008,
@@ -75,7 +75,7 @@ def training_config(learning_rate=0.0008,
                     clip_gradient_norm=5.0,
                     save_model_secs=600,
                     save_summaries_secs=600):
-  """Creates a training configuration object.
+    """Creates a training configuration object.
 
   Args:
     learning_rate: Initial learning rate.
@@ -95,16 +95,16 @@ def training_config(learning_rate=0.0008,
     ValueError: If learning_rate_decay_factor is set and
       learning_rate_decay_steps is unset.
   """
-  if learning_rate_decay_factor and not learning_rate_decay_steps:
-    raise ValueError(
-        "learning_rate_decay_factor requires learning_rate_decay_steps.")
+    if learning_rate_decay_factor and not learning_rate_decay_steps:
+        raise ValueError(
+            "learning_rate_decay_factor requires learning_rate_decay_steps.")
 
-  config = _HParams()
-  config.learning_rate = learning_rate
-  config.learning_rate_decay_factor = learning_rate_decay_factor
-  config.learning_rate_decay_steps = learning_rate_decay_steps
-  config.number_of_steps = number_of_steps
-  config.clip_gradient_norm = clip_gradient_norm
-  config.save_model_secs = save_model_secs
-  config.save_summaries_secs = save_summaries_secs
-  return config
+    config = _HParams()
+    config.learning_rate = learning_rate
+    config.learning_rate_decay_factor = learning_rate_decay_factor
+    config.learning_rate_decay_steps = learning_rate_decay_steps
+    config.number_of_steps = number_of_steps
+    config.clip_gradient_norm = clip_gradient_norm
+    config.save_model_secs = save_model_secs
+    config.save_summaries_secs = save_summaries_secs
+    return config

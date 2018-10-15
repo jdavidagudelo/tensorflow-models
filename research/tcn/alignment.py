@@ -20,9 +20,10 @@ from __future__ import division
 
 import os
 import numpy as np
-from estimators.get_estimator import get_estimator
-from utils import util
+from research.tcn.estimators.get_estimator import get_estimator
+from research.tcn.utils import util
 import tensorflow as tf
+
 tf.logging.set_verbosity(tf.logging.INFO)
 
 tf.flags.DEFINE_string(
@@ -44,8 +45,8 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def compute_average_alignment(
-    seqname_to_embeddings, num_views, summary_writer, training_step):
-  """Computes the average cross-view alignment for all sequence view pairs.
+        seqname_to_embeddings, num_views, summary_writer, training_step):
+    """Computes the average cross-view alignment for all sequence view pairs.
 
   Args:
     seqname_to_embeddings: Dict, mapping sequence name to a
@@ -58,76 +59,77 @@ def compute_average_alignment(
   and the knn aligned time.
   abs(|time_i - knn_time|) / sequence_length
   """
-  all_alignments = []
-  for _, view_embeddings in seqname_to_embeddings.iteritems():
-    for idx_i in range(num_views):
-      for idx_j in range(idx_i+1, num_views):
-        embeddings_view_i = view_embeddings[idx_i]
-        embeddings_view_j = view_embeddings[idx_j]
+    all_alignments = []
+    for _, view_embeddings in seqname_to_embeddings.iteritems():
+        for idx_i in range(num_views):
+            for idx_j in range(idx_i + 1, num_views):
+                embeddings_view_i = view_embeddings[idx_i]
+                embeddings_view_j = view_embeddings[idx_j]
 
-        seq_len = len(embeddings_view_i)
+                seq_len = len(embeddings_view_i)
 
-        times_i = np.array(range(seq_len))
-        # Get the nearest time_index for each embedding in view_i.
-        times_j = np.array([util.KNNIdsWithDistances(
-            q, embeddings_view_j, k=1)[0][0] for q in embeddings_view_i])
+                times_i = np.array(range(seq_len))
+                # Get the nearest time_index for each embedding in view_i.
+                times_j = np.array([util.KNNIdsWithDistances(
+                    q, embeddings_view_j, k=1)[0][0] for q in embeddings_view_i])
 
-        # Compute sequence view pair alignment.
-        alignment = np.mean(
-            np.abs(np.array(times_i)-np.array(times_j))/float(seq_len))
-        all_alignments.append(alignment)
-        print('alignment so far %f' % alignment)
-  average_alignment = np.mean(all_alignments)
-  print('Average alignment %f' % average_alignment)
-  summ = tf.Summary(value=[tf.Summary.Value(
-      tag='validation/alignment', simple_value=average_alignment)])
-  summary_writer.add_summary(summ, int(training_step))
+                # Compute sequence view pair alignment.
+                alignment = np.mean(
+                    np.abs(np.array(times_i) - np.array(times_j)) / float(seq_len))
+                all_alignments.append(alignment)
+                print('alignment so far %f' % alignment)
+    average_alignment = np.mean(all_alignments)
+    print('Average alignment %f' % average_alignment)
+    summ = tf.Summary(value=[tf.Summary.Value(
+        tag='validation/alignment', simple_value=average_alignment)])
+    summary_writer.add_summary(summ, int(training_step))
 
 
 def evaluate_once(
-    config, checkpointdir, validation_records, checkpoint_path, batch_size,
-    num_views):
-  """Evaluates and reports the validation alignment."""
-  # Choose an estimator based on training strategy.
-  estimator = get_estimator(config, checkpointdir)
+        config, checkpointdir, validation_records, checkpoint_path, batch_size,
+        num_views):
+    """Evaluates and reports the validation alignment."""
+    # Choose an estimator based on training strategy.
+    estimator = get_estimator(config, checkpointdir)
 
-  # Embed all validation sequences.
-  seqname_to_embeddings = {}
-  for (view_embeddings, _, seqname) in estimator.inference(
-      validation_records, checkpoint_path, batch_size):
-    seqname_to_embeddings[seqname] = view_embeddings
+    # Embed all validation sequences.
+    seqname_to_embeddings = {}
+    for (view_embeddings, _, seqname) in estimator.inference(
+            validation_records, checkpoint_path, batch_size):
+        seqname_to_embeddings[seqname] = view_embeddings
 
-  # Compute and report alignment statistics.
-  ckpt_step = int(checkpoint_path.split('-')[-1])
-  summary_dir = os.path.join(FLAGS.outdir, 'alignment_summaries')
-  summary_writer = tf.summary.FileWriter(summary_dir)
-  compute_average_alignment(
-      seqname_to_embeddings, num_views, summary_writer, ckpt_step)
+    # Compute and report alignment statistics.
+    ckpt_step = int(checkpoint_path.split('-')[-1])
+    summary_dir = os.path.join(FLAGS.outdir, 'alignment_summaries')
+    summary_writer = tf.summary.FileWriter(summary_dir)
+    compute_average_alignment(
+        seqname_to_embeddings, num_views, summary_writer, ckpt_step)
 
 
 def main(_):
-  # Parse config dict from yaml config files / command line flags.
-  config = util.ParseConfigsToLuaTable(FLAGS.config_paths, FLAGS.model_params)
-  num_views = config.data.num_views
+    # Parse config dict from yaml config files / command line flags.
+    config = util.ParseConfigsToLuaTable(FLAGS.config_paths, FLAGS.model_params)
+    num_views = config.data.num_views
 
-  validation_records = util.GetFilesRecursively(config.data.validation)
-  batch_size = config.data.batch_size
+    validation_records = util.GetFilesRecursively(config.data.validation)
+    batch_size = config.data.batch_size
 
-  checkpointdir = FLAGS.checkpointdir
+    checkpointdir = FLAGS.checkpointdir
 
-  # If evaluating a specific checkpoint, do that.
-  if FLAGS.checkpoint_iter:
-    checkpoint_path = os.path.join(
-        '%s/model.ckpt-%s' % (checkpointdir, FLAGS.checkpoint_iter))
-    evaluate_once(
-        config, checkpointdir, validation_records, checkpoint_path, batch_size,
-        num_views)
-  else:
-    for checkpoint_path in tf.contrib.training.checkpoints_iterator(
-        checkpointdir):
-      evaluate_once(
-          config, checkpointdir, validation_records, checkpoint_path,
-          batch_size, num_views)
+    # If evaluating a specific checkpoint, do that.
+    if FLAGS.checkpoint_iter:
+        checkpoint_path = os.path.join(
+            '%s/model.ckpt-%s' % (checkpointdir, FLAGS.checkpoint_iter))
+        evaluate_once(
+            config, checkpointdir, validation_records, checkpoint_path, batch_size,
+            num_views)
+    else:
+        for checkpoint_path in tf.contrib.training.checkpoints_iterator(
+                checkpointdir):
+            evaluate_once(
+                config, checkpointdir, validation_records, checkpoint_path,
+                batch_size, num_views)
+
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

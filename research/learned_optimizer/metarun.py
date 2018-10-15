@@ -21,14 +21,14 @@ import os
 
 import tensorflow as tf
 
-import metaopt
-from learned_optimizer.optimizer import coordinatewise_rnn
-from learned_optimizer.optimizer import global_learning_rate
-from learned_optimizer.optimizer import hierarchical_rnn
-from learned_optimizer.optimizer import learning_rate_schedule
-from learned_optimizer.optimizer import trainable_adam
-from learned_optimizer.problems import problem_sets as ps
-from learned_optimizer.problems import problem_spec
+from . import metaopt
+from research.learned_optimizer.optimizer import coordinatewise_rnn
+from research.learned_optimizer.optimizer import global_learning_rate
+from research.learned_optimizer.optimizer import hierarchical_rnn
+from research.learned_optimizer.optimizer import learning_rate_schedule
+from research.learned_optimizer.optimizer import trainable_adam
+from research.learned_optimizer.problems import problem_sets as ps
+from research.learned_optimizer.problems import problem_spec
 
 tf.app.flags.DEFINE_string("train_dir", "/tmp/lol/",
                            """Directory to store parameters and results.""")
@@ -218,177 +218,176 @@ FLAGS = tf.app.flags.FLAGS
 HRNN_CELL_SIZES = [10, 20, 20]
 
 
-
 def register_optimizers():
-  opts = {}
-  opts["CoordinatewiseRNN"] = coordinatewise_rnn.CoordinatewiseRNN
-  opts["GlobalLearningRate"] = global_learning_rate.GlobalLearningRate
-  opts["HierarchicalRNN"] = hierarchical_rnn.HierarchicalRNN
-  opts["LearningRateSchedule"] = learning_rate_schedule.LearningRateSchedule
-  opts["TrainableAdam"] = trainable_adam.TrainableAdam
-  return opts
+    opts = {}
+    opts["CoordinatewiseRNN"] = coordinatewise_rnn.CoordinatewiseRNN
+    opts["GlobalLearningRate"] = global_learning_rate.GlobalLearningRate
+    opts["HierarchicalRNN"] = hierarchical_rnn.HierarchicalRNN
+    opts["LearningRateSchedule"] = learning_rate_schedule.LearningRateSchedule
+    opts["TrainableAdam"] = trainable_adam.TrainableAdam
+    return opts
 
 
 def main(unused_argv):
-  """Runs the main script."""
+    """Runs the main script."""
 
-  opts = register_optimizers()
+    opts = register_optimizers()
 
-  # Choose a set of problems to optimize. By default this includes quadratics,
-  # 2-dimensional bowls, 2-class softmax problems, and non-noisy optimization
-  # test problems (e.g. Rosenbrock, Beale)
-  problems_and_data = []
+    # Choose a set of problems to optimize. By default this includes quadratics,
+    # 2-dimensional bowls, 2-class softmax problems, and non-noisy optimization
+    # test problems (e.g. Rosenbrock, Beale)
+    problems_and_data = []
 
-  if FLAGS.include_sparse_softmax_problems:
-    problems_and_data.extend(ps.sparse_softmax_2_class_sparse_problems())
+    if FLAGS.include_sparse_softmax_problems:
+        problems_and_data.extend(ps.sparse_softmax_2_class_sparse_problems())
 
-  if FLAGS.include_one_hot_sparse_softmax_problems:
-    problems_and_data.extend(
-        ps.one_hot_sparse_softmax_2_class_sparse_problems())
+    if FLAGS.include_one_hot_sparse_softmax_problems:
+        problems_and_data.extend(
+            ps.one_hot_sparse_softmax_2_class_sparse_problems())
 
-  if FLAGS.include_quadratic_problems:
-    problems_and_data.extend(ps.quadratic_problems())
+    if FLAGS.include_quadratic_problems:
+        problems_and_data.extend(ps.quadratic_problems())
 
-  if FLAGS.include_noisy_quadratic_problems:
-    problems_and_data.extend(ps.quadratic_problems_noisy())
+    if FLAGS.include_noisy_quadratic_problems:
+        problems_and_data.extend(ps.quadratic_problems_noisy())
 
-  if FLAGS.include_large_quadratic_problems:
-    problems_and_data.extend(ps.quadratic_problems_large())
+    if FLAGS.include_large_quadratic_problems:
+        problems_and_data.extend(ps.quadratic_problems_large())
 
-  if FLAGS.include_bowl_problems:
-    problems_and_data.extend(ps.bowl_problems())
+    if FLAGS.include_bowl_problems:
+        problems_and_data.extend(ps.bowl_problems())
 
-  if FLAGS.include_noisy_bowl_problems:
-    problems_and_data.extend(ps.bowl_problems_noisy())
+    if FLAGS.include_noisy_bowl_problems:
+        problems_and_data.extend(ps.bowl_problems_noisy())
 
-  if FLAGS.include_softmax_2_class_problems:
-    problems_and_data.extend(ps.softmax_2_class_problems())
+    if FLAGS.include_softmax_2_class_problems:
+        problems_and_data.extend(ps.softmax_2_class_problems())
 
-  if FLAGS.include_noisy_softmax_2_class_problems:
-    problems_and_data.extend(ps.softmax_2_class_problems_noisy())
+    if FLAGS.include_noisy_softmax_2_class_problems:
+        problems_and_data.extend(ps.softmax_2_class_problems_noisy())
 
-  if FLAGS.include_optimization_test_problems:
-    problems_and_data.extend(ps.optimization_test_problems())
+    if FLAGS.include_optimization_test_problems:
+        problems_and_data.extend(ps.optimization_test_problems())
 
-  if FLAGS.include_noisy_optimization_test_problems:
-    problems_and_data.extend(ps.optimization_test_problems_noisy())
+    if FLAGS.include_noisy_optimization_test_problems:
+        problems_and_data.extend(ps.optimization_test_problems_noisy())
 
-  if FLAGS.include_fully_connected_random_2_class_problems:
-    problems_and_data.extend(ps.fully_connected_random_2_class_problems())
-
-  if FLAGS.include_matmul_problems:
-    problems_and_data.extend(ps.matmul_problems())
-
-  if FLAGS.include_log_objective_problems:
-    problems_and_data.extend(ps.log_objective_problems())
-
-  if FLAGS.include_rescale_problems:
-    problems_and_data.extend(ps.rescale_problems())
-
-  if FLAGS.include_norm_problems:
-    problems_and_data.extend(ps.norm_problems())
-
-  if FLAGS.include_noisy_norm_problems:
-    problems_and_data.extend(ps.norm_problems_noisy())
-
-  if FLAGS.include_sum_problems:
-    problems_and_data.extend(ps.sum_problems())
-
-  if FLAGS.include_noisy_sum_problems:
-    problems_and_data.extend(ps.sum_problems_noisy())
-
-  if FLAGS.include_sparse_gradient_problems:
-    problems_and_data.extend(ps.sparse_gradient_problems())
     if FLAGS.include_fully_connected_random_2_class_problems:
-      problems_and_data.extend(ps.sparse_gradient_problems_mlp())
+        problems_and_data.extend(ps.fully_connected_random_2_class_problems())
 
-  if FLAGS.include_min_max_well_problems:
-    problems_and_data.extend(ps.min_max_well_problems())
+    if FLAGS.include_matmul_problems:
+        problems_and_data.extend(ps.matmul_problems())
 
-  if FLAGS.include_sum_of_quadratics_problems:
-    problems_and_data.extend(ps.sum_of_quadratics_problems())
+    if FLAGS.include_log_objective_problems:
+        problems_and_data.extend(ps.log_objective_problems())
 
-  if FLAGS.include_projection_quadratic_problems:
-    problems_and_data.extend(ps.projection_quadratic_problems())
+    if FLAGS.include_rescale_problems:
+        problems_and_data.extend(ps.rescale_problems())
 
-  if FLAGS.include_outward_snake_problems:
-    problems_and_data.extend(ps.outward_snake_problems())
+    if FLAGS.include_norm_problems:
+        problems_and_data.extend(ps.norm_problems())
 
-  if FLAGS.include_dependency_chain_problems:
-    problems_and_data.extend(ps.dependency_chain_problems())
+    if FLAGS.include_noisy_norm_problems:
+        problems_and_data.extend(ps.norm_problems_noisy())
 
-  # log directory
-  logdir = os.path.join(FLAGS.train_dir,
-                        "{}_{}_{}_{}".format(FLAGS.optimizer,
-                                             FLAGS.cell_cls,
-                                             FLAGS.cell_size,
-                                             FLAGS.num_cells))
+    if FLAGS.include_sum_problems:
+        problems_and_data.extend(ps.sum_problems())
 
-  # get the optimizer class and arguments
-  optimizer_cls = opts[FLAGS.optimizer]
+    if FLAGS.include_noisy_sum_problems:
+        problems_and_data.extend(ps.sum_problems_noisy())
 
-  assert len(HRNN_CELL_SIZES) in [1, 2, 3]
-  optimizer_args = (HRNN_CELL_SIZES,)
+    if FLAGS.include_sparse_gradient_problems:
+        problems_and_data.extend(ps.sparse_gradient_problems())
+        if FLAGS.include_fully_connected_random_2_class_problems:
+            problems_and_data.extend(ps.sparse_gradient_problems_mlp())
 
-  optimizer_kwargs = {
-      "init_lr_range": (FLAGS.min_lr, FLAGS.max_lr),
-      "learnable_decay": FLAGS.learnable_decay,
-      "dynamic_output_scale": FLAGS.dynamic_output_scale,
-      "cell_cls": getattr(tf.contrib.rnn, FLAGS.cell_cls),
-      "use_attention": FLAGS.use_attention,
-      "use_log_objective": FLAGS.use_log_objective,
-      "num_gradient_scales": FLAGS.num_gradient_scales,
-      "zero_init_lr_weights": FLAGS.zero_init_lr_weights,
-      "use_log_means_squared": FLAGS.use_log_means_squared,
-      "use_relative_lr": FLAGS.use_relative_lr,
-      "use_extreme_indicator": FLAGS.use_extreme_indicator,
-      "max_log_lr": FLAGS.max_log_lr,
-      "obj_train_max_multiplier": FLAGS.objective_training_max_multiplier,
-      "use_problem_lr_mean": FLAGS.use_problem_lr_mean,
-      "use_gradient_shortcut": FLAGS.use_gradient_shortcut,
-      "use_second_derivatives": FLAGS.use_second_derivatives,
-      "use_lr_shortcut": FLAGS.use_lr_shortcut,
-      "use_grad_products": FLAGS.use_grad_products,
-      "use_multiple_scale_decays": FLAGS.use_multiple_scale_decays,
-      "use_numerator_epsilon": FLAGS.use_numerator_epsilon,
-      "learnable_inp_decay": FLAGS.learnable_inp_decay,
-      "learnable_rnn_init": FLAGS.learnable_rnn_init,
-  }
-  optimizer_spec = problem_spec.Spec(
-      optimizer_cls, optimizer_args, optimizer_kwargs)
+    if FLAGS.include_min_max_well_problems:
+        problems_and_data.extend(ps.min_max_well_problems())
 
-  # make log directory
-  tf.gfile.MakeDirs(logdir)
+    if FLAGS.include_sum_of_quadratics_problems:
+        problems_and_data.extend(ps.sum_of_quadratics_problems())
 
-  is_chief = FLAGS.task == 0
-  # if this is a distributed run, make the chief run through problems in order
-  select_random_problems = FLAGS.worker_tasks == 1 or not is_chief
+    if FLAGS.include_projection_quadratic_problems:
+        problems_and_data.extend(ps.projection_quadratic_problems())
 
-  def num_unrolls():
-    return metaopt.sample_numiter(FLAGS.num_unroll_scale, FLAGS.min_num_unrolls)
+    if FLAGS.include_outward_snake_problems:
+        problems_and_data.extend(ps.outward_snake_problems())
 
-  def num_partial_unroll_itrs():
-    return metaopt.sample_numiter(FLAGS.num_partial_unroll_itr_scale,
-                                  FLAGS.min_num_itr_partial_unroll)
+    if FLAGS.include_dependency_chain_problems:
+        problems_and_data.extend(ps.dependency_chain_problems())
 
-  # run it
-  metaopt.train_optimizer(
-      logdir,
-      optimizer_spec,
-      problems_and_data,
-      FLAGS.num_problems,
-      FLAGS.num_meta_iterations,
-      num_unrolls,
-      num_partial_unroll_itrs,
-      learning_rate=FLAGS.meta_learning_rate,
-      gradient_clip=FLAGS.gradient_clip_level,
-      is_chief=is_chief,
-      select_random_problems=select_random_problems,
-      obj_train_max_multiplier=FLAGS.objective_training_max_multiplier,
-      callbacks=[])
+    # log directory
+    logdir = os.path.join(FLAGS.train_dir,
+                          "{}_{}_{}_{}".format(FLAGS.optimizer,
+                                               FLAGS.cell_cls,
+                                               FLAGS.cell_size,
+                                               FLAGS.num_cells))
 
-  return 0
+    # get the optimizer class and arguments
+    optimizer_cls = opts[FLAGS.optimizer]
+
+    assert len(HRNN_CELL_SIZES) in [1, 2, 3]
+    optimizer_args = (HRNN_CELL_SIZES,)
+
+    optimizer_kwargs = {
+        "init_lr_range": (FLAGS.min_lr, FLAGS.max_lr),
+        "learnable_decay": FLAGS.learnable_decay,
+        "dynamic_output_scale": FLAGS.dynamic_output_scale,
+        "cell_cls": getattr(tf.contrib.rnn, FLAGS.cell_cls),
+        "use_attention": FLAGS.use_attention,
+        "use_log_objective": FLAGS.use_log_objective,
+        "num_gradient_scales": FLAGS.num_gradient_scales,
+        "zero_init_lr_weights": FLAGS.zero_init_lr_weights,
+        "use_log_means_squared": FLAGS.use_log_means_squared,
+        "use_relative_lr": FLAGS.use_relative_lr,
+        "use_extreme_indicator": FLAGS.use_extreme_indicator,
+        "max_log_lr": FLAGS.max_log_lr,
+        "obj_train_max_multiplier": FLAGS.objective_training_max_multiplier,
+        "use_problem_lr_mean": FLAGS.use_problem_lr_mean,
+        "use_gradient_shortcut": FLAGS.use_gradient_shortcut,
+        "use_second_derivatives": FLAGS.use_second_derivatives,
+        "use_lr_shortcut": FLAGS.use_lr_shortcut,
+        "use_grad_products": FLAGS.use_grad_products,
+        "use_multiple_scale_decays": FLAGS.use_multiple_scale_decays,
+        "use_numerator_epsilon": FLAGS.use_numerator_epsilon,
+        "learnable_inp_decay": FLAGS.learnable_inp_decay,
+        "learnable_rnn_init": FLAGS.learnable_rnn_init,
+    }
+    optimizer_spec = problem_spec.Spec(
+        optimizer_cls, optimizer_args, optimizer_kwargs)
+
+    # make log directory
+    tf.gfile.MakeDirs(logdir)
+
+    is_chief = FLAGS.task == 0
+    # if this is a distributed run, make the chief run through problems in order
+    select_random_problems = FLAGS.worker_tasks == 1 or not is_chief
+
+    def num_unrolls():
+        return metaopt.sample_numiter(FLAGS.num_unroll_scale, FLAGS.min_num_unrolls)
+
+    def num_partial_unroll_itrs():
+        return metaopt.sample_numiter(FLAGS.num_partial_unroll_itr_scale,
+                                      FLAGS.min_num_itr_partial_unroll)
+
+    # run it
+    metaopt.train_optimizer(
+        logdir,
+        optimizer_spec,
+        problems_and_data,
+        FLAGS.num_problems,
+        FLAGS.num_meta_iterations,
+        num_unrolls,
+        num_partial_unroll_itrs,
+        learning_rate=FLAGS.meta_learning_rate,
+        gradient_clip=FLAGS.gradient_clip_level,
+        is_chief=is_chief,
+        select_random_problems=select_random_problems,
+        obj_train_max_multiplier=FLAGS.objective_training_max_multiplier,
+        callbacks=[])
+
+    return 0
 
 
 if __name__ == "__main__":
-  tf.app.run()
+    tf.app.run()

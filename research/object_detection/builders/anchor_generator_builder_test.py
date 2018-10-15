@@ -110,6 +110,7 @@ class AnchorGeneratorBuilderTest(tf.test.TestCase):
                  (0.799, 0.871),
                  (0.949, 0.974)]):
             self.assert_almost_list_equal(expected_scales, actual_scales, delta=1e-2)
+        # noinspection PyTypeChecker
         for actual_aspect_ratio, expected_aspect_ratio in zip(
                 list(anchor_generator_object._aspect_ratios),
                 [(1.0, 2.0, 0.5)] + 5 * [(1.0, 1.0)]):

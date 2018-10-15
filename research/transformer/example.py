@@ -14,7 +14,7 @@
 # ==============================================================================
 from scipy import ndimage
 import tensorflow as tf
-from spatial_transformer import transformer
+from research.transformer.spatial_transformer import transformer
 import numpy as np
 import matplotlib.pyplot as plt
 

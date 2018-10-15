@@ -35,11 +35,10 @@ import tensorflow as tf
 
 from tensorflow import gfile
 
-from real_nvp_utils import (
+from research.real_nvp.real_nvp_utils import (
     batch_norm, batch_norm_log_diff, conv_layer,
     squeeze_2x2, squeeze_2x2_ordered, standard_normal_ll,
     standard_normal_sample, unsqueeze_2x2, variable_on_cpu)
-
 
 tf.flags.DEFINE_string("master", "local",
                        "BNS name of the TensorFlow master, or local.")
@@ -81,8 +80,10 @@ tf.flags.DEFINE_string(
 
 FLAGS = tf.flags.FLAGS
 
+
 class HParams(object):
     """Dictionary of hyperparameters."""
+
     def __init__(self, **kwargs):
         self.dict_ = kwargs
         self.__dict__.update(self.dict_)
@@ -934,7 +935,7 @@ class RealNVP(object):
         device = "/cpu:0"
         if FLAGS.dataset == "imnet":
             with tf.device(
-                tf.train.replica_device_setter(0, worker_device=device)):
+                    tf.train.replica_device_setter(0, worker_device=device)):
                 filename_queue = tf.train.string_input_producer(
                     gfile.Glob(FLAGS.data_path), num_epochs=None)
                 reader = tf.TFRecordReader()
@@ -967,7 +968,7 @@ class RealNVP(object):
                     + tf.random_uniform(tf.shape(x_in))) / 256.
         elif FLAGS.dataset == "celeba":
             with tf.device(
-                tf.train.replica_device_setter(0, worker_device=device)):
+                    tf.train.replica_device_setter(0, worker_device=device)):
                 filename_queue = tf.train.string_input_producer(
                     gfile.Glob(FLAGS.data_path), num_epochs=None)
                 reader = tf.TFRecordReader()
@@ -1001,7 +1002,7 @@ class RealNVP(object):
                     + tf.random_uniform(tf.shape(x_in))) / 256.
         elif FLAGS.dataset == "lsun":
             with tf.device(
-                tf.train.replica_device_setter(0, worker_device=device)):
+                    tf.train.replica_device_setter(0, worker_device=device)):
                 filename_queue = tf.train.string_input_producer(
                     gfile.Glob(FLAGS.data_path), num_epochs=None)
                 reader = tf.TFRecordReader()
@@ -1082,10 +1083,10 @@ class RealNVP(object):
             use_batch_norm=hps.use_batch_norm, weight_norm=True,
             train=True)
         if FLAGS.mode != "train":
-              z_out, log_diff = encoder(
-                  input_=logit_x_in, hps=hps, n_scale=hps.n_scale,
-                  use_batch_norm=hps.use_batch_norm, weight_norm=True,
-                  train=False)
+            z_out, log_diff = encoder(
+                input_=logit_x_in, hps=hps, n_scale=hps.n_scale,
+                use_batch_norm=hps.use_batch_norm, weight_norm=True,
+                train=False)
         final_shape = [image_size, image_size, 3]
         prior_ll = standard_normal_ll(z_out)
         prior_ll = tf.reduce_sum(prior_ll, [1, 2, 3])
@@ -1156,7 +1157,6 @@ class RealNVP(object):
                 "l2_z_var",
                 tf.reshape(tf.reduce_mean(tf.square(l2_z))
                            - tf.square(tf.reduce_mean(l2_z)), []))
-
 
         capped_grads_and_vars = zip(capped_grads, vars_)
         self.train_step = optimizer.apply_gradients(
@@ -1250,15 +1250,15 @@ class RealNVP(object):
             angle_3 = tf.reshape(angle_3, [-1, 1, 1, 1])
             angle_3 += tf.zeros([n_angle_3, manifold_side, manifold_side, 1])
             manifold = tf.cos(angle_1) * (
-                tf.cos(angle_2) * (
+                    tf.cos(angle_2) * (
                     tf.cos(angle_3) * u_1 + tf.sin(angle_3) * u_2)
-                + tf.sin(angle_2) * (
-                    tf.cos(angle_3) * u_3 + tf.sin(angle_3) * u_4))
+                    + tf.sin(angle_2) * (
+                            tf.cos(angle_3) * u_3 + tf.sin(angle_3) * u_4))
             manifold += tf.sin(angle_1) * (
-                tf.cos(angle_2) * (
+                    tf.cos(angle_2) * (
                     tf.cos(angle_3) * u_5 + tf.sin(angle_3) * u_6)
-                + tf.sin(angle_2) * (
-                    tf.cos(angle_3) * u_7 + tf.sin(angle_3) * u_8))
+                    + tf.sin(angle_2) * (
+                            tf.cos(angle_3) * u_7 + tf.sin(angle_3) * u_8))
             manifold = tf.reshape(
                 manifold,
                 [n_angle_3 * manifold_side * manifold_side] + final_shape)
@@ -1488,7 +1488,6 @@ def train_model(hps, logdir):
                 if should_eval_summaries:
                     fetches += [summary_op]
 
-
                 start_time = time.time()
                 outputs = sess.run(fetches)
                 global_step_val = outputs[0]
@@ -1604,8 +1603,8 @@ def sample_from_model(hps, logdir, traindir):
                             time.sleep(30)
                             continue
                     else:
-                        print ("Loading file %s"
-                               % ckpt_state.model_checkpoint_path)
+                        print("Loading file %s"
+                              % ckpt_state.model_checkpoint_path)
                         saver.restore(sess, ckpt_state.model_checkpoint_path)
 
                     current_step = tf.train.global_step(sess, eval_model.step)
@@ -1634,6 +1633,7 @@ def main(unused_argv):
         hps.batch_size = 100
         evaluate(hps=hps, logdir=FLAGS.logdir,
                  traindir=FLAGS.traindir, subset=FLAGS.mode)
+
 
 if __name__ == "__main__":
     tf.app.run()

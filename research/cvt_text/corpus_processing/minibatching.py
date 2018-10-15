@@ -23,7 +23,7 @@ import collections
 import random
 import numpy as np
 
-from ..base import embeddings
+from research.cvt_text.base import embeddings
 
 
 def get_bucket(config, l):

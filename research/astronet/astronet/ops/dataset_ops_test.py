@@ -18,20 +18,18 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os.path
-
 from absl import flags
 import numpy as np
 import tensorflow as tf
 
-from ..ops import dataset_ops
-from ..util import configdict
+from research.astronet.astronet.ops import dataset_ops
+from research.astronet.astronet.util import configdict
 
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string("test_srcdir", "", "Test source directory.")
 
-_TEST_TFRECORD_FILE = "astronet/ops/test_data/test_dataset.tfrecord"
+_TEST_TFRECORD_FILE = "test_data/test_dataset.tfrecord"
 
 
 class DatasetOpsTest(tf.test.TestCase):

@@ -19,9 +19,10 @@ from __future__ import division
 from __future__ import print_function
 
 import time
-from estimators.get_estimator import get_estimator
-from utils import util
+from research.tcn.estimators.get_estimator import get_estimator
+from research.tcn.utils import util
 import tensorflow as tf
+
 tf.logging.set_verbosity(tf.logging.INFO)
 
 tf.flags.DEFINE_string(
@@ -42,22 +43,23 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
-  """Runs main eval loop."""
-  # Parse config dict from yaml config files / command line flags.
-  logdir = FLAGS.logdir
-  config = util.ParseConfigsToLuaTable(FLAGS.config_paths, FLAGS.model_params)
+    """Runs main eval loop."""
+    # Parse config dict from yaml config files / command line flags.
+    logdir = FLAGS.logdir
+    config = util.ParseConfigsToLuaTable(FLAGS.config_paths, FLAGS.model_params)
 
-  # Choose an estimator based on training strategy.
-  estimator = get_estimator(config, logdir)
+    # Choose an estimator based on training strategy.
+    estimator = get_estimator(config, logdir)
 
-  # Wait for the first checkpoint file to be written.
-  while not tf.train.latest_checkpoint(logdir):
-    tf.logging.info('Waiting for a checkpoint file...')
-    time.sleep(10)
+    # Wait for the first checkpoint file to be written.
+    while not tf.train.latest_checkpoint(logdir):
+        tf.logging.info('Waiting for a checkpoint file...')
+        time.sleep(10)
 
-  # Run validation.
-  while True:
-    estimator.evaluate()
+    # Run validation.
+    while True:
+        estimator.evaluate()
+
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

@@ -15,23 +15,29 @@
 
 import tensorflow as tf
 import numpy as np
-from learner import Learner
-from worldmodel import DeterministicWorldModel
+from research.steve.learner import Learner
+from research.steve.worldmodel import DeterministicWorldModel
+
 
 class WorldmodelLearner(Learner):
     """
     Worldmodel-specific training loop details.
     """
+
     def learner_name(self): return "worldmodel"
 
     def make_loader_placeholders(self):
-        self.obs_loader = tf.placeholder(tf.float32, [self.learner_config["batch_size"], np.prod(self.env_config["obs_dims"])])
-        self.next_obs_loader = tf.placeholder(tf.float32, [self.learner_config["batch_size"], np.prod(self.env_config["obs_dims"])])
-        self.action_loader = tf.placeholder(tf.float32, [self.learner_config["batch_size"], self.env_config["action_dim"]])
+        self.obs_loader = tf.placeholder(tf.float32,
+                                         [self.learner_config["batch_size"], np.prod(self.env_config["obs_dims"])])
+        self.next_obs_loader = tf.placeholder(tf.float32,
+                                              [self.learner_config["batch_size"], np.prod(self.env_config["obs_dims"])])
+        self.action_loader = tf.placeholder(tf.float32,
+                                            [self.learner_config["batch_size"], self.env_config["action_dim"]])
         self.reward_loader = tf.placeholder(tf.float32, [self.learner_config["batch_size"]])
         self.done_loader = tf.placeholder(tf.float32, [self.learner_config["batch_size"]])
         self.datasize_loader = tf.placeholder(tf.float64, [])
-        return [self.obs_loader, self.next_obs_loader, self.action_loader, self.reward_loader, self.done_loader, self.datasize_loader]
+        return [self.obs_loader, self.next_obs_loader, self.action_loader, self.reward_loader, self.done_loader,
+                self.datasize_loader]
 
     def make_core_model(self):
         worldmodel = DeterministicWorldModel(self.config["name"], self.env_config, self.learner_config)
@@ -46,10 +52,9 @@ class WorldmodelLearner(Learner):
 
     ## Optional functions to override
     def initialize(self): pass
+
     def resume_from_checkpoint(self, epoch): pass
+
     def checkpoint(self): pass
+
     def backup(self): pass
-
-
-
-

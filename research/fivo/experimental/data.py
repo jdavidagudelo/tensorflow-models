@@ -22,22 +22,22 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-import models
+from research.fivo.experimental import models
 
 
 def make_long_chain_dataset(
-    state_size=1,
-    num_obs=5,
-    steps_per_obs=3,
-    variance=1.,
-    observation_variance=1.,
-    batch_size=4,
-    num_samples=1,
-    observation_type=models.STANDARD_OBSERVATION,
-    transition_type=models.STANDARD_TRANSITION,
-    fixed_observation=None,
-    dtype="float32"):
-  """Creates a long chain data generating process.
+        state_size=1,
+        num_obs=5,
+        steps_per_obs=3,
+        variance=1.,
+        observation_variance=1.,
+        batch_size=4,
+        num_samples=1,
+        observation_type=models.STANDARD_OBSERVATION,
+        transition_type=models.STANDARD_TRANSITION,
+        fixed_observation=None,
+        dtype="float32"):
+    """Creates a long chain data generating process.
 
   Creates a tf.data.Dataset that provides batches of data from a long
   chain.
@@ -53,58 +53,60 @@ def make_long_chain_dataset(
     dtype: The datatype of the states and observations.
   Returns:
     dataset: A tf.data.Dataset that can be iterated over.
+    :param observation_variance:
   """
-  num_timesteps = num_obs * steps_per_obs
-  def data_generator():
-    """An infinite generator of latents and observations from the model."""
-    while True:
-      states = []
-      observations = []
-      # z0 ~ Normal(0, sqrt(variance)).
-      states.append(
-          np.random.normal(size=[state_size],
-                           scale=np.sqrt(variance)).astype(dtype))
-      # start at 1 because we've already generated z0
-      # go to num_timesteps+1 because we want to include the num_timesteps-th step
-      for t in xrange(1, num_timesteps+1):
-        if transition_type == models.ROUND_TRANSITION:
-          loc = np.round(states[-1])
-        elif transition_type == models.STANDARD_TRANSITION:
-          loc = states[-1]
-        new_state = np.random.normal(size=[state_size],
-                                     loc=loc,
-                                     scale=np.sqrt(variance))
-        states.append(new_state.astype(dtype))
-        if t % steps_per_obs == 0:
-          if fixed_observation is None:
-            if observation_type == models.SQUARED_OBSERVATION:
-              loc = np.square(states[-1])
-            elif observation_type == models.ABS_OBSERVATION:
-              loc = np.abs(states[-1])
-            elif observation_type == models.STANDARD_OBSERVATION:
-              loc = states[-1]
-            new_obs = np.random.normal(size=[state_size],
-                                       loc=loc,
-                                       scale=np.sqrt(observation_variance)).astype(dtype)
-          else:
-            new_obs = np.ones([state_size])* fixed_observation
+    num_timesteps = num_obs * steps_per_obs
 
-          observations.append(new_obs)
-      yield states, observations
+    def data_generator():
+        """An infinite generator of latents and observations from the model."""
+        while True:
+            states = []
+            observations = []
+            # z0 ~ Normal(0, sqrt(variance)).
+            states.append(
+                np.random.normal(size=[state_size],
+                                 scale=np.sqrt(variance)).astype(dtype))
+            # start at 1 because we've already generated z0
+            # go to num_timesteps+1 because we want to include the num_timesteps-th step
+            for t in range(1, num_timesteps + 1):
+                if transition_type == models.ROUND_TRANSITION:
+                    loc = np.round(states[-1])
+                elif transition_type == models.STANDARD_TRANSITION:
+                    loc = states[-1]
+                new_state = np.random.normal(size=[state_size],
+                                             loc=loc,
+                                             scale=np.sqrt(variance))
+                states.append(new_state.astype(dtype))
+                if t % steps_per_obs == 0:
+                    if fixed_observation is None:
+                        if observation_type == models.SQUARED_OBSERVATION:
+                            loc = np.square(states[-1])
+                        elif observation_type == models.ABS_OBSERVATION:
+                            loc = np.abs(states[-1])
+                        elif observation_type == models.STANDARD_OBSERVATION:
+                            loc = states[-1]
+                        new_obs = np.random.normal(size=[state_size],
+                                                   loc=loc,
+                                                   scale=np.sqrt(observation_variance)).astype(dtype)
+                    else:
+                        new_obs = np.ones([state_size]) * fixed_observation
 
-  dataset = tf.data.Dataset.from_generator(
-      data_generator,
-      output_types=(tf.as_dtype(dtype), tf.as_dtype(dtype)),
-      output_shapes=([num_timesteps+1, state_size], [num_obs, state_size]))
-  dataset = dataset.repeat().batch(batch_size)
+                    observations.append(new_obs)
+            yield states, observations
 
-  def tile_batch(state, observation):
-    state = tf.tile(state, [num_samples, 1, 1])
-    observation = tf.tile(observation, [num_samples, 1, 1])
-    return state, observation
+    dataset = tf.data.Dataset.from_generator(
+        data_generator,
+        output_types=(tf.as_dtype(dtype), tf.as_dtype(dtype)),
+        output_shapes=([num_timesteps + 1, state_size], [num_obs, state_size]))
+    dataset = dataset.repeat().batch(batch_size)
 
-  dataset = dataset.map(tile_batch, num_parallel_calls=12).prefetch(1024)
-  return dataset
+    def tile_batch(state, observation):
+        state = tf.tile(state, [num_samples, 1, 1])
+        observation = tf.tile(observation, [num_samples, 1, 1])
+        return state, observation
+
+    dataset = dataset.map(tile_batch, num_parallel_calls=12).prefetch(1024)
+    return dataset
 
 
 def make_dataset(bs=None,
@@ -119,7 +121,7 @@ def make_dataset(bs=None,
                  batch_size=4,
                  num_samples=1,
                  dtype='float32'):
-  """Creates a data generating process.
+    """Creates a data generating process.
 
   Creates a tf.data.Dataset that provides batches of data.
 
@@ -137,56 +139,55 @@ def make_dataset(bs=None,
     dataset: A tf.data.Dataset that can be iterated over.
   """
 
-  if bs is None:
-    bs = [np.random.uniform(size=[state_size]).astype(dtype) for _ in xrange(num_timesteps)]
-    tf.logging.info("data generating processs bs: %s",
-                    np.array(bs).reshape(num_timesteps))
+    if bs is None:
+        bs = [np.random.uniform(size=[state_size]).astype(dtype) for _ in range(num_timesteps)]
+        tf.logging.info("data generating processs bs: %s",
+                        np.array(bs).reshape(num_timesteps))
 
+    def data_generator():
+        """An infinite generator of latents and observations from the model."""
+        while True:
+            states = []
+            if prior_type == "unimodal" or prior_type == "nonlinear":
+                # Prior is Normal(0, sqrt(variance)).
+                states.append(np.random.normal(size=[state_size], scale=np.sqrt(variance)).astype(dtype))
+            elif prior_type == "bimodal":
+                if np.random.uniform() > bimodal_prior_weight:
+                    loc = bimodal_prior_mean
+                else:
+                    loc = - bimodal_prior_mean
+                states.append(np.random.normal(size=[state_size],
+                                               loc=loc,
+                                               scale=np.sqrt(variance)
+                                               ).astype(dtype))
 
-  def data_generator():
-    """An infinite generator of latents and observations from the model."""
-    while True:
-      states = []
-      if prior_type == "unimodal" or prior_type == "nonlinear":
-        # Prior is Normal(0, sqrt(variance)).
-        states.append(np.random.normal(size=[state_size], scale=np.sqrt(variance)).astype(dtype))
-      elif prior_type == "bimodal":
-        if np.random.uniform() > bimodal_prior_weight:
-          loc = bimodal_prior_mean
-        else:
-          loc = - bimodal_prior_mean
-        states.append(np.random.normal(size=[state_size],
-                                       loc=loc,
-                                       scale=np.sqrt(variance)
-                                      ).astype(dtype))
+            for t in range(num_timesteps):
+                if transition_type == models.ROUND_TRANSITION:
+                    loc = np.round(states[-1])
+                elif transition_type == models.STANDARD_TRANSITION:
+                    loc = states[-1]
+                loc += bs[t]
+                new_state = np.random.normal(size=[state_size],
+                                             loc=loc,
+                                             scale=np.sqrt(variance)).astype(dtype)
+                states.append(new_state)
 
-      for t in xrange(num_timesteps):
-        if transition_type == models.ROUND_TRANSITION:
-          loc = np.round(states[-1])
-        elif transition_type == models.STANDARD_TRANSITION:
-          loc = states[-1]
-        loc += bs[t]
-        new_state = np.random.normal(size=[state_size],
-                                     loc=loc,
-                                     scale=np.sqrt(variance)).astype(dtype)
-        states.append(new_state)
+            if fixed_observation is None:
+                observation = states[-1]
+            else:
+                observation = np.ones_like(states[-1]) * fixed_observation
+            yield np.array(states[:-1]), observation
 
-      if fixed_observation is None:
-        observation = states[-1]
-      else:
-        observation = np.ones_like(states[-1]) * fixed_observation
-      yield np.array(states[:-1]), observation
+    dataset = tf.data.Dataset.from_generator(
+        data_generator,
+        output_types=(tf.as_dtype(dtype), tf.as_dtype(dtype)),
+        output_shapes=([num_timesteps, state_size], [state_size]))
+    dataset = dataset.repeat().batch(batch_size)
 
-  dataset = tf.data.Dataset.from_generator(
-      data_generator,
-      output_types=(tf.as_dtype(dtype), tf.as_dtype(dtype)),
-      output_shapes=([num_timesteps, state_size], [state_size]))
-  dataset = dataset.repeat().batch(batch_size)
+    def tile_batch(state, observation):
+        state = tf.tile(state, [num_samples, 1, 1])
+        observation = tf.tile(observation, [num_samples, 1])
+        return state, observation
 
-  def tile_batch(state, observation):
-    state = tf.tile(state, [num_samples, 1, 1])
-    observation = tf.tile(observation, [num_samples, 1])
-    return state, observation
-
-  dataset = dataset.map(tile_batch, num_parallel_calls=12).prefetch(1024)
-  return np.array(bs), dataset
+    dataset = dataset.map(tile_batch, num_parallel_calls=12).prefetch(1024)
+    return np.array(bs), dataset

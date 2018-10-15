@@ -8,7 +8,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import math
 
-from . import config_lib  # brain coder
+from research.brain_coder.common import config_lib  # brain coder
 
 
 class Schedule(object):

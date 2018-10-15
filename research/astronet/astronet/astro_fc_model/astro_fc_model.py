@@ -52,7 +52,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from ..astro_model import astro_model
+from research.astronet.astronet.astro_model import astro_model
 
 
 class AstroFCModel(astro_model.AstroModel):

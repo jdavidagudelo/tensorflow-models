@@ -20,8 +20,8 @@ from __future__ import division
 from __future__ import print_function
 import tensorflow
 import tensorflow as tf
-from ..base import embeddings
-from . import model_helpers
+from research.cvt_text.base import embeddings
+from research.cvt_text .model import model_helpers
 
 
 class Encoder(object):

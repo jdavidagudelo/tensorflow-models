@@ -18,17 +18,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
 import tensorflow as tf
 
-from slim.datasets import dataset_factory as datasets
+from research.slim.datasets import dataset_factory as datasets
 
 slim = tf.contrib.slim
 
 
 def provide_data(batch_size, dataset_dir, dataset_name='cifar10',
                  split_name='train', one_hot=True):
-  """Provides batches of CIFAR data.
+    """Provides batches of CIFAR data.
 
   Args:
     batch_size: The number of images in each batch.
@@ -52,35 +51,35 @@ def provide_data(batch_size, dataset_dir, dataset_name='cifar10',
   Raises:
     ValueError: if the split_name is not either 'train' or 'test'.
   """
-  dataset = datasets.get_dataset(
-      dataset_name, split_name, dataset_dir=dataset_dir)
-  provider = slim.dataset_data_provider.DatasetDataProvider(
-      dataset,
-      common_queue_capacity=5 * batch_size,
-      common_queue_min=batch_size,
-      shuffle=(split_name == 'train'))
-  [image, label] = provider.get(['image', 'label'])
+    dataset = datasets.get_dataset(
+        dataset_name, split_name, dataset_dir=dataset_dir)
+    provider = slim.dataset_data_provider.DatasetDataProvider(
+        dataset,
+        common_queue_capacity=5 * batch_size,
+        common_queue_min=batch_size,
+        shuffle=(split_name == 'train'))
+    [image, label] = provider.get(['image', 'label'])
 
-  # Preprocess the images.
-  image = (tf.to_float(image) - 128.0) / 128.0
+    # Preprocess the images.
+    image = (tf.to_float(image) - 128.0) / 128.0
 
-  # Creates a QueueRunner for the pre-fetching operation.
-  images, labels = tf.train.batch(
-      [image, label],
-      batch_size=batch_size,
-      num_threads=32,
-      capacity=5 * batch_size)
+    # Creates a QueueRunner for the pre-fetching operation.
+    images, labels = tf.train.batch(
+        [image, label],
+        batch_size=batch_size,
+        num_threads=32,
+        capacity=5 * batch_size)
 
-  labels = tf.reshape(labels, [-1])
+    labels = tf.reshape(labels, [-1])
 
-  if one_hot:
-    labels = tf.one_hot(labels, dataset.num_classes)
+    if one_hot:
+        labels = tf.one_hot(labels, dataset.num_classes)
 
-  return images, labels, dataset.num_samples, dataset.num_classes
+    return images, labels, dataset.num_samples, dataset.num_classes
 
 
 def float_image_to_uint8(image):
-  """Convert float image in [-1, 1) to [0, 255] uint8.
+    """Convert float image in [-1, 1) to [0, 255] uint8.
 
   Note that `1` gets mapped to `0`, but `1 - epsilon` gets mapped to 255.
 
@@ -90,5 +89,5 @@ def float_image_to_uint8(image):
   Returns:
     Input image cast to uint8 and with integer values in [0, 255].
   """
-  image = (image * 128.0) + 128.0
-  return tf.cast(image, tf.uint8)
+    image = (image * 128.0) + 128.0
+    return tf.cast(image, tf.uint8)

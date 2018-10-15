@@ -41,7 +41,6 @@ from __future__ import print_function
 import collections
 import os.path
 
-
 import gensim.models
 import numpy as np
 import sklearn.linear_model
@@ -67,7 +66,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 
 def _load_skip_thoughts_embeddings(checkpoint_path):
-  """Loads the embedding matrix from a skip-thoughts model checkpoint.
+    """Loads the embedding matrix from a skip-thoughts model checkpoint.
 
   Args:
     checkpoint_path: Model checkpoint file or directory containing a checkpoint
@@ -79,25 +78,25 @@ def _load_skip_thoughts_embeddings(checkpoint_path):
   Raises:
     ValueError: If no checkpoint file matches checkpoint_path.
   """
-  if tf.gfile.IsDirectory(checkpoint_path):
-    checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
-    if not checkpoint_file:
-      raise ValueError("No checkpoint file found in %s" % checkpoint_path)
-  else:
-    checkpoint_file = checkpoint_path
+    if tf.gfile.IsDirectory(checkpoint_path):
+        checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
+        if not checkpoint_file:
+            raise ValueError("No checkpoint file found in %s" % checkpoint_path)
+    else:
+        checkpoint_file = checkpoint_path
 
-  tf.logging.info("Loading skip-thoughts embedding matrix from %s",
-                  checkpoint_file)
-  reader = tf.train.NewCheckpointReader(checkpoint_file)
-  word_embedding = reader.get_tensor("word_embedding")
-  tf.logging.info("Loaded skip-thoughts embedding matrix of shape %s",
-                  word_embedding.shape)
+    tf.logging.info("Loading skip-thoughts embedding matrix from %s",
+                    checkpoint_file)
+    reader = tf.train.NewCheckpointReader(checkpoint_file)
+    word_embedding = reader.get_tensor("word_embedding")
+    tf.logging.info("Loaded skip-thoughts embedding matrix of shape %s",
+                    word_embedding.shape)
 
-  return word_embedding
+    return word_embedding
 
 
 def _load_vocabulary(filename):
-  """Loads a vocabulary file.
+    """Loads a vocabulary file.
 
   Args:
     filename: Path to text file containing newline-separated words.
@@ -105,19 +104,19 @@ def _load_vocabulary(filename):
   Returns:
     vocab: A dictionary mapping word to word id.
   """
-  tf.logging.info("Reading vocabulary from %s", filename)
-  vocab = collections.OrderedDict()
-  with tf.gfile.GFile(filename, mode="r") as f:
-    for i, line in enumerate(f):
-      word = line.decode("utf-8").strip()
-      assert word not in vocab, "Attempting to add word twice: %s" % word
-      vocab[word] = i
-  tf.logging.info("Read vocabulary of size %d", len(vocab))
-  return vocab
+    tf.logging.info("Reading vocabulary from %s", filename)
+    vocab = collections.OrderedDict()
+    with tf.gfile.GFile(filename, mode="r") as f:
+        for i, line in enumerate(f):
+            word = line.decode("utf-8").strip()
+            assert word not in vocab, "Attempting to add word twice: %s" % word
+            vocab[word] = i
+    tf.logging.info("Read vocabulary of size %d", len(vocab))
+    return vocab
 
 
 def _expand_vocabulary(skip_thoughts_emb, skip_thoughts_vocab, word2vec):
-  """Runs vocabulary expansion on a skip-thoughts model using a word2vec model.
+    """Runs vocabulary expansion on a skip-thoughts model using a word2vec model.
 
   Args:
     skip_thoughts_emb: A numpy array of shape [skip_thoughts_vocab_size,
@@ -128,76 +127,76 @@ def _expand_vocabulary(skip_thoughts_emb, skip_thoughts_vocab, word2vec):
   Returns:
     combined_emb: A dictionary mapping words to embedding vectors.
   """
-  # Find words shared between the two vocabularies.
-  tf.logging.info("Finding shared words")
-  shared_words = [w for w in word2vec.vocab if w in skip_thoughts_vocab]
+    # Find words shared between the two vocabularies.
+    tf.logging.info("Finding shared words")
+    shared_words = [w for w in word2vec.vocab if w in skip_thoughts_vocab]
 
-  # Select embedding vectors for shared words.
-  tf.logging.info("Selecting embeddings for %d shared words", len(shared_words))
-  shared_st_emb = skip_thoughts_emb[[
-      skip_thoughts_vocab[w] for w in shared_words
-  ]]
-  shared_w2v_emb = word2vec[shared_words]
+    # Select embedding vectors for shared words.
+    tf.logging.info("Selecting embeddings for %d shared words", len(shared_words))
+    shared_st_emb = skip_thoughts_emb[[
+        skip_thoughts_vocab[w] for w in shared_words
+    ]]
+    shared_w2v_emb = word2vec[shared_words]
 
-  # Train a linear regression model on the shared embedding vectors.
-  tf.logging.info("Training linear regression model")
-  model = sklearn.linear_model.LinearRegression()
-  model.fit(shared_w2v_emb, shared_st_emb)
+    # Train a linear regression model on the shared embedding vectors.
+    tf.logging.info("Training linear regression model")
+    model = sklearn.linear_model.LinearRegression()
+    model.fit(shared_w2v_emb, shared_st_emb)
 
-  # Create the expanded vocabulary.
-  tf.logging.info("Creating embeddings for expanded vocabuary")
-  combined_emb = collections.OrderedDict()
-  for w in word2vec.vocab:
-    # Ignore words with underscores (spaces).
-    if "_" not in w:
-      w_emb = model.predict(word2vec[w].reshape(1, -1))
-      combined_emb[w] = w_emb.reshape(-1)
+    # Create the expanded vocabulary.
+    tf.logging.info("Creating embeddings for expanded vocabuary")
+    combined_emb = collections.OrderedDict()
+    for w in word2vec.vocab:
+        # Ignore words with underscores (spaces).
+        if "_" not in w:
+            w_emb = model.predict(word2vec[w].reshape(1, -1))
+            combined_emb[w] = w_emb.reshape(-1)
 
-  for w in skip_thoughts_vocab:
-    combined_emb[w] = skip_thoughts_emb[skip_thoughts_vocab[w]]
+    for w in skip_thoughts_vocab:
+        combined_emb[w] = skip_thoughts_emb[skip_thoughts_vocab[w]]
 
-  tf.logging.info("Created expanded vocabulary of %d words", len(combined_emb))
+    tf.logging.info("Created expanded vocabulary of %d words", len(combined_emb))
 
-  return combined_emb
+    return combined_emb
 
 
 def main(unused_argv):
-  if not FLAGS.skip_thoughts_model:
-    raise ValueError("--skip_thoughts_model is required.")
-  if not FLAGS.skip_thoughts_vocab:
-    raise ValueError("--skip_thoughts_vocab is required.")
-  if not FLAGS.word2vec_model:
-    raise ValueError("--word2vec_model is required.")
-  if not FLAGS.output_dir:
-    raise ValueError("--output_dir is required.")
+    if not FLAGS.skip_thoughts_model:
+        raise ValueError("--skip_thoughts_model is required.")
+    if not FLAGS.skip_thoughts_vocab:
+        raise ValueError("--skip_thoughts_vocab is required.")
+    if not FLAGS.word2vec_model:
+        raise ValueError("--word2vec_model is required.")
+    if not FLAGS.output_dir:
+        raise ValueError("--output_dir is required.")
 
-  if not tf.gfile.IsDirectory(FLAGS.output_dir):
-    tf.gfile.MakeDirs(FLAGS.output_dir)
+    if not tf.gfile.IsDirectory(FLAGS.output_dir):
+        tf.gfile.MakeDirs(FLAGS.output_dir)
 
-  # Load the skip-thoughts embeddings and vocabulary.
-  skip_thoughts_emb = _load_skip_thoughts_embeddings(FLAGS.skip_thoughts_model)
-  skip_thoughts_vocab = _load_vocabulary(FLAGS.skip_thoughts_vocab)
+    # Load the skip-thoughts embeddings and vocabulary.
+    skip_thoughts_emb = _load_skip_thoughts_embeddings(FLAGS.skip_thoughts_model)
+    skip_thoughts_vocab = _load_vocabulary(FLAGS.skip_thoughts_vocab)
 
-  # Load the Word2Vec model.
-  word2vec = gensim.models.Word2Vec.load_word2vec_format(
-      FLAGS.word2vec_model, binary=True)
+    # Load the Word2Vec model.
+    word2vec = gensim.models.Word2Vec.load_word2vec_format(
+        FLAGS.word2vec_model, binary=True)
 
-  # Run vocabulary expansion.
-  embedding_map = _expand_vocabulary(skip_thoughts_emb, skip_thoughts_vocab,
-                                     word2vec)
+    # Run vocabulary expansion.
+    embedding_map = _expand_vocabulary(skip_thoughts_emb, skip_thoughts_vocab,
+                                       word2vec)
 
-  # Save the output.
-  vocab = embedding_map.keys()
-  vocab_file = os.path.join(FLAGS.output_dir, "vocab.txt")
-  with tf.gfile.GFile(vocab_file, "w") as f:
-    f.write("\n".join(vocab))
-  tf.logging.info("Wrote vocabulary file to %s", vocab_file)
+    # Save the output.
+    vocab = embedding_map.keys()
+    vocab_file = os.path.join(FLAGS.output_dir, "vocab.txt")
+    with tf.gfile.GFile(vocab_file, "w") as f:
+        f.write("\n".join(vocab))
+    tf.logging.info("Wrote vocabulary file to %s", vocab_file)
 
-  embeddings = np.array(embedding_map.values())
-  embeddings_file = os.path.join(FLAGS.output_dir, "embeddings.npy")
-  np.save(embeddings_file, embeddings)
-  tf.logging.info("Wrote embeddings file to %s", embeddings_file)
+    embeddings = np.array(embedding_map.values())
+    embeddings_file = os.path.join(FLAGS.output_dir, "embeddings.npy")
+    np.save(embeddings_file, embeddings)
+    tf.logging.info("Wrote embeddings file to %s", embeddings_file)
 
 
 if __name__ == "__main__":
-  tf.app.run()
+    tf.app.run()

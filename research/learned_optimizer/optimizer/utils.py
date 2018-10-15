@@ -24,18 +24,18 @@ import tensorflow as tf
 
 
 def make_finite(t, replacement):
-  """Replaces non-finite tensor values with the replacement value."""
-  return tf.where(tf.is_finite(t), t, replacement)
+    """Replaces non-finite tensor values with the replacement value."""
+    return tf.where(tf.is_finite(t), t, replacement)
 
 
 def asinh(x):
-  """Computes the inverse hyperbolic sine function (in tensorflow)."""
-  return tf.log(x + tf.sqrt(1. + x ** 2))
+    """Computes the inverse hyperbolic sine function (in tensorflow)."""
+    return tf.log(x + tf.sqrt(1. + x ** 2))
 
 
 def affine(inputs, output_size, scope="Affine", scale=0.1, vec_mean=0.,
            include_bias=True, bias_init=0., random_seed=None):
-  """Computes an affine function of the inputs.
+    """Computes an affine function of the inputs.
 
   Creates or recalls tensorflow variables "Matrix" and "Bias"
   to generate an affine operation on the input.
@@ -63,32 +63,32 @@ def affine(inputs, output_size, scope="Affine", scale=0.1, vec_mean=0.,
     output: Tensor with shape (batch_size, output_size)
   """
 
-  # Concatenate the input arguments.
-  x = tf.concat(inputs, 1)
+    # Concatenate the input arguments.
+    x = tf.concat(inputs, 1)
 
-  with tf.variable_scope(scope):
-    input_size = x.get_shape().as_list()[1]
+    with tf.variable_scope(scope):
+        input_size = x.get_shape().as_list()[1]
 
-    sigma = scale / np.sqrt(input_size)
-    rand_init = tf.random_normal_initializer(mean=vec_mean, stddev=sigma,
-                                             seed=random_seed)
+        sigma = scale / np.sqrt(input_size)
+        rand_init = tf.random_normal_initializer(mean=vec_mean, stddev=sigma,
+                                                 seed=random_seed)
 
-    matrix = tf.get_variable("Matrix", [input_size, output_size],
-                             dtype=tf.float32, initializer=rand_init)
+        matrix = tf.get_variable("Matrix", [input_size, output_size],
+                                 dtype=tf.float32, initializer=rand_init)
 
-    if include_bias:
-      bias = tf.get_variable("Bias", [output_size], dtype=tf.float32,
-                             initializer=tf.constant_initializer(bias_init,
-                                                                 tf.float32))
-    else:
-      bias = 0.
-    output = tf.matmul(x, matrix) + bias
+        if include_bias:
+            bias = tf.get_variable("Bias", [output_size], dtype=tf.float32,
+                                   initializer=tf.constant_initializer(bias_init,
+                                                                       tf.float32))
+        else:
+            bias = 0.
+        output = tf.matmul(x, matrix) + bias
 
-  return output
+    return output
 
 
 def project(inputs, weights, bias=0., activation=tf.identity):
-  """Computes an affine or linear projection of the inputs.
+    """Computes an affine or linear projection of the inputs.
 
   Projects the inputs onto the given weight vector and (optionally)
   adds a bias and passes the result through an activation function.
@@ -102,11 +102,11 @@ def project(inputs, weights, bias=0., activation=tf.identity):
   Returns:
     outputs: an op which computes activation(inputs @ weights + bias)
   """
-  return activation(tf.matmul(inputs, weights) + bias)
+    return activation(tf.matmul(inputs, weights) + bias)
 
 
 def new_mean_squared(grad_vec, decay, ms):
-  """Calculates the new accumulated mean squared of the gradient.
+    """Calculates the new accumulated mean squared of the gradient.
 
   Args:
     grad_vec: the vector for the current gradient
@@ -116,26 +116,26 @@ def new_mean_squared(grad_vec, decay, ms):
   Returns:
     the new mean_squared value
   """
-  decay_size = decay.get_shape().num_elements()
-  decay_check_ops = [
-      tf.assert_less_equal(decay, 1., summarize=decay_size),
-      tf.assert_greater_equal(decay, 0., summarize=decay_size)]
+    decay_size = decay.get_shape().num_elements()
+    decay_check_ops = [
+        tf.assert_less_equal(decay, 1., summarize=decay_size),
+        tf.assert_greater_equal(decay, 0., summarize=decay_size)]
 
-  with tf.control_dependencies(decay_check_ops):
-    grad_squared = tf.square(grad_vec)
+    with tf.control_dependencies(decay_check_ops):
+        grad_squared = tf.square(grad_vec)
 
-  # If the previous mean_squared is the 0 vector, don't use the decay and just
-  # return the full grad_squared. This should only happen on the first timestep.
-  decay = tf.cond(tf.reduce_all(tf.equal(ms, 0.)),
-                  lambda: tf.zeros_like(decay, dtype=tf.float32), lambda: decay)
+    # If the previous mean_squared is the 0 vector, don't use the decay and just
+    # return the full grad_squared. This should only happen on the first timestep.
+    decay = tf.cond(tf.reduce_all(tf.equal(ms, 0.)),
+                    lambda: tf.zeros_like(decay, dtype=tf.float32), lambda: decay)
 
-  # Update the running average of squared gradients.
-  epsilon = 1e-12
-  return (1. - decay) * (grad_squared + epsilon) + decay * ms
+    # Update the running average of squared gradients.
+    epsilon = 1e-12
+    return (1. - decay) * (grad_squared + epsilon) + decay * ms
 
 
 def rms_scaling(gradient, decay, ms, update_ms=True):
-  """Vectorizes and scales a tensor of gradients.
+    """Vectorizes and scales a tensor of gradients.
 
   Args:
     gradient: the current gradient
@@ -148,20 +148,20 @@ def rms_scaling(gradient, decay, ms, update_ms=True):
     the old ms value otherwise.
   """
 
-  # Vectorize the gradients and compute the squared gradients.
-  grad_vec = tf.reshape(gradient, [-1, 1])
+    # Vectorize the gradients and compute the squared gradients.
+    grad_vec = tf.reshape(gradient, [-1, 1])
 
-  if update_ms:
-    ms = new_mean_squared(grad_vec, decay, ms)
+    if update_ms:
+        ms = new_mean_squared(grad_vec, decay, ms)
 
-  # Scale the current gradients by the RMS, squashed by the asinh function.
-  scaled_gradient = asinh(grad_vec / tf.sqrt(ms + 1e-16))
+    # Scale the current gradients by the RMS, squashed by the asinh function.
+    scaled_gradient = asinh(grad_vec / tf.sqrt(ms + 1e-16))
 
-  return scaled_gradient, ms
+    return scaled_gradient, ms
 
 
 def accumulate_sparse_gradients(grad):
-  """Accumulates repeated indices of a sparse gradient update.
+    """Accumulates repeated indices of a sparse gradient update.
 
   Args:
     grad: a tf.IndexedSlices gradient
@@ -171,14 +171,14 @@ def accumulate_sparse_gradients(grad):
     grad_values: gradient values corresponding to the indices
   """
 
-  grad_indices, grad_segments = tf.unique(grad.indices)
-  grad_values = tf.unsorted_segment_sum(grad.values, grad_segments,
-                                        tf.shape(grad_indices)[0])
-  return grad_indices, grad_values
+    grad_indices, grad_segments = tf.unique(grad.indices)
+    grad_values = tf.unsorted_segment_sum(grad.values, grad_segments,
+                                          tf.shape(grad_indices)[0])
+    return grad_indices, grad_values
 
 
 def slice_tensor(dense_tensor, indices, head_dims):
-  """Extracts slices from a partially flattened dense tensor.
+    """Extracts slices from a partially flattened dense tensor.
 
   indices is assumed to index into the first dimension of head_dims.
   dense_tensor is assumed to have a shape [D_0, D_1, ...] such that
@@ -204,17 +204,17 @@ def slice_tensor(dense_tensor, indices, head_dims):
     Extracted slices. Shape [K, D_1, ...]
   """
 
-  tail_dims = tf.shape(dense_tensor)[1:]
-  dense_tensor = tf.reshape(dense_tensor,
-                            tf.concat([head_dims, tail_dims], 0))
+    tail_dims = tf.shape(dense_tensor)[1:]
+    dense_tensor = tf.reshape(dense_tensor,
+                              tf.concat([head_dims, tail_dims], 0))
 
-  slices = tf.gather(dense_tensor, indices)
-  # NOTE(siege): This kills the shape annotation.
-  return tf.reshape(slices, tf.concat([[-1], tail_dims], 0))
+    slices = tf.gather(dense_tensor, indices)
+    # NOTE(siege): This kills the shape annotation.
+    return tf.reshape(slices, tf.concat([[-1], tail_dims], 0))
 
 
 def stack_tensor(slices, indices, dense_tensor, head_dims):
-  """Reconsititutes a tensor from slices and corresponding indices.
+    """Reconsititutes a tensor from slices and corresponding indices.
 
   This is an inverse operation to slice_tensor. Missing slices are set to 0.
 
@@ -228,21 +228,21 @@ def stack_tensor(slices, indices, dense_tensor, head_dims):
   Returns:
     Reconsituted tensor. Shape: [D_0, D_1, ...]
   """
-  # NOTE(siege): This cast shouldn't be necessary.
-  indices = tf.cast(indices, tf.int32)
+    # NOTE(siege): This cast shouldn't be necessary.
+    indices = tf.cast(indices, tf.int32)
 
-  tail_dims = tf.shape(dense_tensor)[1:]
-  dense_shape = tf.concat([head_dims, tail_dims], 0)
+    tail_dims = tf.shape(dense_tensor)[1:]
+    dense_shape = tf.concat([head_dims, tail_dims], 0)
 
-  slices = tf.reshape(slices, tf.concat([[-1], dense_shape[1:]], 0))
-  indices = tf.expand_dims(indices, -1)
+    slices = tf.reshape(slices, tf.concat([[-1], dense_shape[1:]], 0))
+    indices = tf.expand_dims(indices, -1)
 
-  return tf.reshape(tf.scatter_nd(indices, slices, dense_shape),
-                    tf.shape(dense_tensor))
+    return tf.reshape(tf.scatter_nd(indices, slices, dense_shape),
+                      tf.shape(dense_tensor))
 
 
 def update_slices(slices, indices, dense_tensor, head_dims):
-  """Reconstitutes a tensor from slices and corresponding indices.
+    """Reconstitutes a tensor from slices and corresponding indices.
 
   Like _stack_tensor, but instead of setting missing slices to 0, sets them to
   what they were in the original tensor. The return value is reshaped to be
@@ -258,21 +258,21 @@ def update_slices(slices, indices, dense_tensor, head_dims):
   Returns:
     Reconsituted tensor. Shape: [D_0, D_1, ...]
   """
-  # NOTE(siege): This cast shouldn't be necessary.
-  indices = tf.cast(indices, tf.int32)
+    # NOTE(siege): This cast shouldn't be necessary.
+    indices = tf.cast(indices, tf.int32)
 
-  tail_dims = tf.shape(dense_tensor)[1:]
-  dense_shape = tf.concat([head_dims, tail_dims], 0)
+    tail_dims = tf.shape(dense_tensor)[1:]
+    dense_shape = tf.concat([head_dims, tail_dims], 0)
 
-  update_mask_vals = tf.fill(tf.shape(indices), 1)
-  reshaped_indices = tf.expand_dims(indices, -1)
-  update_mask = tf.equal(
-      tf.scatter_nd(reshaped_indices, update_mask_vals, head_dims[:1]), 1)
+    update_mask_vals = tf.fill(tf.shape(indices), 1)
+    reshaped_indices = tf.expand_dims(indices, -1)
+    update_mask = tf.equal(
+        tf.scatter_nd(reshaped_indices, update_mask_vals, head_dims[:1]), 1)
 
-  reshaped_dense_slices = tf.reshape(
-      stack_tensor(slices, indices, dense_tensor, head_dims), dense_shape)
-  reshaped_dense_tensor = tf.reshape(dense_tensor, dense_shape)
+    reshaped_dense_slices = tf.reshape(
+        stack_tensor(slices, indices, dense_tensor, head_dims), dense_shape)
+    reshaped_dense_tensor = tf.reshape(dense_tensor, dense_shape)
 
-  return tf.reshape(
-      tf.where(update_mask, reshaped_dense_slices, reshaped_dense_tensor),
-      tf.shape(dense_tensor))
+    return tf.reshape(
+        tf.where(update_mask, reshaped_dense_slices, reshaped_dense_tensor),
+        tf.shape(dense_tensor))

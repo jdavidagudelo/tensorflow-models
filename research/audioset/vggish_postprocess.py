@@ -17,7 +17,7 @@
 
 import numpy as np
 
-from . import vggish_params
+from research.audioset import vggish_params
 
 
 class Postprocessor(object):

@@ -18,39 +18,37 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-from absl import flags
 from absl.testing import parameterized
 import numpy as np
 import tensorflow as tf
-import train
+from research.gan.cifar import train
 
-FLAGS = flags.FLAGS
+FLAGS = tf.app.flags
 mock = tf.test.mock
 
 
 class TrainTest(tf.test.TestCase, parameterized.TestCase):
 
-  @parameterized.named_parameters(
-      ('Unconditional', False, False),
-      ('Conditional', True, False),
-      ('SyncReplicas', False, True))
-  def test_build_graph_helper(self, conditional, use_sync_replicas):
-    FLAGS.max_number_of_steps = 0
-    FLAGS.conditional = conditional
-    FLAGS.use_sync_replicas = use_sync_replicas
-    FLAGS.batch_size = 16
+    @parameterized.named_parameters(
+        ('Unconditional', False, False),
+        ('Conditional', True, False),
+        ('SyncReplicas', False, True))
+    def test_build_graph_helper(self, conditional, use_sync_replicas):
+        FLAGS.max_number_of_steps = 0
+        FLAGS.conditional = conditional
+        FLAGS.use_sync_replicas = use_sync_replicas
+        FLAGS.batch_size = 16
 
-    # Mock input pipeline.
-    mock_imgs = np.zeros([FLAGS.batch_size, 32, 32, 3], dtype=np.float32)
-    mock_lbls = np.concatenate(
-        (np.ones([FLAGS.batch_size, 1], dtype=np.int32),
-         np.zeros([FLAGS.batch_size, 9], dtype=np.int32)), axis=1)
-    with mock.patch.object(train, 'data_provider') as mock_data_provider:
-      mock_data_provider.provide_data.return_value = (
-          mock_imgs, mock_lbls, None, None)
-      train.main(None)
+        # Mock input pipeline.
+        mock_imgs = np.zeros([FLAGS.batch_size, 32, 32, 3], dtype=np.float32)
+        mock_lbls = np.concatenate(
+            (np.ones([FLAGS.batch_size, 1], dtype=np.int32),
+             np.zeros([FLAGS.batch_size, 9], dtype=np.int32)), axis=1)
+        with mock.patch.object(train, 'data_provider') as mock_data_provider:
+            mock_data_provider.provide_data.return_value = (
+                mock_imgs, mock_lbls, None, None)
+            train.main(None)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

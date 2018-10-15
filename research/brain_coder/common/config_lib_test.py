@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from . import config_lib  # brain coder
+from research.brain_coder.common import config_lib  # brain coder
 
 
 class ConfigLibTest(tf.test.TestCase):

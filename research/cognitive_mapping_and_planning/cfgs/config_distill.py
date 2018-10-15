@@ -14,8 +14,8 @@
 # ==============================================================================
 
 import logging
-from ..src import utils as utils
-from ..cfgs import config_common as cc
+from research.cognitive_mapping_and_planning.src import utils as utils
+from research.cognitive_mapping_and_planning.cfgs import config_common as cc
 
 rgb_resnet_v2_50_path = 'cache/resnet_v2_50_inception_preprocessed/model.ckpt-5136169'
 

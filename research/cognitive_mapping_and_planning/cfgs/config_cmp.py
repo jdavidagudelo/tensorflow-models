@@ -15,8 +15,8 @@
 
 import numpy as np
 import logging
-from ..src import utils
-from ..cfgs import config_common as cc
+from research.cognitive_mapping_and_planning.src import utils
+from research.cognitive_mapping_and_planning.cfgs import config_common as cc
 
 import tensorflow as tf
 

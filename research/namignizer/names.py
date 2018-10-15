@@ -43,8 +43,8 @@ import time
 import tensorflow as tf
 import numpy as np
 
-from model import NamignizerModel
-import data_utils
+from research.namignizer.model import NamignizerModel
+from research.namignizer import data_utils
 
 
 class SmallConfig(object):

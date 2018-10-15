@@ -18,35 +18,35 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-from absl import flags
 import numpy as np
 
 import tensorflow as tf
-import train
+from research.gan.mnist_estimator import train
 
+
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 mock = tf.test.mock
 
 
 class TrainTest(tf.test.TestCase):
 
-  @mock.patch.object(train, 'data_provider', autospec=True)
-  def test_full_flow(self, mock_data_provider):
-    FLAGS.eval_dir = self.get_temp_dir()
-    FLAGS.batch_size = 16
-    FLAGS.max_number_of_steps = 2
-    FLAGS.noise_dims = 3
+    @mock.patch.object(train, 'data_provider', autospec=True)
+    def test_full_flow(self, mock_data_provider):
+        FLAGS.eval_dir = self.get_temp_dir()
+        FLAGS.batch_size = 16
+        FLAGS.max_number_of_steps = 2
+        FLAGS.noise_dims = 3
 
-    # Construct mock inputs.
-    mock_imgs = np.zeros([FLAGS.batch_size, 28, 28, 1], dtype=np.float32)
-    mock_lbls = np.concatenate(
-        (np.ones([FLAGS.batch_size, 1], dtype=np.int32),
-         np.zeros([FLAGS.batch_size, 9], dtype=np.int32)), axis=1)
-    mock_data_provider.provide_data.return_value = (mock_imgs, mock_lbls, None)
+        # Construct mock inputs.
+        mock_imgs = np.zeros([FLAGS.batch_size, 28, 28, 1], dtype=np.float32)
+        mock_lbls = np.concatenate(
+            (np.ones([FLAGS.batch_size, 1], dtype=np.int32),
+             np.zeros([FLAGS.batch_size, 9], dtype=np.int32)), axis=1)
+        mock_data_provider.provide_data.return_value = (mock_imgs, mock_lbls, None)
 
-    train.main(None)
+        train.main(None)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

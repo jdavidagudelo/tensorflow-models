@@ -24,14 +24,14 @@ import contextlib
 import os
 import time
 
-from . import custom_ops as ops
-from . import data_utils
-from . import helper_utils
+from research.autoaugment import custom_ops as ops
+from research.autoaugment import data_utils
+from research.autoaugment import helper_utils
 import numpy as np
-from .shake_drop import build_shake_drop_model
-from .shake_shake import build_shake_shake_model
+from research.autoaugment.shake_drop import build_shake_drop_model
+from research.autoaugment.shake_shake import build_shake_shake_model
 import tensorflow as tf
-from .wrn import build_wrn_model
+from research.autoaugment.wrn import build_wrn_model
 
 tf.flags.DEFINE_string('model_name', 'wrn',
                        'wrn, shake_shake_32, shake_shake_96, shake_shake_112, '

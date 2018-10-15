@@ -23,7 +23,7 @@ import os
 import tensorflow as tf
 from tensorflow import app
 
-import model_rotator as model
+from research.ptn import model_rotator as model
 
 flags = tf.app.flags
 slim = tf.contrib.slim
@@ -70,57 +70,57 @@ FLAGS = flags.FLAGS
 
 
 def main(argv=()):
-  del argv  # Unused.
-  eval_dir = os.path.join(FLAGS.checkpoint_dir,
-                          FLAGS.model_name, 'train')
-  log_dir = os.path.join(FLAGS.checkpoint_dir,
-                         FLAGS.model_name, 'eval')
+    del argv  # Unused.
+    eval_dir = os.path.join(FLAGS.checkpoint_dir,
+                            FLAGS.model_name, 'train')
+    log_dir = os.path.join(FLAGS.checkpoint_dir,
+                           FLAGS.model_name, 'eval')
 
-  if not os.path.exists(eval_dir):
-    os.makedirs(eval_dir)
-  if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-  g = tf.Graph()
+    if not os.path.exists(eval_dir):
+        os.makedirs(eval_dir)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    g = tf.Graph()
 
-  if FLAGS.step_size < FLAGS.num_views:
-    raise ValueError('Impossible step_size, must not be less than num_views.')
+    if FLAGS.step_size < FLAGS.num_views:
+        raise ValueError('Impossible step_size, must not be less than num_views.')
 
-  g = tf.Graph()
-  with g.as_default():
-    ##########
-    ## data ##
-    ##########
-    val_data = model.get_inputs(
-        FLAGS.inp_dir,
-        FLAGS.dataset_name,
-        'val',
-        FLAGS.batch_size,
-        FLAGS.image_size,
-        is_training=False)
-    inputs = model.preprocess(val_data, FLAGS.step_size)
-    ###########
-    ## model ##
-    ###########
-    model_fn = model.get_model_fn(FLAGS, is_training=False)
-    outputs = model_fn(inputs)
-    #############
-    ## metrics ##
-    #############
-    names_to_values, names_to_updates = model.get_metrics(
-        inputs, outputs, FLAGS)
-    del names_to_values
-    ################
-    ## evaluation ##
-    ################
-    num_batches = int(val_data['num_samples'] / FLAGS.batch_size)
-    slim.evaluation.evaluation_loop(
-        master=FLAGS.master,
-        checkpoint_dir=eval_dir,
-        logdir=log_dir,
-        num_evals=num_batches,
-        eval_op=names_to_updates.values(),
-        eval_interval_secs=FLAGS.eval_interval_secs)
+    g = tf.Graph()
+    with g.as_default():
+        ##########
+        ## data ##
+        ##########
+        val_data = model.get_inputs(
+            FLAGS.inp_dir,
+            FLAGS.dataset_name,
+            'val',
+            FLAGS.batch_size,
+            FLAGS.image_size,
+            is_training=False)
+        inputs = model.preprocess(val_data, FLAGS.step_size)
+        ###########
+        ## model ##
+        ###########
+        model_fn = model.get_model_fn(FLAGS, is_training=False)
+        outputs = model_fn(inputs)
+        #############
+        ## metrics ##
+        #############
+        names_to_values, names_to_updates = model.get_metrics(
+            inputs, outputs, FLAGS)
+        del names_to_values
+        ################
+        ## evaluation ##
+        ################
+        num_batches = int(val_data['num_samples'] / FLAGS.batch_size)
+        slim.evaluation.evaluation_loop(
+            master=FLAGS.master,
+            checkpoint_dir=eval_dir,
+            logdir=log_dir,
+            num_evals=num_batches,
+            eval_op=names_to_updates.values(),
+            eval_interval_secs=FLAGS.eval_interval_secs)
 
 
 if __name__ == '__main__':
-  app.run()
+    app.run()

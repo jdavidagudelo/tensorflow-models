@@ -20,9 +20,9 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from nets import perspective_projector
-from nets import ptn_encoder
-from nets import ptn_vox_decoder
+from research.ptn.nets import perspective_projector
+from research.ptn.nets import ptn_encoder
+from research.ptn.nets import ptn_vox_decoder
 
 _NAME_TO_NETS = {
     'ptn_encoder': ptn_encoder,
@@ -32,15 +32,15 @@ _NAME_TO_NETS = {
 
 
 def _get_network(name):
-  """Gets a single encoder/decoder network model."""
+    """Gets a single encoder/decoder network model."""
 
-  if name not in _NAME_TO_NETS:
-    raise ValueError('Network name [%s] not recognized.' % name)
-  return _NAME_TO_NETS[name].model
+    if name not in _NAME_TO_NETS:
+        raise ValueError('Network name [%s] not recognized.' % name)
+    return _NAME_TO_NETS[name].model
 
 
 def get(params, is_training=False, reuse=False, run_projection=True):
-  """Factory function to get the training/pretraining im->vox model (NIPS16).
+    """Factory function to get the training/pretraining im->vox model (NIPS16).
 
   Args:
     params: Different parameters used througout ptn, typically FLAGS (dict).
@@ -52,41 +52,42 @@ def get(params, is_training=False, reuse=False, run_projection=True):
   Returns:
     Model function for network (inputs to outputs).
   """
-  def model(inputs):
-    """Model function corresponding to a specific network architecture."""
-    outputs = {}
 
-    # First, build the encoder
-    encoder_fn = _get_network(params.encoder_name)
-    with tf.variable_scope('encoder', reuse=reuse):
-      # Produces id/pose units
-      enc_outputs = encoder_fn(inputs['images_1'], params, is_training)
-      outputs['ids_1'] = enc_outputs['ids']
+    def model(inputs):
+        """Model function corresponding to a specific network architecture."""
+        outputs = {}
 
-    # Second, build the decoder and projector
-    decoder_fn = _get_network(params.decoder_name)
-    with tf.variable_scope('decoder', reuse=reuse):
-      outputs['voxels_1'] = decoder_fn(outputs['ids_1'], params, is_training)
-    if run_projection:
-      projector_fn = _get_network(params.projector_name)
-      with tf.variable_scope('projector', reuse=reuse):
-        outputs['projs_1'] = projector_fn(
-            outputs['voxels_1'], inputs['matrix_1'], params, is_training)
-      # Infer the ground-truth mask
-      with tf.variable_scope('oracle', reuse=reuse):
-        outputs['masks_1'] = projector_fn(inputs['voxels'], inputs['matrix_1'],
-                                          params, False)
+        # First, build the encoder
+        encoder_fn = _get_network(params.encoder_name)
+        with tf.variable_scope('encoder', reuse=reuse):
+            # Produces id/pose units
+            enc_outputs = encoder_fn(inputs['images_1'], params, is_training)
+            outputs['ids_1'] = enc_outputs['ids']
 
-      # Third, build the entire graph (bundled strategy described in PTN paper)
-      for k in range(1, params.step_size):
-        with tf.variable_scope('projector', reuse=True):
-          outputs['projs_%d' % (k + 1)] = projector_fn(
-              outputs['voxels_1'], inputs['matrix_%d' %
-                                          (k + 1)], params, is_training)
-        with tf.variable_scope('oracle', reuse=True):
-          outputs['masks_%d' % (k + 1)] = projector_fn(
-              inputs['voxels'], inputs['matrix_%d' % (k + 1)], params, False)
+        # Second, build the decoder and projector
+        decoder_fn = _get_network(params.decoder_name)
+        with tf.variable_scope('decoder', reuse=reuse):
+            outputs['voxels_1'] = decoder_fn(outputs['ids_1'], params, is_training)
+        if run_projection:
+            projector_fn = _get_network(params.projector_name)
+            with tf.variable_scope('projector', reuse=reuse):
+                outputs['projs_1'] = projector_fn(
+                    outputs['voxels_1'], inputs['matrix_1'], params, is_training)
+            # Infer the ground-truth mask
+            with tf.variable_scope('oracle', reuse=reuse):
+                outputs['masks_1'] = projector_fn(inputs['voxels'], inputs['matrix_1'],
+                                                  params, False)
 
-    return outputs
+            # Third, build the entire graph (bundled strategy described in PTN paper)
+            for k in range(1, params.step_size):
+                with tf.variable_scope('projector', reuse=True):
+                    outputs['projs_%d' % (k + 1)] = projector_fn(
+                        outputs['voxels_1'], inputs['matrix_%d' %
+                                                    (k + 1)], params, is_training)
+                with tf.variable_scope('oracle', reuse=True):
+                    outputs['masks_%d' % (k + 1)] = projector_fn(
+                        inputs['voxels'], inputs['matrix_%d' % (k + 1)], params, False)
 
-  return model
+        return outputs
+
+    return model

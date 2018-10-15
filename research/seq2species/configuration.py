@@ -28,7 +28,7 @@ import tensorflow as tf
 
 
 def parse_hparams(hparam_values='', num_filters=1):
-  """Initializes TensorFlow hyperparameters object with default values.
+    """Initializes TensorFlow hyperparameters object with default values.
 
   In addition, default hyperparameter values are overwritten with the specified
   ones, where necessary.
@@ -43,35 +43,35 @@ def parse_hparams(hparam_values='', num_filters=1):
   Returns:
     tf.contrib.training.Hparams object containing the model's hyperparameters.
   """
-  hparams = tf.contrib.training.HParams()
+    hparams = tf.contrib.training.HParams()
 
-  # Specify model architecture option.
-  hparams.add_hparam('use_depthwise_separable', True)
+    # Specify model architecture option.
+    hparams.add_hparam('use_depthwise_separable', True)
 
-  # Specify number of model parameters.
-  hparams.add_hparam('filter_widths', [3] * num_filters)
-  hparams.add_hparam('filter_depths', [1] * num_filters)
-  hparams.add_hparam('pointwise_depths', [64] * num_filters)
-  hparams.add_hparam('num_fc_layers', 2)
-  hparams.add_hparam('num_fc_units', 455)
-  hparams.add_hparam('min_read_length', 100)
-  hparams.add_hparam('pooling_type', 'avg')
+    # Specify number of model parameters.
+    hparams.add_hparam('filter_widths', [3] * num_filters)
+    hparams.add_hparam('filter_depths', [1] * num_filters)
+    hparams.add_hparam('pointwise_depths', [64] * num_filters)
+    hparams.add_hparam('num_fc_layers', 2)
+    hparams.add_hparam('num_fc_units', 455)
+    hparams.add_hparam('min_read_length', 100)
+    hparams.add_hparam('pooling_type', 'avg')
 
-  # Specify activation options.
-  hparams.add_hparam('lrelu_slope', 0.0)  # Negative slope for leaky relu.
+    # Specify activation options.
+    hparams.add_hparam('lrelu_slope', 0.0)  # Negative slope for leaky relu.
 
-  # Specify training options.
-  hparams.add_hparam('keep_prob', 1.0)
-  hparams.add_hparam('weight_scale', 1.0)
-  hparams.add_hparam('grad_clip_norm', 20.0)
-  hparams.add_hparam('lr_init', 0.001)
-  hparams.add_hparam('lr_decay', 0.1)
-  hparams.add_hparam('optimizer', 'adam')
-  # optimizer_hp is decay rate for 1st moment estimates for ADAM, and
-  # momentum for SGD.
-  hparams.add_hparam('optimizer_hp', 0.9)
-  hparams.add_hparam('train_steps', 400000)
+    # Specify training options.
+    hparams.add_hparam('keep_prob', 1.0)
+    hparams.add_hparam('weight_scale', 1.0)
+    hparams.add_hparam('grad_clip_norm', 20.0)
+    hparams.add_hparam('lr_init', 0.001)
+    hparams.add_hparam('lr_decay', 0.1)
+    hparams.add_hparam('optimizer', 'adam')
+    # optimizer_hp is decay rate for 1st moment estimates for ADAM, and
+    # momentum for SGD.
+    hparams.add_hparam('optimizer_hp', 0.9)
+    hparams.add_hparam('train_steps', 400000)
 
-  # Overwrite defaults with specified values.
-  hparams.parse(hparam_values)
-  return hparams
+    # Overwrite defaults with specified values.
+    hparams.parse(hparam_values)
+    return hparams

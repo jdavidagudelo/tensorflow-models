@@ -22,14 +22,14 @@ from __future__ import print_function
 import os
 
 from absl import app
-from absl import flags
 
 import tensorflow as tf
 
 from . import adversarial_attack
 from . import model_lib
-from .datasets import dataset_factory
+from research.adversarial_logit_pairing.datasets import dataset_factory
 
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('train_dir', None,
@@ -107,7 +107,10 @@ def main(_):
         # setup model
         global_step = tf.train.get_or_create_global_step()
         model_fn_two_args = model_lib.get_model(FLAGS.model_name, num_classes)
-        model_fn = lambda x: model_fn_two_args(x, is_training=False)
+
+        def model_fn(x):
+            return model_fn_two_args(x, is_training=False)
+
         if not FLAGS.adv_method or FLAGS.adv_method == 'clean':
             logits = model_fn(images)
         else:

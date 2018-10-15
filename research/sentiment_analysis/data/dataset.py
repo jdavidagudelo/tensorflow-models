@@ -7,13 +7,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import data.imdb as imdb
+from research.sentiment_analysis.data import imdb as imdb
 
 DATASET_IMDB = "imdb"
 
 
 def load(dataset, vocabulary_size, sentence_length):
-  """Returns training and evaluation input.
+    """Returns training and evaluation input.
 
   Args:
     dataset: Dataset to be trained and evaluated.
@@ -29,14 +29,14 @@ def load(dataset, vocabulary_size, sentence_length):
     evaluation sentences, and evaluation labels,
     each being an numpy array.
   """
-  if dataset == DATASET_IMDB:
-    return imdb.load(vocabulary_size, sentence_length)
-  else:
-    raise ValueError("unsupported dataset: " + dataset)
+    if dataset == DATASET_IMDB:
+        return imdb.load(vocabulary_size, sentence_length)
+    else:
+        raise ValueError("unsupported dataset: " + dataset)
 
 
 def get_num_class(dataset):
-  """Returns an integer for the number of label classes.
+    """Returns an integer for the number of label classes.
 
   Args:
     dataset: Dataset to be trained and evaluated.
@@ -46,7 +46,7 @@ def get_num_class(dataset):
   Returns:
     int: The number of label classes.
   """
-  if dataset == DATASET_IMDB:
-    return imdb.NUM_CLASS
-  else:
-    raise ValueError("unsupported dataset: " + dataset)
+    if dataset == DATASET_IMDB:
+        return imdb.NUM_CLASS
+    else:
+        raise ValueError("unsupported dataset: " + dataset)

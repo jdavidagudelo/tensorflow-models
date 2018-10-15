@@ -22,9 +22,9 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 
-from ..base import embeddings
-from . import example
-from . import minibatching
+from research.cvt_text.base import embeddings
+from research.cvt_text.corpus_processing import example
+from research.cvt_text.corpus_processing import minibatching
 
 
 class UnlabeledDataReader(object):

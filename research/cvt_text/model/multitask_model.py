@@ -21,8 +21,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from . import encoder
-from . import shared_inputs
+from research.cvt_text.model import encoder
+from research.cvt_text.model import shared_inputs
 
 
 class Inference(object):

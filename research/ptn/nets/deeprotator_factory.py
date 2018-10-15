@@ -20,9 +20,9 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from nets import ptn_encoder
-from nets import ptn_im_decoder
-from nets import ptn_rotator
+from research.ptn.nets import ptn_encoder
+from research.ptn.nets import ptn_im_decoder
+from research.ptn.nets import ptn_rotator
 
 _NAME_TO_NETS = {
     'ptn_encoder': ptn_encoder,
@@ -32,15 +32,15 @@ _NAME_TO_NETS = {
 
 
 def _get_network(name):
-  """Gets a single network component."""
+    """Gets a single network component."""
 
-  if name not in _NAME_TO_NETS:
-    raise ValueError('Network name [%s] not recognized.' % name)
-  return _NAME_TO_NETS[name].model
+    if name not in _NAME_TO_NETS:
+        raise ValueError('Network name [%s] not recognized.' % name)
+    return _NAME_TO_NETS[name].model
 
 
 def get(params, is_training=False, reuse=False):
-  """Factory function to retrieve a network model.
+    """Factory function to retrieve a network model.
 
   Args:
     params: Different parameters used througout ptn, typically FLAGS (dict)
@@ -51,41 +51,41 @@ def get(params, is_training=False, reuse=False):
     Model function for network (inputs to outputs)
   """
 
-  def model(inputs):
-    """Model function corresponding to a specific network architecture."""
-    outputs = {}
+    def model(inputs):
+        """Model function corresponding to a specific network architecture."""
+        outputs = {}
 
-    # First, build the encoder.
-    encoder_fn = _get_network(params.encoder_name)
-    with tf.variable_scope('encoder', reuse=reuse):
-      # Produces id/pose units
-      features = encoder_fn(inputs['images_0'], params, is_training)
-      outputs['ids'] = features['ids']
-      outputs['poses_0'] = features['poses']
+        # First, build the encoder.
+        encoder_fn = _get_network(params.encoder_name)
+        with tf.variable_scope('encoder', reuse=reuse):
+            # Produces id/pose units
+            features = encoder_fn(inputs['images_0'], params, is_training)
+            outputs['ids'] = features['ids']
+            outputs['poses_0'] = features['poses']
 
-    # Second, build the rotator and decoder.
-    rotator_fn = _get_network(params.rotator_name)
-    with tf.variable_scope('rotator', reuse=reuse):
-      outputs['poses_1'] = rotator_fn(outputs['poses_0'], inputs['actions'],
-                                      params, is_training)
-    decoder_fn = _get_network(params.decoder_name)
-    with tf.variable_scope('decoder', reuse=reuse):
-      dec_output = decoder_fn(outputs['ids'], outputs['poses_1'], params,
-                              is_training)
-      outputs['images_1'] = dec_output['images']
-      outputs['masks_1'] = dec_output['masks']
+        # Second, build the rotator and decoder.
+        rotator_fn = _get_network(params.rotator_name)
+        with tf.variable_scope('rotator', reuse=reuse):
+            outputs['poses_1'] = rotator_fn(outputs['poses_0'], inputs['actions'],
+                                            params, is_training)
+        decoder_fn = _get_network(params.decoder_name)
+        with tf.variable_scope('decoder', reuse=reuse):
+            dec_output = decoder_fn(outputs['ids'], outputs['poses_1'], params,
+                                    is_training)
+            outputs['images_1'] = dec_output['images']
+            outputs['masks_1'] = dec_output['masks']
 
-    # Third, build the recurrent connection
-    for k in range(1, params.step_size):
-      with tf.variable_scope('rotator', reuse=True):
-        outputs['poses_%d' % (k + 1)] = rotator_fn(
-            outputs['poses_%d' % k], inputs['actions'], params, is_training)
-      with tf.variable_scope('decoder', reuse=True):
-        dec_output = decoder_fn(outputs['ids'], outputs['poses_%d' % (k + 1)],
-                                params, is_training)
-        outputs['images_%d' % (k + 1)] = dec_output['images']
-        outputs['masks_%d' % (k + 1)] = dec_output['masks']
+        # Third, build the recurrent connection
+        for k in range(1, params.step_size):
+            with tf.variable_scope('rotator', reuse=True):
+                outputs['poses_%d' % (k + 1)] = rotator_fn(
+                    outputs['poses_%d' % k], inputs['actions'], params, is_training)
+            with tf.variable_scope('decoder', reuse=True):
+                dec_output = decoder_fn(outputs['ids'], outputs['poses_%d' % (k + 1)],
+                                        params, is_training)
+                outputs['images_%d' % (k + 1)] = dec_output['images']
+                outputs['masks_%d' % (k + 1)] = dec_output['masks']
 
-    return outputs
+        return outputs
 
-  return model
+    return model

@@ -18,18 +18,18 @@ import os
 
 
 def str2bool(v):
-  return v.lower() in ('true', '1')
+    return v.lower() in ('true', '1')
 
 
 def add_argument_group(name):
-  arg = parser.add_argument_group(name)
-  arg_lists.append(arg)
-  return arg
+    arg = parser.add_argument_group(name)
+    arg_lists.append(arg)
+    return arg
 
 
 def get_config():
-  config, unparsed = parser.parse_known_args()
-  return config, unparsed
+    config, unparsed = parser.parse_known_args()
+    return config, unparsed
 
 
 arg_lists = []
@@ -42,7 +42,7 @@ net_arg.add_argument('--num_layers', type=int, default=1)
 net_arg.add_argument('--embed_dim_txt', type=int, default=128)
 net_arg.add_argument('--embed_dim_nmn', type=int, default=128)
 net_arg.add_argument(
-  '--T_encoder', type=int, default=0)  # will be updated when reading data
+    '--T_encoder', type=int, default=0)  # will be updated when reading data
 net_arg.add_argument('--T_decoder', type=int, default=5)
 
 train_arg = add_argument_group('Training')
@@ -58,7 +58,7 @@ data_arg = add_argument_group('Data')
 data_path = work_dir + '/MetaQA/'
 data_arg.add_argument('--KB_file', type=str, default=data_path + 'kb.txt')
 data_arg.add_argument(
-  '--data_dir', type=str, default=data_path + '1-hop/vanilla/')
+    '--data_dir', type=str, default=data_path + '1-hop/vanilla/')
 data_arg.add_argument('--train_data_file', type=str, default='qa_train.txt')
 data_arg.add_argument('--dev_data_file', type=str, default='qa_dev.txt')
 data_arg.add_argument('--test_data_file', type=str, default='qa_test.txt')
@@ -72,7 +72,7 @@ log_arg.add_argument('--log_dir', type=str, default='logs')
 log_arg.add_argument('--log_interval', type=int, default=1000)
 log_arg.add_argument('--num_log_samples', type=int, default=3)
 log_arg.add_argument(
-  '--log_level', type=str, default='INFO', choices=['INFO', 'DEBUG', 'WARN'])
+    '--log_level', type=str, default='INFO', choices=['INFO', 'DEBUG', 'WARN'])
 
 io_arg = add_argument_group('IO')
 io_arg.add_argument('--model_dir', type=str, default='model')

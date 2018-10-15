@@ -146,7 +146,7 @@ def _apply_with_random_selector_tuples(x,
         preprocess_vars_cache, key)
 
     # Pass the real x only to one of the func calls.
-    tuples = [list() for t in x]
+    tuples = [list() for _ in x]
     for case in range(num_cases):
         new_x = [control_flow_ops.switch(t, tf.equal(rand_sel, case))[1] for t in x]
         output = func(tuple(new_x), case)
@@ -490,9 +490,9 @@ def random_horizontal_flip(image,
     ValueError: if keypoints are provided but keypoint_flip_permutation is not.
   """
 
-    def _flip_image(image):
+    def _flip_image(img):
         # flip image
-        image_flipped = tf.image.flip_left_right(image)
+        image_flipped = tf.image.flip_left_right(img)
         return image_flipped
 
     if keypoints is not None and keypoint_flip_permutation is None:
@@ -587,9 +587,9 @@ def random_vertical_flip(image,
     ValueError: if keypoints are provided but keypoint_flip_permutation is not.
   """
 
-    def _flip_image(image):
+    def _flip_image(img):
         # flip image
-        image_flipped = tf.image.flip_up_down(image)
+        image_flipped = tf.image.flip_up_down(img)
         return image_flipped
 
     if keypoints is not None and keypoint_flip_permutation is None:
@@ -680,9 +680,9 @@ def random_rotation90(image,
                [num_instances, num_keypoints, 2]
   """
 
-    def _rot90_image(image):
+    def _rot90_image(img):
         # flip image
-        image_rotated = tf.image.rot90(image)
+        image_rotated = tf.image.rot90(img)
         return image_rotated
 
     with tf.name_scope('RandomRotation90', values=[image, boxes]):
@@ -840,8 +840,8 @@ def random_rgb_to_gray(image,
     image: image which is the same shape as input image.
   """
 
-    def _image_to_gray(image):
-        image_gray1 = _rgb_to_grayscale(image)
+    def _image_to_gray(img):
+        image_gray1 = _rgb_to_grayscale(img)
         image_gray3 = tf.image.grayscale_to_rgb(image_gray1)
         return image_gray3
 
@@ -1071,20 +1071,20 @@ def random_jitter_boxes(boxes, ratio=0.05, seed=None):
     boxes: boxes which is the same shape as input boxes.
   """
 
-    def random_jitter_box(box, ratio, seed):
+    def random_jitter_box(box, r, s):
         """Randomly jitter box.
 
     Args:
       box: bounding box [1, 1, 4].
-      ratio: max ratio between jittered box and original box,
+      r: max ratio between jittered box and original box,
       a number between [0, 0.5].
-      seed: random seed.
+      s: random seed.
 
     Returns:
       jittered_box: jittered box.
     """
         rand_numbers = tf.random_uniform(
-            [1, 1, 4], minval=-ratio, maxval=ratio, dtype=tf.float32, seed=seed)
+            [1, 1, 4], minval=-r, maxval=r, dtype=tf.float32, seed=s)
         box_width = tf.subtract(box[0, 0, 3], box[0, 0, 1])
         box_height = tf.subtract(box[0, 0, 2], box[0, 0, 0])
         hw_coefs = tf.stack([box_height, box_width, box_height, box_width])
@@ -1198,7 +1198,7 @@ def _strict_random_crop_image(image,
         sample_distorted_bounding_box = _get_or_create_preprocess_rand_vars(
             generator_func,
             preprocessor_cache.PreprocessorCache.STRICT_CROP_IMAGE,
-            preprocess_vars_cache, key=min_object_covered)
+            preprocess_vars_cache, key=str(min_object_covered))
 
         im_box_begin, im_box_size, im_box = sample_distorted_bounding_box
 
@@ -1475,7 +1475,8 @@ def random_pad_image(image,
         lambda: _random_integer(0, target_width - image_width, seed),
         lambda: tf.constant(0, dtype=tf.int32))
 
-    gen_func = lambda: (target_height, target_width, offset_height, offset_width)
+    def gen_func():
+        return target_height, target_width, offset_height, offset_width
     params = _get_or_create_preprocess_rand_vars(
         gen_func, preprocessor_cache.PreprocessorCache.PAD_IMAGE,
         preprocess_vars_cache)
@@ -1502,8 +1503,7 @@ def random_pad_image(image,
     # setting boxes
     new_window = tf.to_float(
         tf.stack([
-            -offset_height, -offset_width, target_height - offset_height,
-                                           target_width - offset_width
+            -offset_height, -offset_width, target_height - offset_height, target_width - offset_width
         ]))
     new_window /= tf.to_float(
         tf.stack([image_height, image_width, image_height, image_width]))
@@ -1735,7 +1735,8 @@ def random_crop_to_aspect_ratio(image,
         offset_height = _random_integer(0, orig_height - target_height + 1, seed)
         offset_width = _random_integer(0, orig_width - target_width + 1, seed)
 
-        generator_func = lambda: (offset_height, offset_width)
+        def generator_func():
+            return offset_height, offset_width
         offset_height, offset_width = _get_or_create_preprocess_rand_vars(
             generator_func,
             preprocessor_cache.PreprocessorCache.CROP_TO_ASPECT_RATIO,
@@ -1963,15 +1964,6 @@ def random_black_patches(image,
   """
 
     def add_black_patch_to_image(image, idx):
-        """Function for adding one patch to the image.
-
-    Args:
-      image: image
-      idx: counter for number of patches that could have been added
-
-    Returns:
-      image with a randomly added black box
-    """
         image_shape = tf.shape(image)
         image_height = image_shape[0]
         image_width = image_shape[1]
@@ -1980,15 +1972,15 @@ def random_black_patches(image,
                 tf.minimum(tf.to_float(image_height), tf.to_float(image_width)),
                 size_to_image_ratio))
 
-        generator_func = functools.partial(tf.random_uniform, [], minval=0.0,
-                                           maxval=(1.0 - size_to_image_ratio),
-                                           seed=random_seed)
+        gen_func = functools.partial(tf.random_uniform, [], minval=0.0,
+                                     maxval=(1.0 - size_to_image_ratio),
+                                     seed=random_seed)
         normalized_y_min = _get_or_create_preprocess_rand_vars(
-            generator_func,
+            gen_func,
             preprocessor_cache.PreprocessorCache.ADD_BLACK_PATCH,
             preprocess_vars_cache, key=str(idx) + 'y')
         normalized_x_min = _get_or_create_preprocess_rand_vars(
-            generator_func,
+            gen_func,
             preprocessor_cache.PreprocessorCache.ADD_BLACK_PATCH,
             preprocess_vars_cache, key=str(idx) + 'x')
 
@@ -1997,8 +1989,8 @@ def random_black_patches(image,
         black_box = tf.ones([box_size, box_size, 3], dtype=tf.float32)
         mask = 1.0 - tf.image.pad_to_bounding_box(black_box, y_min, x_min,
                                                   image_height, image_width)
-        image = tf.multiply(image, mask)
-        return image
+        img = tf.multiply(image, mask)
+        return img
 
     with tf.name_scope('RandomBlackPatchInImage', values=[image]):
         for idx in range(max_black_patches):
@@ -2008,7 +2000,7 @@ def random_black_patches(image,
             random_prob = _get_or_create_preprocess_rand_vars(
                 generator_func,
                 preprocessor_cache.PreprocessorCache.BLACK_PATCHES,
-                preprocess_vars_cache, key=idx)
+                preprocess_vars_cache, key=str(idx))
             image = tf.cond(
                 tf.greater(random_prob, probability), lambda: image,
                 functools.partial(add_black_patch_to_image, image=image, idx=idx))
@@ -2519,7 +2511,7 @@ def ssd_random_crop(image,
     """
 
         i = 3
-        image, boxes, labels = selected_result[:i]
+        im, bs, ls = selected_result[:i]
         selected_label_scores = None
         selected_multiclass_scores = None
         selected_masks = None
@@ -2537,9 +2529,9 @@ def ssd_random_crop(image,
             selected_keypoints = selected_result[i]
 
         return random_crop_image(
-            image=image,
-            boxes=boxes,
-            labels=labels,
+            image=im,
+            boxes=bs,
+            labels=ls,
             label_scores=selected_label_scores,
             multiclass_scores=selected_multiclass_scores,
             masks=selected_masks,
@@ -2632,7 +2624,7 @@ def ssd_random_crop_pad(image,
     def random_crop_pad_selector(image_boxes_labels, index):
         """Random crop preprocessing helper."""
         i = 3
-        image, boxes, labels = image_boxes_labels[:i]
+        im, bs, ls = image_boxes_labels[:i]
         selected_label_scores = None
         selected_multiclass_scores = None
         if label_scores is not None:
@@ -2642,9 +2634,9 @@ def ssd_random_crop_pad(image,
             selected_multiclass_scores = image_boxes_labels[i]
 
         return random_crop_pad_image(
-            image,
-            boxes,
-            labels,
+            im,
+            bs,
+            ls,
             label_scores=selected_label_scores,
             multiclass_scores=selected_multiclass_scores,
             min_object_covered=min_object_covered[index],
@@ -2981,7 +2973,7 @@ def get_default_func_arg_map(include_label_scores=False,
 
     multiclass_scores = None
     if include_multiclass_scores:
-        multiclass_scores = (fields.InputDataFields.multiclass_scores)
+        multiclass_scores = fields.InputDataFields.multiclass_scores
 
     groundtruth_instance_masks = None
     if include_instance_masks:
@@ -3169,8 +3161,7 @@ def preprocess(tensor_dict,
     for option in preprocess_options:
         func, params = option
         if func not in func_arg_map:
-            raise ValueError('The function %s does not exist in func_arg_map' %
-                             (func.__name__))
+            raise ValueError('The function %s does not exist in func_arg_map' % func.__name__)
         arg_names = func_arg_map[func]
         for a in arg_names:
             if a is not None and a not in tensor_dict:
@@ -3181,8 +3172,9 @@ def preprocess(tensor_dict,
             return tensor_dict[key] if key is not None else None
 
         args = [get_arg(a) for a in arg_names]
+        function_args = [k for k in inspect.signature(func).parameters]
         if (preprocess_vars_cache is not None and
-                'preprocess_vars_cache' in inspect.getargspec(func).args):
+                'preprocess_vars_cache' in function_args):
             params['preprocess_vars_cache'] = preprocess_vars_cache
         results = func(*args, **params)
         if not isinstance(results, (list, tuple)):

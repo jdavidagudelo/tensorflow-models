@@ -72,7 +72,7 @@ class Loss(object):
       loss: a tensor representing the value of the loss function.
     """
         with tf.name_scope(scope, 'Loss',
-                           [prediction_tensor, target_tensor, params]) as scope:
+                           [prediction_tensor, target_tensor, params]) as _:
             if ignore_nan_targets:
                 target_tensor = tf.where(tf.is_nan(target_tensor),
                                          prediction_tensor,
@@ -92,7 +92,8 @@ class Loss(object):
                     params['weights'] *= weights_multiplier
             return self._compute_loss(prediction_tensor, target_tensor, **params)
 
-    def _get_loss_multiplier_for_tensor(self, tensor, losses_mask):
+    @staticmethod
+    def _get_loss_multiplier_for_tensor(tensor, losses_mask):
         loss_multiplier_shape = tf.stack([-1] + [1] * (len(tensor.shape) - 1))
         return tf.cast(tf.reshape(losses_mask, loss_multiplier_shape), tf.float32)
 
@@ -119,7 +120,7 @@ class WeightedL2LocalizationLoss(Loss):
   Loss[b,a] = .5 * ||weights[b,a] * (prediction[b,a,:] - target[b,a,:])||^2
   """
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -133,6 +134,7 @@ class WeightedL2LocalizationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors] tensor
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         weighted_diff = (prediction_tensor - target_tensor) * tf.expand_dims(
             weights, 2)
         square_diff = 0.5 * tf.square(weighted_diff)
@@ -157,7 +159,7 @@ class WeightedSmoothL1LocalizationLoss(Loss):
     """
         self._delta = delta
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -171,6 +173,7 @@ class WeightedSmoothL1LocalizationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors] tensor
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         return tf.reduce_sum(tf.losses.huber_loss(
             target_tensor,
             prediction_tensor,
@@ -189,7 +192,7 @@ class WeightedIOULocalizationLoss(Loss):
   sum over all pairs which is returned as the total loss.
   """
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -203,6 +206,7 @@ class WeightedIOULocalizationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors] tensor
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         predicted_boxes = box_list.BoxList(tf.reshape(prediction_tensor, [-1, 4]))
         target_boxes = box_list.BoxList(tf.reshape(target_tensor, [-1, 4]))
         per_anchor_iou_loss = 1.0 - box_list_ops.matched_iou(predicted_boxes,
@@ -216,8 +220,7 @@ class WeightedSigmoidClassificationLoss(Loss):
     def _compute_loss(self,
                       prediction_tensor,
                       target_tensor,
-                      weights,
-                      class_indices=None):
+                      **kwargs):
         """Compute loss function.
 
     Args:
@@ -233,6 +236,8 @@ class WeightedSigmoidClassificationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors, num_classes]
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
+        class_indices = kwargs.get('class_indices')
         weights = tf.expand_dims(weights, 2)
         if class_indices is not None:
             weights *= tf.reshape(
@@ -263,9 +268,7 @@ class SigmoidFocalClassificationLoss(Loss):
 
     def _compute_loss(self,
                       prediction_tensor,
-                      target_tensor,
-                      weights,
-                      class_indices=None):
+                      target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -281,6 +284,8 @@ class SigmoidFocalClassificationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors, num_classes]
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
+        class_indices = kwargs.get('class_indices')
         weights = tf.expand_dims(weights, 2)
         if class_indices is not None:
             weights *= tf.reshape(
@@ -318,7 +323,7 @@ class WeightedSoftmaxClassificationLoss(Loss):
     """
         self._logit_scale = logit_scale
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -332,6 +337,7 @@ class WeightedSoftmaxClassificationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors]
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         num_classes = prediction_tensor.get_shape().as_list()[-1]
         prediction_tensor = tf.divide(
             prediction_tensor, self._logit_scale, name='scale_logit')
@@ -364,7 +370,7 @@ class WeightedSoftmaxClassificationAgainstLogitsLoss(Loss):
         scaled_logits = tf.divide(logits, self._logit_scale, name='scale_logits')
         return tf.nn.softmax(scaled_logits, name='convert_scores')
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -378,6 +384,7 @@ class WeightedSoftmaxClassificationAgainstLogitsLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors]
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         num_classes = prediction_tensor.get_shape().as_list()[-1]
         target_tensor = self._scale_and_softmax_logits(target_tensor)
         prediction_tensor = tf.divide(prediction_tensor, self._logit_scale,
@@ -423,7 +430,7 @@ class BootstrappedSigmoidClassificationLoss(Loss):
         self._alpha = alpha
         self._bootstrap_type = bootstrap_type
 
-    def _compute_loss(self, prediction_tensor, target_tensor, weights):
+    def _compute_loss(self, prediction_tensor, target_tensor, **kwargs):
         """Compute loss function.
 
     Args:
@@ -437,6 +444,7 @@ class BootstrappedSigmoidClassificationLoss(Loss):
       loss: a float tensor of shape [batch_size, num_anchors, num_classes]
         representing the value of the loss function.
     """
+        weights = kwargs.get('weights')
         if self._bootstrap_type == 'soft':
             bootstrap_target_tensor = self._alpha * target_tensor + (
                     1.0 - self._alpha) * tf.sigmoid(prediction_tensor)
@@ -570,6 +578,7 @@ class HardExampleMiner(object):
                              'length=len(decoded_boxlist_list).')
         num_positives_list = []
         num_negatives_list = []
+        match = None
         for ind, detection_boxlist in enumerate(decoded_boxlist_list):
             box_locations = detection_boxlist.get()
             match = match_list[ind]
@@ -601,7 +610,7 @@ class HardExampleMiner(object):
         if match and self._max_negatives_per_positive:
             self._num_positives_list = num_positives_list
             self._num_negatives_list = num_negatives_list
-        return (location_loss, cls_loss)
+        return location_loss, cls_loss
 
     def summarize(self):
         """Summarize the number of positives and negatives after mining."""
@@ -611,8 +620,8 @@ class HardExampleMiner(object):
             tf.summary.scalar('HardExampleMiner/NumPositives', avg_num_positives)
             tf.summary.scalar('HardExampleMiner/NumNegatives', avg_num_negatives)
 
-    def _subsample_selection_to_desired_neg_pos_ratio(self,
-                                                      indices,
+    @staticmethod
+    def _subsample_selection_to_desired_neg_pos_ratio(indices,
                                                       match,
                                                       max_negatives_per_positive,
                                                       min_negatives_per_image=0):

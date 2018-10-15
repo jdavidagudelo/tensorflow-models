@@ -48,8 +48,8 @@ class ConvolutionalBoxPredictorBuilderTest(tf.test.TestCase):
         hyperparams_proto = hyperparams_pb2.Hyperparams()
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
-        def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+        def mock_conv_argscope_builder(conv_hyperparams_arg, training):
+            return conv_hyperparams_arg, training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         box_predictor_proto.convolutional_box_predictor.conv_hyperparams.CopyFrom(
@@ -105,7 +105,7 @@ class ConvolutionalBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
         def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+            return conv_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         text_format.Merge(box_predictor_text_proto, box_predictor_proto)
@@ -248,8 +248,8 @@ class WeightSharedConvolutionalBoxPredictorBuilderTest(tf.test.TestCase):
         hyperparams_proto = hyperparams_pb2.Hyperparams()
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
-        def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+        def mock_conv_argscope_builder(conv_hyperparams_arg, training):
+            return conv_hyperparams_arg, training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         (box_predictor_proto.weight_shared_convolutional_box_predictor
@@ -300,7 +300,7 @@ class WeightSharedConvolutionalBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
         def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+            return conv_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         text_format.Merge(box_predictor_text_proto, box_predictor_proto)
@@ -344,7 +344,7 @@ class WeightSharedConvolutionalBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
         def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+            return conv_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         text_format.Merge(box_predictor_text_proto, box_predictor_proto)
@@ -555,7 +555,7 @@ class MaskRCNNBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(fc_hyperparams_text_proto, hyperparams_proto)
 
         def mock_fc_argscope_builder(fc_hyperparams_arg, is_training):
-            return (fc_hyperparams_arg, is_training)
+            return fc_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         text_format.Merge(box_predictor_text_proto, box_predictor_proto)
@@ -630,8 +630,7 @@ class MaskRCNNBoxPredictorBuilderTest(tf.test.TestCase):
         self.assertTrue(
             mask_rcnn_box_predictor.MASK_PREDICTIONS in third_stage_heads)
         self.assertEqual(
-            third_stage_heads[mask_rcnn_box_predictor.MASK_PREDICTIONS]
-                ._mask_prediction_conv_depth, 512)
+            third_stage_heads[mask_rcnn_box_predictor.MASK_PREDICTIONS]._mask_prediction_conv_depth, 512)
 
 
 class RfcnBoxPredictorBuilderTest(tf.test.TestCase):
@@ -654,8 +653,8 @@ class RfcnBoxPredictorBuilderTest(tf.test.TestCase):
         hyperparams_proto = hyperparams_pb2.Hyperparams()
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
-        def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+        def mock_conv_argscope_builder(conv_hyperparams_arg, training):
+            return conv_hyperparams_arg, training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         box_predictor_proto.rfcn_box_predictor.conv_hyperparams.CopyFrom(
@@ -708,7 +707,7 @@ class RfcnBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
         def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+            return conv_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         text_format.Merge(box_predictor_text_proto, box_predictor_proto)
@@ -741,7 +740,7 @@ class RfcnBoxPredictorBuilderTest(tf.test.TestCase):
         text_format.Merge(conv_hyperparams_text_proto, hyperparams_proto)
 
         def mock_conv_argscope_builder(conv_hyperparams_arg, is_training):
-            return (conv_hyperparams_arg, is_training)
+            return conv_hyperparams_arg, is_training
 
         box_predictor_proto = box_predictor_pb2.BoxPredictor()
         box_predictor_proto.rfcn_box_predictor.conv_hyperparams.CopyFrom(

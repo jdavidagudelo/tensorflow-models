@@ -20,8 +20,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from ..ops import input_ops
-from ..util import configdict
+from research.astronet.astronet.ops import input_ops
+from research.astronet.astronet.util import configdict
 
 
 class InputOpsTest(tf.test.TestCase):

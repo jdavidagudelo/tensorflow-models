@@ -44,13 +44,13 @@ import os
 import random
 
 from absl import app
-from absl import flags
 from absl import logging
 
 import pandas as pd
 
 import tensorflow as tf
 
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('input_dir', '', 'Input directory')

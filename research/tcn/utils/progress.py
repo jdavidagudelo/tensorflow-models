@@ -23,28 +23,28 @@ import datetime
 
 
 class Progress(object):
-  """A utility class for reporting processing progress."""
+    """A utility class for reporting processing progress."""
 
-  def __init__(self, target_size):
-    self.target_size = target_size
-    self.current_size = 0
-    self.start_time = datetime.datetime.now()
+    def __init__(self, target_size):
+        self.target_size = target_size
+        self.current_size = 0
+        self.start_time = datetime.datetime.now()
 
-  def Update(self, current_size):
-    """Replaces internal current_size with current_size."""
-    self.current_size = current_size
+    def Update(self, current_size):
+        """Replaces internal current_size with current_size."""
+        self.current_size = current_size
 
-  def Add(self, size):
-    """Increments internal current_size by size."""
-    self.current_size += size
+    def Add(self, size):
+        """Increments internal current_size by size."""
+        self.current_size += size
 
-  def __str__(self):
-    processed = 1e-5 + self.current_size / float(self.target_size)
-    current_time = datetime.datetime.now()
-    elapsed = current_time - self.start_time
-    eta = datetime.timedelta(
-        seconds=elapsed.total_seconds() / processed - elapsed.total_seconds())
-    return "%d / %d (elapsed %s eta %s)" % (
-        self.current_size, self.target_size,
-        str(elapsed).split(".")[0],
-        str(eta).split(".")[0])
+    def __str__(self):
+        processed = 1e-5 + self.current_size / float(self.target_size)
+        current_time = datetime.datetime.now()
+        elapsed = current_time - self.start_time
+        eta = datetime.timedelta(
+            seconds=elapsed.total_seconds() / processed - elapsed.total_seconds())
+        return "%d / %d (elapsed %s eta %s)" % (
+            self.current_size, self.target_size,
+            str(elapsed).split(".")[0],
+            str(eta).split(".")[0])

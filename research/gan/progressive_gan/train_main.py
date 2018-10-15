@@ -26,13 +26,12 @@ from __future__ import print_function
 
 import sys
 
-
 from absl import flags
 from absl import logging
 import tensorflow as tf
 
-import data_provider
-import train
+from research.gan.progressive_gan import data_provider
+from research.gan.progressive_gan import train
 
 tfgan = tf.contrib.gan
 
@@ -118,53 +117,53 @@ FLAGS = flags.FLAGS
 
 
 def _make_config_from_flags():
-  """Makes a config dictionary from commandline flags."""
-  return dict([(flag.name, flag.value)
-               for flag in FLAGS.get_key_flags_for_module(sys.argv[0])])
+    """Makes a config dictionary from commandline flags."""
+    return dict([(flag.name, flag.value)
+                 for flag in FLAGS.get_key_flags_for_module(sys.argv[0])])
 
 
 def _provide_real_images(**kwargs):
-  """Provides real images."""
-  dataset_name = kwargs.get('dataset_name')
-  dataset_file_pattern = kwargs.get('dataset_file_pattern')
-  batch_size = kwargs['batch_size']
-  colors = kwargs['colors']
-  final_height, final_width = train.make_resolution_schedule(
-      **kwargs).final_resolutions
-  if dataset_name is not None:
-    return data_provider.provide_data(
-        dataset_name=dataset_name,
-        split_name='train',
-        batch_size=batch_size,
-        patch_height=final_height,
-        patch_width=final_width,
-        colors=colors)
-  elif dataset_file_pattern is not None:
-    return data_provider.provide_data_from_image_files(
-        file_pattern=dataset_file_pattern,
-        batch_size=batch_size,
-        patch_height=final_height,
-        patch_width=final_width,
-        colors=colors)
+    """Provides real images."""
+    dataset_name = kwargs.get('dataset_name')
+    dataset_file_pattern = kwargs.get('dataset_file_pattern')
+    batch_size = kwargs['batch_size']
+    colors = kwargs['colors']
+    final_height, final_width = train.make_resolution_schedule(
+        **kwargs).final_resolutions
+    if dataset_name is not None:
+        return data_provider.provide_data(
+            dataset_name=dataset_name,
+            split_name='train',
+            batch_size=batch_size,
+            patch_height=final_height,
+            patch_width=final_width,
+            colors=colors)
+    elif dataset_file_pattern is not None:
+        return data_provider.provide_data_from_image_files(
+            file_pattern=dataset_file_pattern,
+            batch_size=batch_size,
+            patch_height=final_height,
+            patch_width=final_width,
+            colors=colors)
 
 
 def main(_):
-  if not tf.gfile.Exists(FLAGS.train_root_dir):
-    tf.gfile.MakeDirs(FLAGS.train_root_dir)
+    if not tf.gfile.Exists(FLAGS.train_root_dir):
+        tf.gfile.MakeDirs(FLAGS.train_root_dir)
 
-  config = _make_config_from_flags()
-  logging.info('\n'.join(['{}={}'.format(k, v) for k, v in config.iteritems()]))
+    config = _make_config_from_flags()
+    logging.info('\n'.join(['{}={}'.format(k, v) for k, v in config.iteritems()]))
 
-  for stage_id in train.get_stage_ids(**config):
-    tf.reset_default_graph()
-    with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
-      real_images = None
-      with tf.device('/cpu:0'), tf.name_scope('inputs'):
-        real_images = _provide_real_images(**config)
-      model = train.build_model(stage_id, real_images, **config)
-      train.add_model_summaries(model, **config)
-      train.train(model, **config)
+    for stage_id in train.get_stage_ids(**config):
+        tf.reset_default_graph()
+        with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
+            real_images = None
+            with tf.device('/cpu:0'), tf.name_scope('inputs'):
+                real_images = _provide_real_images(**config)
+            model = train.build_model(stage_id, real_images, **config)
+            train.add_model_summaries(model, **config)
+            train.train(model, **config)
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

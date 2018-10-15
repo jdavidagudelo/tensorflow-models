@@ -16,4 +16,4 @@
 """Import and register all the entropy coder models."""
 
 # pylint: disable=unused-import
-from entropy_coder.progressive import progressive
+from research.compression.entropy_coder.progressive import progressive

@@ -26,8 +26,8 @@ slim = tf.contrib.slim
 
 
 def add_image_pred_metrics(
-    inputs, outputs, num_views, upscale_factor):
-  """Computes the image prediction metrics.
+        inputs, outputs, num_views, upscale_factor):
+    """Computes the image prediction metrics.
 
   Args:
     inputs: Input dictionary of the deep rotator model (model_rotator.py).
@@ -43,20 +43,20 @@ def add_image_pred_metrics(
     names_to_updates: A dictionary representing the operation
       that accumulates the error from a batch of data.
   """
-  names_to_values = dict()
-  names_to_updates = dict()
-  for k in xrange(num_views):
-    tmp_value, tmp_update = tf.contrib.metrics.streaming_mean_squared_error(
-        outputs['images_%d' % (k + 1)], inputs['images_%d' % (k + 1)])
-    name = 'image_pred/rnn_%d' % (k + 1)
-    names_to_values.update({name: tmp_value * upscale_factor})
-    names_to_updates.update({name: tmp_update})
-  return names_to_values, names_to_updates
+    names_to_values = dict()
+    names_to_updates = dict()
+    for k in xrange(num_views):
+        tmp_value, tmp_update = tf.contrib.metrics.streaming_mean_squared_error(
+            outputs['images_%d' % (k + 1)], inputs['images_%d' % (k + 1)])
+        name = 'image_pred/rnn_%d' % (k + 1)
+        names_to_values.update({name: tmp_value * upscale_factor})
+        names_to_updates.update({name: tmp_update})
+    return names_to_values, names_to_updates
 
 
 def add_mask_pred_metrics(
-    inputs, outputs, num_views, upscale_factor):
-  """Computes the mask prediction metrics.
+        inputs, outputs, num_views, upscale_factor):
+    """Computes the mask prediction metrics.
 
   Args:
     inputs: Input dictionary of the deep rotator model (model_rotator.py).
@@ -73,19 +73,19 @@ def add_mask_pred_metrics(
       that accumulates the error from a batch of data.
 
   """
-  names_to_values = dict()
-  names_to_updates = dict()
-  for k in xrange(num_views):
-    tmp_value, tmp_update = tf.contrib.metrics.streaming_mean_squared_error(
-        outputs['masks_%d' % (k + 1)], inputs['masks_%d' % (k + 1)])
-    name = 'mask_pred/rnn_%d' % (k + 1)
-    names_to_values.update({name: tmp_value * upscale_factor})
-    names_to_updates.update({name: tmp_update})
-  return names_to_values, names_to_updates
+    names_to_values = dict()
+    names_to_updates = dict()
+    for k in xrange(num_views):
+        tmp_value, tmp_update = tf.contrib.metrics.streaming_mean_squared_error(
+            outputs['masks_%d' % (k + 1)], inputs['masks_%d' % (k + 1)])
+        name = 'mask_pred/rnn_%d' % (k + 1)
+        names_to_values.update({name: tmp_value * upscale_factor})
+        names_to_updates.update({name: tmp_update})
+    return names_to_values, names_to_updates
 
 
 def add_volume_iou_metrics(inputs, outputs):
-  """Computes the per-instance volume IOU.
+    """Computes the per-instance volume IOU.
 
   Args:
     inputs: Input dictionary of the voxel generation model.
@@ -96,16 +96,16 @@ def add_volume_iou_metrics(inputs, outputs):
     names_to_updates: metrics->ops (dict).
 
   """
-  names_to_values = dict()
-  names_to_updates = dict()
-  labels = tf.greater_equal(inputs['voxels'], 0.5)
-  predictions = tf.greater_equal(outputs['voxels_1'], 0.5)
-  labels = (2 - tf.to_int32(labels)) - 1
-  predictions = (3 - tf.to_int32(predictions) * 2) - 1
-  tmp_values, tmp_updates = tf.metrics.mean_iou(
-      labels=labels,
-      predictions=predictions,
-      num_classes=3)
-  names_to_values['volume_iou'] = tmp_values * 3.0
-  names_to_updates['volume_iou'] = tmp_updates
-  return names_to_values, names_to_updates
+    names_to_values = dict()
+    names_to_updates = dict()
+    labels = tf.greater_equal(inputs['voxels'], 0.5)
+    predictions = tf.greater_equal(outputs['voxels_1'], 0.5)
+    labels = (2 - tf.to_int32(labels)) - 1
+    predictions = (3 - tf.to_int32(predictions) * 2) - 1
+    tmp_values, tmp_updates = tf.metrics.mean_iou(
+        labels=labels,
+        predictions=predictions,
+        num_classes=3)
+    names_to_values['volume_iou'] = tmp_values * 3.0
+    names_to_updates['volume_iou'] = tmp_updates
+    return names_to_values, names_to_updates

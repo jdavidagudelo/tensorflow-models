@@ -20,9 +20,9 @@ import os
 import glob
 import logging
 
-from ..render import swiftshader_renderer as renderer
-from ..src import file_utils as fu
-from ..src import utils as utils
+from research.cognitive_mapping_and_planning.render import swiftshader_renderer as renderer
+from research.cognitive_mapping_and_planning.src import file_utils as fu
+from research.cognitive_mapping_and_planning.src import utils as utils
 
 
 def get_dataset(dataset_name):

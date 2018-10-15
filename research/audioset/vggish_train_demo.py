@@ -50,9 +50,9 @@ from random import shuffle
 import numpy as np
 import tensorflow as tf
 
-from . import vggish_input
-from . import vggish_params
-from . import vggish_slim
+from research.audioset import vggish_input
+from research.audioset import vggish_params
+from research.audioset import vggish_slim
 
 flags = tf.app.flags
 slim = tf.contrib.slim

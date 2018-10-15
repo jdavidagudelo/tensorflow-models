@@ -21,6 +21,7 @@ from __future__ import print_function
 import argparse
 import os
 import shutil
+
 # pylint: disable=invalid-name
 
 parser = argparse.ArgumentParser()
@@ -44,21 +45,21 @@ parser.add_argument(
 
 def create_vids(view_dirs, vid_paths, debug_path=None,
                 debug_lhs_view=0, debug_rhs_view=1):
-  """Creates one video per view per sequence."""
+    """Creates one video per view per sequence."""
 
-  # Create the view videos.
-  for (view_dir, vidpath) in zip(view_dirs, vid_paths):
-    encode_vid_cmd = r'mencoder mf://%s/*.png \
+    # Create the view videos.
+    for (view_dir, vidpath) in zip(view_dirs, vid_paths):
+        encode_vid_cmd = r'mencoder mf://%s/*.png \
     -mf fps=29:type=png \
     -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell \
     -oac copy -o %s' % (view_dir, vidpath)
-    os.system(encode_vid_cmd)
+        os.system(encode_vid_cmd)
 
-  # Optionally create a debug side-by-side video.
-  if debug_path:
-    lhs = vid_paths[int(debug_lhs_view)]
-    rhs = vid_paths[int(debug_rhs_view)]
-    os.system(r"avconv \
+    # Optionally create a debug side-by-side video.
+    if debug_path:
+        lhs = vid_paths[int(debug_lhs_view)]
+        rhs = vid_paths[int(debug_rhs_view)]
+        os.system(r"avconv \
       -i %s \
       -i %s \
       -filter_complex '[0:v]pad=iw*2:ih[int];[int][1:v]overlay=W/2:0[vid]' \
@@ -70,17 +71,18 @@ def create_vids(view_dirs, vid_paths, debug_path=None,
 
 
 def main():
-  FLAGS, _ = parser.parse_known_args()
-  assert FLAGS.view_dirs
-  assert FLAGS.vid_paths
-  view_dirs = FLAGS.view_dirs.split(',')
-  vid_paths = FLAGS.vid_paths.split(',')
-  create_vids(view_dirs, vid_paths, FLAGS.debug_path,
-              FLAGS.debug_lhs_view, FLAGS.debug_rhs_view)
+    FLAGS, _ = parser.parse_known_args()
+    assert FLAGS.view_dirs
+    assert FLAGS.vid_paths
+    view_dirs = FLAGS.view_dirs.split(',')
+    vid_paths = FLAGS.vid_paths.split(',')
+    create_vids(view_dirs, vid_paths, FLAGS.debug_path,
+                FLAGS.debug_lhs_view, FLAGS.debug_rhs_view)
 
-  # Cleanup temp image dirs.
-  for i in view_dirs:
-    shutil.rmtree(i)
+    # Cleanup temp image dirs.
+    for i in view_dirs:
+        shutil.rmtree(i)
+
 
 if __name__ == '__main__':
-  main()
+    main()

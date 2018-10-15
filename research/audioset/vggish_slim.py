@@ -31,7 +31,7 @@ https://github.com/tensorflow/models/blob/master/research/slim/nets/vgg.py
 """
 
 import tensorflow as tf
-from . import vggish_params as params
+from research.audioset import vggish_params as params
 
 slim = tf.contrib.slim
 

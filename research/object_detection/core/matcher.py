@@ -172,7 +172,8 @@ class Match(object):
         return self._reshape_and_cast(
             self._gather_op(self._match_results, self.matched_column_indices()))
 
-    def _reshape_and_cast(self, t):
+    @staticmethod
+    def _reshape_and_cast(t):
         return tf.cast(tf.reshape(t, [-1]), tf.int32)
 
     def gather_based_on_match(self, input_tensor, unmatched_value,
@@ -235,7 +236,7 @@ class Matcher(object):
     Returns:
       A Match object with the results of matching.
     """
-        with tf.name_scope(scope, 'Match') as scope:
+        with tf.name_scope(scope, 'Match') as _:
             if valid_rows is None:
                 valid_rows = tf.ones(tf.shape(similarity_matrix)[0], dtype=tf.bool)
             return Match(self._match(similarity_matrix, valid_rows),

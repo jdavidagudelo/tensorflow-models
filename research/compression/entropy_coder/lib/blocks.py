@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from block_base import *
-from block_util import *
-from blocks_binarizer import *
-from blocks_entropy_coding import *
-from blocks_lstm import *
-from blocks_masked_conv2d import *
-from blocks_masked_conv2d_lstm import *
-from blocks_operator import *
-from blocks_std import *
+from research.compression.entropy_coder.lib.block_base import *
+from research.compression.entropy_coder.lib.block_util import *
+from research.compression.entropy_coder.lib.blocks_binarizer import *
+from research.compression.entropy_coder.lib.blocks_entropy_coding import *
+from research.compression.entropy_coder.lib.blocks_lstm import *
+from research.compression.entropy_coder.lib.blocks_masked_conv2d import *
+from research.compression.entropy_coder.lib.blocks_masked_conv2d_lstm import *
+from research.compression.entropy_coder.lib.blocks_operator import *
+from research.compression.entropy_coder.lib.blocks_std import *

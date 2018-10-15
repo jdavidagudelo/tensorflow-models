@@ -188,6 +188,14 @@ class MPQItemContainer(object):
         self.score = score
         self.extra_data = extra_data
 
+    def __lt__(self, other):
+        assert isinstance(other, type(self))
+        return self.score < other.score
+
+    def __gt__(self, other):
+        assert isinstance(other, type(self))
+        return self.score > other.score
+
     def __cmp__(self, other):
         assert isinstance(other, type(self))
         return self.score > other.score
@@ -379,7 +387,7 @@ class RouletteWheel(object):
 
         if save_file is not None and tf.gfile.Exists(save_file):
             # Load from disk.
-            with tf.gfile.OpenFast(save_file, 'r') as f:
+            with tf.gfile.Open(save_file, 'rb') as f:
                 count = 0
                 while 1:
                     try:
@@ -551,7 +559,7 @@ class RouletteWheel(object):
         if log_info:
             logging.info('Saving %d new samples to disk.',
                          len(self.save_to_disk_buffer))
-        with tf.gfile.OpenFast(self.save_file, 'a') as f:
+        with tf.gfile.Open(self.save_file, 'ab') as f:
             for entry in self.save_to_disk_buffer:
                 pickle.dump(entry, f)
         # Clear the buffer.

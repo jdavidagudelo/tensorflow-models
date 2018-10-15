@@ -17,18 +17,18 @@ from builtins import range
 
 import numpy as np
 import tensorflow as tf
-# import moviepy.editor as mpy
-import time, os, traceback, multiprocessing, portalocker, sys
+import sys
 
-import envwrap
-import util
-import valuerl, worldmodel
-from config import config
+from research.steve import envwrap
+from research.steve import util
+from research.steve import valuerl, worldmodel
+from research.steve.config import config
 
 MODEL_NAME = config["name"]
-LOG_PATH = util.create_directory("output/" + config["env"] + "/" + MODEL_NAME + "/" + config["log_path"]) + "/" + MODEL_NAME
-LOAD_PATH =    util.create_directory("output/" + config["env"] + "/" + MODEL_NAME + "/" + config["save_model_path"])
-OBS_DIM =   np.prod(config["obs_dims"])
+LOG_PATH = util.create_directory(
+    "output/" + config["env"] + "/" + MODEL_NAME + "/" + config["log_path"]) + "/" + MODEL_NAME
+LOAD_PATH = util.create_directory("output/" + config["env"] + "/" + MODEL_NAME + "/" + config["save_model_path"])
+OBS_DIM = np.prod(config["obs_dims"])
 HIDDEN_DIM = config["hidden_dim"]
 ACTION_DIM = config["action_dim"]
 MAX_FRAMES = config["max_frames"]
@@ -51,7 +51,8 @@ if MODEL_AUGMENTED: MODEL_BAYESIAN_CONFIG = config["model_config"]["bayesian"]
 FILENAME = sys.argv[3]
 
 if __name__ == '__main__':
-    oprl = valuerl.ValueRL(MODEL_NAME, ALGO, OBS_DIM, ACTION_DIM, HIDDEN_DIM, REWARD_SCALE, DISCOUNT, POLICY_BAYESIAN_CONFIG, AUX_CONFIG, DDPG_EXPLORE_CHANCE)
+    oprl = valuerl.ValueRL(MODEL_NAME, ALGO, OBS_DIM, ACTION_DIM, HIDDEN_DIM, REWARD_SCALE, DISCOUNT,
+                           POLICY_BAYESIAN_CONFIG, AUX_CONFIG, DDPG_EXPLORE_CHANCE)
 
     obs_loader = tf.placeholder(tf.float32, [1, OBS_DIM])
     policy_actions, _ = oprl.build_evalution_graph(obs_loader, mode="exploit")
@@ -60,8 +61,10 @@ if __name__ == '__main__':
         next_obs_loader = tf.placeholder(tf.float32, [1, OBS_DIM])
         reward_loader = tf.placeholder(tf.float32, [1])
         done_loader = tf.placeholder(tf.float32, [1])
-        worldmodel = worldmodel.DeterministicWorldModel(MODEL_NAME, OBS_DIM, ACTION_DIM, HIDDEN_DIM, REWARD_SCALE, DISCOUNT, MODEL_BAYESIAN_CONFIG)
-        _, _, _, _, _, confidence, _ = oprl.build_Q_expansion_graph(next_obs_loader, reward_loader, done_loader, worldmodel, rollout_len=3, model_ensembling=True)
+        worldmodel = worldmodel.DeterministicWorldModel(MODEL_NAME, OBS_DIM, ACTION_DIM, HIDDEN_DIM, REWARD_SCALE,
+                                                        DISCOUNT, MODEL_BAYESIAN_CONFIG)
+        _, _, _, _, _, confidence, _ = oprl.build_Q_expansion_graph(next_obs_loader, reward_loader, done_loader,
+                                                                    worldmodel, rollout_len=3, model_ensembling=True)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -86,13 +89,13 @@ if __name__ == '__main__':
             obs, _reward, done, reset = env.step(action)
 
             if MODEL_AUGMENTED:
-                _confidences = sess.run(confidence, feed_dict={next_obs_loader: np.expand_dims(obs,0),
-                                                               reward_loader: np.expand_dims(_reward,0),
-                                                               done_loader: np.expand_dims(done,0)})
+                _confidences = sess.run(confidence, feed_dict={next_obs_loader: np.expand_dims(obs, 0),
+                                                               reward_loader: np.expand_dims(_reward, 0),
+                                                               done_loader: np.expand_dims(done, 0)})
                 # print "%.02f %.02f %.02f %.02f" % tuple(_confidences[0,0])
                 for h in range(4):
-                    bucket = int((_confidences[0,0,h]-1e-5)*10)
-                    hist[h,bucket] += 1
+                    bucket = int((_confidences[0, 0, h] - 1e-5) * 10)
+                    hist[h, bucket] += 1
 
             reward += _reward
             ts += 1
@@ -101,7 +104,5 @@ if __name__ == '__main__':
     hist /= np.sum(hist, axis=1, keepdims=True)
     for row in reversed(hist.T): print(' '.join(["%.02f"] * 4) % tuple(row))
 
-    #clip = mpy.ImageSequenceClip(rgb_frames, fps=100)
-    #clip.write_videofile(FILENAME + "/movie.mp4")
-
-
+    # clip = mpy.ImageSequenceClip(rgb_frames, fps=100)
+    # clip.write_videofile(FILENAME + "/movie.mp4")

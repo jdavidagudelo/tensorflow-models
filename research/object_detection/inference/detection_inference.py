@@ -116,8 +116,7 @@ def infer_detections_and_add_to_example(
     (serialized_example, detected_boxes, detected_scores,
      detected_classes) = tf.get_default_session().run([
         serialized_example_tensor, detected_boxes_tensor, detected_scores_tensor,
-        detected_labels_tensor
-    ])
+        detected_labels_tensor])
     detected_boxes = detected_boxes.T
 
     tf_example.ParseFromString(serialized_example)

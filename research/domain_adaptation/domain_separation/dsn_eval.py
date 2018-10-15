@@ -22,9 +22,9 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-from domain_adaptation.datasets import dataset_factory
-from domain_adaptation.domain_separation import losses
-from domain_adaptation.domain_separation import models
+from research.domain_adaptation.datasets import dataset_factory
+from research.domain_adaptation.domain_separation import losses
+from research.domain_adaptation.domain_separation import models
 
 slim = tf.contrib.slim
 
@@ -65,97 +65,97 @@ tf.app.flags.DEFINE_bool('use_logging', False, 'Debugging messages.')
 
 
 def quaternion_metric(predictions, labels):
-  params = {'batch_size': FLAGS.batch_size, 'use_logging': False}
-  logcost = losses.log_quaternion_loss_batch(predictions, labels, params)
-  return slim.metrics.streaming_mean(logcost)
+    params = {'batch_size': FLAGS.batch_size, 'use_logging': False}
+    logcost = losses.log_quaternion_loss_batch(predictions, labels, params)
+    return slim.metrics.streaming_mean(logcost)
 
 
 def angle_diff(true_q, pred_q):
-  angles = 2 * (
-      180.0 /
-      np.pi) * np.arccos(np.abs(np.sum(np.multiply(pred_q, true_q), axis=1)))
-  return angles
+    angles = 2 * (
+            180.0 /
+            np.pi) * np.arccos(np.abs(np.sum(np.multiply(pred_q, true_q), axis=1)))
+    return angles
 
 
 def provide_batch_fn():
-  """ The provide_batch function to use. """
-  return dataset_factory.provide_batch
+    """ The provide_batch function to use. """
+    return dataset_factory.provide_batch
 
 
 def main(_):
-  g = tf.Graph()
-  with g.as_default():
-    # Load the data.
-    images, labels = provide_batch_fn()(
-        FLAGS.dataset, FLAGS.split, FLAGS.dataset_dir, 4, FLAGS.batch_size, 4)
+    g = tf.Graph()
+    with g.as_default():
+        # Load the data.
+        images, labels = provide_batch_fn()(
+            FLAGS.dataset, FLAGS.split, FLAGS.dataset_dir, 4, FLAGS.batch_size, 4)
 
-    num_classes = labels['classes'].get_shape().as_list()[1]
+        num_classes = labels['classes'].get_shape().as_list()[1]
 
-    tf.summary.image('eval_images', images, max_outputs=3)
+        tf.summary.image('eval_images', images, max_outputs=3)
 
-    # Define the model:
-    with tf.variable_scope('towers'):
-      basic_tower = getattr(models, FLAGS.basic_tower)
-      predictions, endpoints = basic_tower(
-          images,
-          num_classes=num_classes,
-          is_training=False,
-          batch_norm_params=None)
-    metric_names_to_values = {}
+        # Define the model:
+        with tf.variable_scope('towers'):
+            basic_tower = getattr(models, FLAGS.basic_tower)
+            predictions, endpoints = basic_tower(
+                images,
+                num_classes=num_classes,
+                is_training=False,
+                batch_norm_params=None)
+        metric_names_to_values = {}
 
-    # Define the metrics:
-    if 'quaternions' in labels:  # Also have to evaluate pose estimation!
-      quaternion_loss = quaternion_metric(labels['quaternions'],
-                                          endpoints['quaternion_pred'])
+        # Define the metrics:
+        if 'quaternions' in labels:  # Also have to evaluate pose estimation!
+            quaternion_loss = quaternion_metric(labels['quaternions'],
+                                                endpoints['quaternion_pred'])
 
-      angle_errors, = tf.py_func(
-          angle_diff, [labels['quaternions'], endpoints['quaternion_pred']],
-          [tf.float32])
+            angle_errors, = tf.py_func(
+                angle_diff, [labels['quaternions'], endpoints['quaternion_pred']],
+                [tf.float32])
 
-      metric_names_to_values[
-          'Angular mean error'] = slim.metrics.streaming_mean(angle_errors)
-      metric_names_to_values['Quaternion Loss'] = quaternion_loss
+            metric_names_to_values[
+                'Angular mean error'] = slim.metrics.streaming_mean(angle_errors)
+            metric_names_to_values['Quaternion Loss'] = quaternion_loss
 
-    accuracy = tf.contrib.metrics.streaming_accuracy(
-        tf.argmax(predictions, 1), tf.argmax(labels['classes'], 1))
+        accuracy = tf.contrib.metrics.streaming_accuracy(
+            tf.argmax(predictions, 1), tf.argmax(labels['classes'], 1))
 
-    predictions = tf.argmax(predictions, 1)
-    labels = tf.argmax(labels['classes'], 1)
-    metric_names_to_values['Accuracy'] = accuracy
+        predictions = tf.argmax(predictions, 1)
+        labels = tf.argmax(labels['classes'], 1)
+        metric_names_to_values['Accuracy'] = accuracy
 
-    if FLAGS.enable_precision_recall:
-      for i in xrange(num_classes):
-        index_map = tf.one_hot(i, depth=num_classes)
-        name = 'PR/Precision_{}'.format(i)
-        metric_names_to_values[name] = slim.metrics.streaming_precision(
-            tf.gather(index_map, predictions), tf.gather(index_map, labels))
-        name = 'PR/Recall_{}'.format(i)
-        metric_names_to_values[name] = slim.metrics.streaming_recall(
-            tf.gather(index_map, predictions), tf.gather(index_map, labels))
+        if FLAGS.enable_precision_recall:
+            for i in xrange(num_classes):
+                index_map = tf.one_hot(i, depth=num_classes)
+                name = 'PR/Precision_{}'.format(i)
+                metric_names_to_values[name] = slim.metrics.streaming_precision(
+                    tf.gather(index_map, predictions), tf.gather(index_map, labels))
+                name = 'PR/Recall_{}'.format(i)
+                metric_names_to_values[name] = slim.metrics.streaming_recall(
+                    tf.gather(index_map, predictions), tf.gather(index_map, labels))
 
-    names_to_values, names_to_updates = slim.metrics.aggregate_metric_map(
-        metric_names_to_values)
+        names_to_values, names_to_updates = slim.metrics.aggregate_metric_map(
+            metric_names_to_values)
 
-    # Create the summary ops such that they also print out to std output:
-    summary_ops = []
-    for metric_name, metric_value in names_to_values.iteritems():
-      op = tf.summary.scalar(metric_name, metric_value)
-      op = tf.Print(op, [metric_value], metric_name)
-      summary_ops.append(op)
+        # Create the summary ops such that they also print out to std output:
+        summary_ops = []
+        for metric_name, metric_value in names_to_values.iteritems():
+            op = tf.summary.scalar(metric_name, metric_value)
+            op = tf.Print(op, [metric_value], metric_name)
+            summary_ops.append(op)
 
-    # This ensures that we make a single pass over all of the data.
-    num_batches = math.ceil(FLAGS.num_examples / float(FLAGS.batch_size))
+        # This ensures that we make a single pass over all of the data.
+        num_batches = math.ceil(FLAGS.num_examples / float(FLAGS.batch_size))
 
-    # Setup the global step.
-    slim.get_or_create_global_step()
-    slim.evaluation.evaluation_loop(
-        FLAGS.master,
-        checkpoint_dir=FLAGS.checkpoint_dir,
-        logdir=FLAGS.eval_dir,
-        num_evals=num_batches,
-        eval_op=names_to_updates.values(),
-        summary_op=tf.summary.merge(summary_ops))
+        # Setup the global step.
+        slim.get_or_create_global_step()
+        slim.evaluation.evaluation_loop(
+            FLAGS.master,
+            checkpoint_dir=FLAGS.checkpoint_dir,
+            logdir=FLAGS.eval_dir,
+            num_evals=num_batches,
+            eval_op=names_to_updates.values(),
+            summary_op=tf.summary.merge(summary_ops))
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

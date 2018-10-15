@@ -8,7 +8,7 @@ from math import log
 import numpy as np
 import tensorflow as tf
 
-from . import reward  # brain coder
+from research.brain_coder.common import reward  # brain coder
 
 
 class RewardTest(tf.test.TestCase):

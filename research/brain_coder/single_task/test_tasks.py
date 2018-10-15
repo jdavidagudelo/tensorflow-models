@@ -5,8 +5,8 @@ from __future__ import print_function
 """Tasks that test correctness of algorithms."""
 
 from six.moves import xrange
-from ..common import reward as reward_lib  # brain coder
-from ..single_task import misc  # brain coder
+from research.brain_coder.common import reward as reward_lib  # brain coder
+from research.brain_coder.single_task import misc  # brain coder
 
 
 class BasicTaskManager(object):

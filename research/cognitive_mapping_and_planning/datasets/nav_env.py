@@ -38,13 +38,13 @@ import re
 import matplotlib.pyplot as plt
 
 import logging
-from ..src import file_utils as fu
-from ..src import utils as utils
-from ..src import graph_utils as gu
-from ..src import map_utils as mu
-from ..src import depth_utils as du
-from ..render import swiftshader_renderer as sru
-from ..render.swiftshader_renderer import SwiftshaderRenderer
+from research.cognitive_mapping_and_planning.src import file_utils as fu
+from research.cognitive_mapping_and_planning.src import utils as utils
+from research.cognitive_mapping_and_planning.src import graph_utils as gu
+from research.cognitive_mapping_and_planning.src import map_utils as mu
+from research.cognitive_mapping_and_planning.src import depth_utils as du
+from research.cognitive_mapping_and_planning.render import swiftshader_renderer as sru
+from research.cognitive_mapping_and_planning.render.swiftshader_renderer import SwiftshaderRenderer
 import cv2
 
 label_nodes_with_class = gu.label_nodes_with_class

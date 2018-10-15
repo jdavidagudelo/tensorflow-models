@@ -26,47 +26,46 @@ import collections
 
 import tensorflow as tf
 
-from differential_privacy.dp_sgd.dp_optimizer import utils
-
+from research.differential_privacy.dp_sgd.dp_optimizer import utils
 
 ClipOption = collections.namedtuple("ClipOption",
                                     ["l2norm_bound", "clip"])
 
 
 class AmortizedGaussianSanitizer(object):
-  """Sanitizer with Gaussian noise and amoritzed privacy spending accounting.
+    """Sanitizer with Gaussian noise and amoritzed privacy spending accounting.
 
   This sanitizes a tensor by first clipping the tensor, summing the tensor
   and then adding appropriate amount of noise. It also uses an amortized
   accountant to keep track of privacy spending.
   """
 
-  def __init__(self, accountant, default_option):
-    """Construct an AmortizedGaussianSanitizer.
+    def __init__(self, accountant, default_option):
+        """Construct an AmortizedGaussianSanitizer.
 
     Args:
       accountant: the privacy accountant. Expect an amortized one.
       default_option: the default ClipOptoin.
     """
 
-    self._accountant = accountant
-    self._default_option = default_option
-    self._options = {}
+        self._accountant = accountant
+        self._default_option = default_option
+        self._options = {}
 
-  def set_option(self, tensor_name, option):
-    """Set options for an individual tensor.
+    def set_option(self, tensor_name, option):
+        """Set options for an individual tensor.
 
     Args:
       tensor_name: the name of the tensor.
       option: clip option.
     """
 
-    self._options[tensor_name] = option
+        self._options[tensor_name] = option
 
-  def sanitize(self, x, eps_delta, sigma=None,
-               option=ClipOption(None, None), tensor_name=None,
-               num_examples=None, add_noise=True):
-    """Sanitize the given tensor.
+    def sanitize(self, x, eps_delta, sigma=None,
+                 option=ClipOption(None, None), tensor_name=None,
+                 num_examples=None, add_noise=True):
+        """Sanitize the given tensor.
 
     This santize a given tensor by first applying l2 norm clipping and then
     adding Gaussian noise. It calls the privacy accountant for updating the
@@ -87,37 +86,37 @@ class AmortizedGaussianSanitizer(object):
       spending.
     """
 
-    if sigma is None:
-      # pylint: disable=unpacking-non-sequence
-      eps, delta = eps_delta
-      with tf.control_dependencies(
-          [tf.Assert(tf.greater(eps, 0),
-                     ["eps needs to be greater than 0"]),
-           tf.Assert(tf.greater(delta, 0),
-                     ["delta needs to be greater than 0"])]):
-        # The following formula is taken from
-        #   Dwork and Roth, The Algorithmic Foundations of Differential
-        #   Privacy, Appendix A.
-        #   http://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf
-        sigma = tf.sqrt(2.0 * tf.log(1.25 / delta)) / eps
+        if sigma is None:
+            # pylint: disable=unpacking-non-sequence
+            eps, delta = eps_delta
+            with tf.control_dependencies(
+                    [tf.Assert(tf.greater(eps, 0),
+                               ["eps needs to be greater than 0"]),
+                     tf.Assert(tf.greater(delta, 0),
+                               ["delta needs to be greater than 0"])]):
+                # The following formula is taken from
+                #   Dwork and Roth, The Algorithmic Foundations of Differential
+                #   Privacy, Appendix A.
+                #   http://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf
+                sigma = tf.sqrt(2.0 * tf.log(1.25 / delta)) / eps
 
-    l2norm_bound, clip = option
-    if l2norm_bound is None:
-      l2norm_bound, clip = self._default_option
-      if ((tensor_name is not None) and
-          (tensor_name in self._options)):
-        l2norm_bound, clip = self._options[tensor_name]
-    if clip:
-      x = utils.BatchClipByL2norm(x, l2norm_bound)
+        l2norm_bound, clip = option
+        if l2norm_bound is None:
+            l2norm_bound, clip = self._default_option
+            if ((tensor_name is not None) and
+                    (tensor_name in self._options)):
+                l2norm_bound, clip = self._options[tensor_name]
+        if clip:
+            x = utils.BatchClipByL2norm(x, l2norm_bound)
 
-    if add_noise:
-      if num_examples is None:
-        num_examples = tf.slice(tf.shape(x), [0], [1])
-      privacy_accum_op = self._accountant.accumulate_privacy_spending(
-          eps_delta, sigma, num_examples)
-      with tf.control_dependencies([privacy_accum_op]):
-        saned_x = utils.AddGaussianNoise(tf.reduce_sum(x, 0),
-                                         sigma * l2norm_bound)
-    else:
-      saned_x = tf.reduce_sum(x, 0)
-    return saned_x
+        if add_noise:
+            if num_examples is None:
+                num_examples = tf.slice(tf.shape(x), [0], [1])
+            privacy_accum_op = self._accountant.accumulate_privacy_spending(
+                eps_delta, sigma, num_examples)
+            with tf.control_dependencies([privacy_accum_op]):
+                saned_x = utils.AddGaussianNoise(tf.reduce_sum(x, 0),
+                                                 sigma * l2norm_bound)
+        else:
+            saned_x = tf.reduce_sum(x, 0)
+        return saned_x

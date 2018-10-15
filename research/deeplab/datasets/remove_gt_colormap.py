@@ -40,7 +40,7 @@ tf.app.flags.DEFINE_string('output_dir',
 
 
 def _remove_colormap(filename):
-  """Removes the color map from the annotation.
+    """Removes the color map from the annotation.
 
   Args:
     filename: Ground truth annotation filename.
@@ -48,36 +48,36 @@ def _remove_colormap(filename):
   Returns:
     Annotation without color map.
   """
-  return np.array(Image.open(filename))
+    return np.array(Image.open(filename))
 
 
 def _save_annotation(annotation, filename):
-  """Saves the annotation as png file.
+    """Saves the annotation as png file.
 
   Args:
     annotation: Segmentation annotation.
     filename: Output filename.
   """
-  pil_image = Image.fromarray(annotation.astype(dtype=np.uint8))
-  with tf.gfile.Open(filename, mode='w') as f:
-    pil_image.save(f, 'PNG')
+    pil_image = Image.fromarray(annotation.astype(dtype=np.uint8))
+    with tf.gfile.Open(filename, mode='w') as f:
+        pil_image.save(f, 'PNG')
 
 
 def main(unused_argv):
-  # Create the output directory if not exists.
-  if not tf.gfile.IsDirectory(FLAGS.output_dir):
-    tf.gfile.MakeDirs(FLAGS.output_dir)
+    # Create the output directory if not exists.
+    if not tf.gfile.IsDirectory(FLAGS.output_dir):
+        tf.gfile.MakeDirs(FLAGS.output_dir)
 
-  annotations = glob.glob(os.path.join(FLAGS.original_gt_folder,
-                                       '*.' + FLAGS.segmentation_format))
-  for annotation in annotations:
-    raw_annotation = _remove_colormap(annotation)
-    filename = os.path.splitext(os.path.basename(annotation))[0]
-    _save_annotation(raw_annotation,
-                     os.path.join(
-                         FLAGS.output_dir,
-                         filename + '.' + FLAGS.segmentation_format))
+    annotations = glob.glob(os.path.join(FLAGS.original_gt_folder,
+                                         '*.' + FLAGS.segmentation_format))
+    for annotation in annotations:
+        raw_annotation = _remove_colormap(annotation)
+        filename = os.path.splitext(os.path.basename(annotation))[0]
+        _save_annotation(raw_annotation,
+                         os.path.join(
+                             FLAGS.output_dir,
+                             filename + '.' + FLAGS.segmentation_format))
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

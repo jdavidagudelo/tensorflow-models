@@ -23,7 +23,6 @@ import tensorflow as tf
 from tensorflow.python.platform import flags
 from tensorflow.python.platform import gfile
 
-
 FLAGS = flags.FLAGS
 
 # Original image dimensions
@@ -40,7 +39,7 @@ STATE_DIM = 5
 
 
 def build_tfrecord_input(training=True):
-  """Create input tfrecord tensors.
+    """Create input tfrecord tensors.
 
   Args:
     training: training or validation data.
@@ -51,69 +50,68 @@ def build_tfrecord_input(training=True):
   Raises:
     RuntimeError: if no files found.
   """
-  filenames = gfile.Glob(os.path.join(FLAGS.data_dir, '*'))
-  if not filenames:
-    raise RuntimeError('No data files found.')
-  index = int(np.floor(FLAGS.train_val_split * len(filenames)))
-  if training:
-    filenames = filenames[:index]
-  else:
-    filenames = filenames[index:]
-  filename_queue = tf.train.string_input_producer(filenames, shuffle=True)
-  reader = tf.TFRecordReader()
-  _, serialized_example = reader.read(filename_queue)
-
-  image_seq, state_seq, action_seq = [], [], []
-
-  for i in range(FLAGS.sequence_length):
-    image_name = 'move/' + str(i) + '/image/encoded'
-    action_name = 'move/' + str(i) + '/commanded_pose/vec_pitch_yaw'
-    state_name = 'move/' + str(i) + '/endeffector/vec_pitch_yaw'
-    if FLAGS.use_state:
-      features = {image_name: tf.FixedLenFeature([1], tf.string),
-                  action_name: tf.FixedLenFeature([STATE_DIM], tf.float32),
-                  state_name: tf.FixedLenFeature([STATE_DIM], tf.float32)}
+    filenames = gfile.Glob(os.path.join(FLAGS.data_dir, '*'))
+    if not filenames:
+        raise RuntimeError('No data files found.')
+    index = int(np.floor(FLAGS.train_val_split * len(filenames)))
+    if training:
+        filenames = filenames[:index]
     else:
-      features = {image_name: tf.FixedLenFeature([1], tf.string)}
-    features = tf.parse_single_example(serialized_example, features=features)
+        filenames = filenames[index:]
+    filename_queue = tf.train.string_input_producer(filenames, shuffle=True)
+    reader = tf.TFRecordReader()
+    _, serialized_example = reader.read(filename_queue)
 
-    image_buffer = tf.reshape(features[image_name], shape=[])
-    image = tf.image.decode_jpeg(image_buffer, channels=COLOR_CHAN)
-    image.set_shape([ORIGINAL_HEIGHT, ORIGINAL_WIDTH, COLOR_CHAN])
+    image_seq, state_seq, action_seq = [], [], []
 
-    if IMG_HEIGHT != IMG_WIDTH:
-      raise ValueError('Unequal height and width unsupported')
+    for i in range(FLAGS.sequence_length):
+        image_name = 'move/' + str(i) + '/image/encoded'
+        action_name = 'move/' + str(i) + '/commanded_pose/vec_pitch_yaw'
+        state_name = 'move/' + str(i) + '/endeffector/vec_pitch_yaw'
+        if FLAGS.use_state:
+            features = {image_name: tf.FixedLenFeature([1], tf.string),
+                        action_name: tf.FixedLenFeature([STATE_DIM], tf.float32),
+                        state_name: tf.FixedLenFeature([STATE_DIM], tf.float32)}
+        else:
+            features = {image_name: tf.FixedLenFeature([1], tf.string)}
+        features = tf.parse_single_example(serialized_example, features=features)
 
-    crop_size = min(ORIGINAL_HEIGHT, ORIGINAL_WIDTH)
-    image = tf.image.resize_image_with_crop_or_pad(image, crop_size, crop_size)
-    image = tf.reshape(image, [1, crop_size, crop_size, COLOR_CHAN])
-    image = tf.image.resize_bicubic(image, [IMG_HEIGHT, IMG_WIDTH])
-    image = tf.cast(image, tf.float32) / 255.0
-    image_seq.append(image)
+        image_buffer = tf.reshape(features[image_name], shape=[])
+        image = tf.image.decode_jpeg(image_buffer, channels=COLOR_CHAN)
+        image.set_shape([ORIGINAL_HEIGHT, ORIGINAL_WIDTH, COLOR_CHAN])
+
+        if IMG_HEIGHT != IMG_WIDTH:
+            raise ValueError('Unequal height and width unsupported')
+
+        crop_size = min(ORIGINAL_HEIGHT, ORIGINAL_WIDTH)
+        image = tf.image.resize_image_with_crop_or_pad(image, crop_size, crop_size)
+        image = tf.reshape(image, [1, crop_size, crop_size, COLOR_CHAN])
+        image = tf.image.resize_bicubic(image, [IMG_HEIGHT, IMG_WIDTH])
+        image = tf.cast(image, tf.float32) / 255.0
+        image_seq.append(image)
+
+        if FLAGS.use_state:
+            state = tf.reshape(features[state_name], shape=[1, STATE_DIM])
+            state_seq.append(state)
+            action = tf.reshape(features[action_name], shape=[1, STATE_DIM])
+            action_seq.append(action)
+
+    image_seq = tf.concat(axis=0, values=image_seq)
 
     if FLAGS.use_state:
-      state = tf.reshape(features[state_name], shape=[1, STATE_DIM])
-      state_seq.append(state)
-      action = tf.reshape(features[action_name], shape=[1, STATE_DIM])
-      action_seq.append(action)
-
-  image_seq = tf.concat(axis=0, values=image_seq)
-
-  if FLAGS.use_state:
-    state_seq = tf.concat(axis=0, values=state_seq)
-    action_seq = tf.concat(axis=0, values=action_seq)
-    [image_batch, action_batch, state_batch] = tf.train.batch(
-        [image_seq, action_seq, state_seq],
-        FLAGS.batch_size,
-        num_threads=FLAGS.batch_size,
-        capacity=100 * FLAGS.batch_size)
-    return image_batch, action_batch, state_batch
-  else:
-    image_batch = tf.train.batch(
-        [image_seq],
-        FLAGS.batch_size,
-        num_threads=FLAGS.batch_size,
-        capacity=100 * FLAGS.batch_size)
-    zeros_batch = tf.zeros([FLAGS.batch_size, FLAGS.sequence_length, STATE_DIM])
-    return image_batch, zeros_batch, zeros_batch
-
+        state_seq = tf.concat(axis=0, values=state_seq)
+        action_seq = tf.concat(axis=0, values=action_seq)
+        [image_batch, action_batch, state_batch] = tf.train.batch(
+            [image_seq, action_seq, state_seq],
+            FLAGS.batch_size,
+            num_threads=FLAGS.batch_size,
+            capacity=100 * FLAGS.batch_size)
+        return image_batch, action_batch, state_batch
+    else:
+        image_batch = tf.train.batch(
+            [image_seq],
+            FLAGS.batch_size,
+            num_threads=FLAGS.batch_size,
+            capacity=100 * FLAGS.batch_size)
+        zeros_batch = tf.zeros([FLAGS.batch_size, FLAGS.sequence_length, STATE_DIM])
+        return image_batch, zeros_batch, zeros_batch

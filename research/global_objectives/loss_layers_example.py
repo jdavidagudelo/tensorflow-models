@@ -25,7 +25,7 @@ from __future__ import print_function
 import numpy as np
 from sklearn.metrics import precision_score
 import tensorflow as tf
-from global_objectives import loss_layers
+from research.global_objectives import loss_layers
 
 # When optimizing using global_objectives, if set to True then the saddle point
 # optimization steps are performed internally by the Tensorflow optimizer,
@@ -49,7 +49,7 @@ EXPERIMENT_DATA_CONFIG = {
 
 
 def create_training_and_eval_data_for_experiment(**data_config):
-  """Creates train and eval data sets.
+    """Creates train and eval data sets.
 
   Note: The synthesized binary-labeled data is a mixture of four Gaussians - two
     positives and two negatives. The centers, variances, and sizes for each of
@@ -71,141 +71,142 @@ def create_training_and_eval_data_for_experiment(**data_config):
     and 'eval_labels'. The data points are two-dimentional floats, and the
     labels are in {0,1}.
   """
-  def data_points(is_positives, index):
-    variance = data_config['positives_variances'
-                           if is_positives else 'negatives_variances'][index]
-    center = data_config['positives_centers'
-                         if is_positives else 'negatives_centers'][index]
-    count = data_config['positives_counts'
-                        if is_positives else 'negatives_counts'][index]
-    return variance*np.random.randn(count, 2) + np.array([center])
 
-  def create_data():
-    return np.concatenate([data_points(False, 0),
-                           data_points(True, 0),
-                           data_points(True, 1),
-                           data_points(False, 1)], axis=0)
+    def data_points(is_positives, index):
+        variance = data_config['positives_variances'
+        if is_positives else 'negatives_variances'][index]
+        center = data_config['positives_centers'
+        if is_positives else 'negatives_centers'][index]
+        count = data_config['positives_counts'
+        if is_positives else 'negatives_counts'][index]
+        return variance * np.random.randn(count, 2) + np.array([center])
 
-  def create_labels():
-    """Creates an array of 0.0 or 1.0 labels for the data_config batches."""
-    return np.array([0.0]*data_config['negatives_counts'][0] +
-                    [1.0]*data_config['positives_counts'][0] +
-                    [1.0]*data_config['positives_counts'][1] +
-                    [0.0]*data_config['negatives_counts'][1])
+    def create_data():
+        return np.concatenate([data_points(False, 0),
+                               data_points(True, 0),
+                               data_points(True, 1),
+                               data_points(False, 1)], axis=0)
 
-  permutation = np.random.permutation(
-      sum(data_config['positives_counts'] + data_config['negatives_counts']))
+    def create_labels():
+        """Creates an array of 0.0 or 1.0 labels for the data_config batches."""
+        return np.array([0.0] * data_config['negatives_counts'][0] +
+                        [1.0] * data_config['positives_counts'][0] +
+                        [1.0] * data_config['positives_counts'][1] +
+                        [0.0] * data_config['negatives_counts'][1])
 
-  train_data = create_data()[permutation, :]
-  eval_data = create_data()[permutation, :]
-  train_labels = create_labels()[permutation]
-  eval_labels = create_labels()[permutation]
+    permutation = np.random.permutation(
+        sum(data_config['positives_counts'] + data_config['negatives_counts']))
 
-  return {
-      'train_data': train_data,
-      'train_labels': train_labels,
-      'eval_data': eval_data,
-      'eval_labels': eval_labels
-  }
+    train_data = create_data()[permutation, :]
+    eval_data = create_data()[permutation, :]
+    train_labels = create_labels()[permutation]
+    eval_labels = create_labels()[permutation]
+
+    return {
+        'train_data': train_data,
+        'train_labels': train_labels,
+        'eval_data': eval_data,
+        'eval_labels': eval_labels
+    }
 
 
 def train_model(data, use_global_objectives):
-  """Trains a linear model for maximal accuracy or precision at given recall."""
+    """Trains a linear model for maximal accuracy or precision at given recall."""
 
-  def precision_at_recall(scores, labels, target_recall):
-    """Computes precision - at target recall - over data."""
-    positive_scores = scores[labels == 1.0]
-    threshold = np.percentile(positive_scores, 100 - target_recall*100)
-    predicted = scores >= threshold
-    return precision_score(labels, predicted)
+    def precision_at_recall(scores, labels, target_recall):
+        """Computes precision - at target recall - over data."""
+        positive_scores = scores[labels == 1.0]
+        threshold = np.percentile(positive_scores, 100 - target_recall * 100)
+        predicted = scores >= threshold
+        return precision_score(labels, predicted)
 
-  w = tf.Variable(tf.constant([-1.0, -1.0], shape=[2, 1]), trainable=True,
-                  name='weights', dtype=tf.float32)
-  b = tf.Variable(tf.zeros([1]), trainable=True, name='biases',
-                  dtype=tf.float32)
+    w = tf.Variable(tf.constant([-1.0, -1.0], shape=[2, 1]), trainable=True,
+                    name='weights', dtype=tf.float32)
+    b = tf.Variable(tf.zeros([1]), trainable=True, name='biases',
+                    dtype=tf.float32)
 
-  logits = tf.matmul(tf.cast(data['train_data'], tf.float32), w) + b
+    logits = tf.matmul(tf.cast(data['train_data'], tf.float32), w) + b
 
-  labels = tf.constant(
-      data['train_labels'],
-      shape=[len(data['train_labels']), 1],
-      dtype=tf.float32)
+    labels = tf.constant(
+        data['train_labels'],
+        shape=[len(data['train_labels']), 1],
+        dtype=tf.float32)
 
-  if use_global_objectives:
-    loss, other_outputs = loss_layers.precision_at_recall_loss(
-        labels, logits,
-        TARGET_RECALL,
-        dual_rate_factor=GO_DUAL_RATE_FACTOR)
-    loss = tf.reduce_mean(loss)
-  else:
-    loss = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits))
+    if use_global_objectives:
+        loss, other_outputs = loss_layers.precision_at_recall_loss(
+            labels, logits,
+            TARGET_RECALL,
+            dual_rate_factor=GO_DUAL_RATE_FACTOR)
+        loss = tf.reduce_mean(loss)
+    else:
+        loss = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits))
 
-  global_step = tf.Variable(0, trainable=False)
+    global_step = tf.Variable(0, trainable=False)
 
-  learning_rate = tf.train.polynomial_decay(
-      LEARNING_RATE,
-      global_step,
-      TRAIN_ITERATIONS, (LEARNING_RATE / TRAIN_ITERATIONS),
-      power=1.0,
-      cycle=False,
-      name='learning_rate')
+    learning_rate = tf.train.polynomial_decay(
+        LEARNING_RATE,
+        global_step,
+        TRAIN_ITERATIONS, (LEARNING_RATE / TRAIN_ITERATIONS),
+        power=1.0,
+        cycle=False,
+        name='learning_rate')
 
-  optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 
-  if (not use_global_objectives) or USE_GO_SADDLE_POINT_OPT:
-    training_op = optimizer.minimize(loss, global_step=global_step)
-  else:
-    lambdas = other_outputs['lambdas']
-    primal_update_op = optimizer.minimize(loss, var_list=[w, b])
-    dual_update_op = optimizer.minimize(
-        loss, global_step=global_step, var_list=[lambdas])
+    if (not use_global_objectives) or USE_GO_SADDLE_POINT_OPT:
+        training_op = optimizer.minimize(loss, global_step=global_step)
+    else:
+        lambdas = other_outputs['lambdas']
+        primal_update_op = optimizer.minimize(loss, var_list=[w, b])
+        dual_update_op = optimizer.minimize(
+            loss, global_step=global_step, var_list=[lambdas])
 
-  # Training loop:
-  with tf.Session() as sess:
-    checkpoint_step = TRAIN_ITERATIONS // NUM_CHECKPOINTS
-    sess.run(tf.global_variables_initializer())
-    step = sess.run(global_step)
+    # Training loop:
+    with tf.Session() as sess:
+        checkpoint_step = TRAIN_ITERATIONS // NUM_CHECKPOINTS
+        sess.run(tf.global_variables_initializer())
+        step = sess.run(global_step)
 
-    while step <= TRAIN_ITERATIONS:
-      if (not use_global_objectives) or USE_GO_SADDLE_POINT_OPT:
-        _, step, loss_value, w_value, b_value = sess.run(
-            [training_op, global_step, loss, w, b])
-      else:
-        _, w_value, b_value = sess.run([primal_update_op, w, b])
-        _, loss_value, step = sess.run([dual_update_op, loss, global_step])
+        while step <= TRAIN_ITERATIONS:
+            if (not use_global_objectives) or USE_GO_SADDLE_POINT_OPT:
+                _, step, loss_value, w_value, b_value = sess.run(
+                    [training_op, global_step, loss, w, b])
+            else:
+                _, w_value, b_value = sess.run([primal_update_op, w, b])
+                _, loss_value, step = sess.run([dual_update_op, loss, global_step])
 
-      if use_global_objectives:
-        go_outputs = sess.run(other_outputs.values())
+            if use_global_objectives:
+                go_outputs = sess.run(other_outputs.values())
 
-      if step % checkpoint_step == 0:
-        precision = precision_at_recall(
-            np.dot(data['train_data'], w_value) + b_value,
-            data['train_labels'], TARGET_RECALL)
+            if step % checkpoint_step == 0:
+                precision = precision_at_recall(
+                    np.dot(data['train_data'], w_value) + b_value,
+                    data['train_labels'], TARGET_RECALL)
 
-        tf.logging.info('Loss = %f Precision = %f', loss_value, precision)
-        if use_global_objectives:
-          for i, output_name in enumerate(other_outputs.keys()):
-            tf.logging.info('\t%s = %f', output_name, go_outputs[i])
+                tf.logging.info('Loss = %f Precision = %f', loss_value, precision)
+                if use_global_objectives:
+                    for i, output_name in enumerate(other_outputs.keys()):
+                        tf.logging.info('\t%s = %f', output_name, go_outputs[i])
 
-    w_value, b_value = sess.run([w, b])
-    return precision_at_recall(np.dot(data['eval_data'], w_value) + b_value,
-                               data['eval_labels'],
-                               TARGET_RECALL)
+        w_value, b_value = sess.run([w, b])
+        return precision_at_recall(np.dot(data['eval_data'], w_value) + b_value,
+                                   data['eval_labels'],
+                                   TARGET_RECALL)
 
 
 def main(unused_argv):
-  del unused_argv
-  experiment_data = create_training_and_eval_data_for_experiment(
-      **EXPERIMENT_DATA_CONFIG)
-  global_objectives_loss_precision = train_model(experiment_data, True)
-  tf.logging.info('global_objectives precision at requested recall is %f',
-                  global_objectives_loss_precision)
-  cross_entropy_loss_precision = train_model(experiment_data, False)
-  tf.logging.info('cross_entropy precision at requested recall is %f',
-                  cross_entropy_loss_precision)
+    del unused_argv
+    experiment_data = create_training_and_eval_data_for_experiment(
+        **EXPERIMENT_DATA_CONFIG)
+    global_objectives_loss_precision = train_model(experiment_data, True)
+    tf.logging.info('global_objectives precision at requested recall is %f',
+                    global_objectives_loss_precision)
+    cross_entropy_loss_precision = train_model(experiment_data, False)
+    tf.logging.info('cross_entropy precision at requested recall is %f',
+                    cross_entropy_loss_precision)
 
 
 if __name__ == '__main__':
-  tf.logging.set_verbosity(tf.logging.INFO)
-  tf.app.run()
+    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.app.run()

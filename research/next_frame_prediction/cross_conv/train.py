@@ -20,8 +20,8 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-import model as cross_conv_model
-import reader
+from research.next_frame_prediction.cross_conv import model as cross_conv_model
+from research.next_frame_prediction.cross_conv import reader
 
 FLAGS = tf.flags.FLAGS
 tf.flags.DEFINE_string('master', '', 'Session address.')
@@ -44,79 +44,79 @@ slim = tf.contrib.slim
 
 
 def _Train():
-  params = dict()
-  params['batch_size'] = FLAGS.batch_size
-  params['seq_len'] = FLAGS.sequence_length
-  params['image_size'] = FLAGS.image_size
-  params['is_training'] = True
-  params['norm_scale'] = FLAGS.norm_scale
-  params['scale'] = FLAGS.scale
-  params['learning_rate'] = FLAGS.learning_rate
-  params['l2_loss'] = FLAGS.l2_loss
-  params['reconstr_loss'] = FLAGS.reconstr_loss
-  params['kl_loss'] = FLAGS.kl_loss
+    params = dict()
+    params['batch_size'] = FLAGS.batch_size
+    params['seq_len'] = FLAGS.sequence_length
+    params['image_size'] = FLAGS.image_size
+    params['is_training'] = True
+    params['norm_scale'] = FLAGS.norm_scale
+    params['scale'] = FLAGS.scale
+    params['learning_rate'] = FLAGS.learning_rate
+    params['l2_loss'] = FLAGS.l2_loss
+    params['reconstr_loss'] = FLAGS.reconstr_loss
+    params['kl_loss'] = FLAGS.kl_loss
 
-  train_dir = os.path.join(FLAGS.log_root, 'train')
+    train_dir = os.path.join(FLAGS.log_root, 'train')
 
-  images = reader.ReadInput(FLAGS.data_filepattern, shuffle=True, params=params)
-  images *= params['scale']
-  # Increase the value makes training much faster.
-  image_diff_list = reader.SequenceToImageAndDiff(images)
-  model = cross_conv_model.CrossConvModel(image_diff_list, params)
-  model.Build()
-  tf.contrib.tfprof.model_analyzer.print_model_analysis(tf.get_default_graph())
+    images = reader.ReadInput(FLAGS.data_filepattern, shuffle=True, params=params)
+    images *= params['scale']
+    # Increase the value makes training much faster.
+    image_diff_list = reader.SequenceToImageAndDiff(images)
+    model = cross_conv_model.CrossConvModel(image_diff_list, params)
+    model.Build()
+    tf.contrib.tfprof.model_analyzer.print_model_analysis(tf.get_default_graph())
 
-  summary_writer = tf.summary.FileWriter(train_dir)
-  sv = tf.train.Supervisor(logdir=FLAGS.log_root,
-                           summary_op=None,
-                           is_chief=True,
-                           save_model_secs=60,
-                           global_step=model.global_step)
-  sess = sv.prepare_or_wait_for_session(
-      FLAGS.master, config=tf.ConfigProto(allow_soft_placement=True))
+    summary_writer = tf.summary.FileWriter(train_dir)
+    sv = tf.train.Supervisor(logdir=FLAGS.log_root,
+                             summary_op=None,
+                             is_chief=True,
+                             save_model_secs=60,
+                             global_step=model.global_step)
+    sess = sv.prepare_or_wait_for_session(
+        FLAGS.master, config=tf.ConfigProto(allow_soft_placement=True))
 
-  total_loss = 0.0
-  step = 0
-  sample_z_mean = np.zeros(model.z_mean.get_shape().as_list())
-  sample_z_stddev_log = np.zeros(model.z_stddev_log.get_shape().as_list())
-  sample_step = 0
+    total_loss = 0.0
+    step = 0
+    sample_z_mean = np.zeros(model.z_mean.get_shape().as_list())
+    sample_z_stddev_log = np.zeros(model.z_stddev_log.get_shape().as_list())
+    sample_step = 0
 
-  while True:
-    _, loss_val, total_steps, summaries, z_mean, z_stddev_log = sess.run(
-        [model.train_op, model.loss, model.global_step,
-         model.summary_op,
-         model.z_mean, model.z_stddev_log])
+    while True:
+        _, loss_val, total_steps, summaries, z_mean, z_stddev_log = sess.run(
+            [model.train_op, model.loss, model.global_step,
+             model.summary_op,
+             model.z_mean, model.z_stddev_log])
 
-    sample_z_mean += z_mean
-    sample_z_stddev_log += z_stddev_log
-    total_loss += loss_val
-    step += 1
-    sample_step += 1
+        sample_z_mean += z_mean
+        sample_z_stddev_log += z_stddev_log
+        total_loss += loss_val
+        step += 1
+        sample_step += 1
 
-    if step % 100 == 0:
-      summary_writer.add_summary(summaries, total_steps)
-      sys.stderr.write('step: %d, loss: %f\n' %
-                       (total_steps, total_loss / step))
-      total_loss = 0.0
-      step = 0
+        if step % 100 == 0:
+            summary_writer.add_summary(summaries, total_steps)
+            sys.stderr.write('step: %d, loss: %f\n' %
+                             (total_steps, total_loss / step))
+            total_loss = 0.0
+            step = 0
 
-    # Sampled z is used for eval.
-    # It seems 10k is better than 1k. Maybe try 100k next?
-    if sample_step % 10000 == 0:
-      with tf.gfile.Open(os.path.join(FLAGS.log_root, 'z_mean.npy'), 'w') as f:
-        np.save(f, sample_z_mean / sample_step)
-      with tf.gfile.Open(
-          os.path.join(FLAGS.log_root, 'z_stddev_log.npy'), 'w') as f:
-        np.save(f, sample_z_stddev_log / sample_step)
-      sample_z_mean = np.zeros(model.z_mean.get_shape().as_list())
-      sample_z_stddev_log = np.zeros(
-          model.z_stddev_log.get_shape().as_list())
-      sample_step = 0
+        # Sampled z is used for eval.
+        # It seems 10k is better than 1k. Maybe try 100k next?
+        if sample_step % 10000 == 0:
+            with tf.gfile.Open(os.path.join(FLAGS.log_root, 'z_mean.npy'), 'w') as f:
+                np.save(f, sample_z_mean / sample_step)
+            with tf.gfile.Open(
+                    os.path.join(FLAGS.log_root, 'z_stddev_log.npy'), 'w') as f:
+                np.save(f, sample_z_stddev_log / sample_step)
+            sample_z_mean = np.zeros(model.z_mean.get_shape().as_list())
+            sample_z_stddev_log = np.zeros(
+                model.z_stddev_log.get_shape().as_list())
+            sample_step = 0
 
 
 def main(_):
-  _Train()
+    _Train()
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

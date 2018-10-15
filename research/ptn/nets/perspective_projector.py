@@ -20,11 +20,11 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from nets import perspective_transform
+from research.ptn.nets import perspective_transform
 
 
 def model(voxels, transform_matrix, params, is_training):
-  """Model transforming the 3D voxels into 2D projections.
+    """Model transforming the 3D voxels into 2D projections.
 
   Args:
     voxels: A tensor of size [batch, depth, height, width, channel]
@@ -38,16 +38,16 @@ def model(voxels, transform_matrix, params, is_training):
     A transformed tensor (tf.float32)
 
   """
-  del is_training  # Doesn't make a difference for projector
-  # Rearrangement (batch, z, y, x, channel) --> (batch, y, z, x, channel).
-  # By the standard, projection happens along z-axis but the voxels
-  # are stored in a different way. So we need to switch the y and z
-  # axis for transformation operation.
-  voxels = tf.transpose(voxels, [0, 2, 1, 3, 4])
-  z_near = params.focal_length
-  z_far = params.focal_length + params.focal_range
-  transformed_voxels = perspective_transform.transformer(
-      voxels, transform_matrix, [params.vox_size] * 3, z_near, z_far)
-  views = tf.reduce_max(transformed_voxels, [1])
-  views = tf.reverse(views, [1])
-  return views
+    del is_training  # Doesn't make a difference for projector
+    # Rearrangement (batch, z, y, x, channel) --> (batch, y, z, x, channel).
+    # By the standard, projection happens along z-axis but the voxels
+    # are stored in a different way. So we need to switch the y and z
+    # axis for transformation operation.
+    voxels = tf.transpose(voxels, [0, 2, 1, 3, 4])
+    z_near = params.focal_length
+    z_far = params.focal_length + params.focal_range
+    transformed_voxels = perspective_transform.transformer(
+        voxels, transform_matrix, [params.vox_size] * 3, z_near, z_far)
+    views = tf.reduce_max(transformed_voxels, [1])
+    views = tf.reverse(views, [1])
+    return views

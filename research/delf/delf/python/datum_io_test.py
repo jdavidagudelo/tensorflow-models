@@ -23,50 +23,50 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from delf import datum_io
+from research.delf.delf.python import datum_io
 
 
 class DatumIoTest(tf.test.TestCase):
 
-  def Conversion2dTestWithType(self, dtype):
-    original_data = np.arange(9).reshape(3, 3).astype(dtype)
-    serialized = datum_io.SerializeToString(original_data)
-    retrieved_data = datum_io.ParseFromString(serialized)
-    self.assertTrue(np.array_equal(original_data, retrieved_data))
+    def Conversion2dTestWithType(self, dtype):
+        original_data = np.arange(9).reshape(3, 3).astype(dtype)
+        serialized = datum_io.SerializeToString(original_data)
+        retrieved_data = datum_io.ParseFromString(serialized)
+        self.assertTrue(np.array_equal(original_data, retrieved_data))
 
-  def Conversion3dTestWithType(self, dtype):
-    original_data = np.arange(24).reshape(2, 3, 4).astype(dtype)
-    serialized = datum_io.SerializeToString(original_data)
-    retrieved_data = datum_io.ParseFromString(serialized)
-    self.assertTrue(np.array_equal(original_data, retrieved_data))
+    def Conversion3dTestWithType(self, dtype):
+        original_data = np.arange(24).reshape(2, 3, 4).astype(dtype)
+        serialized = datum_io.SerializeToString(original_data)
+        retrieved_data = datum_io.ParseFromString(serialized)
+        self.assertTrue(np.array_equal(original_data, retrieved_data))
 
-  def testConversion2dWithType(self):
-    self.Conversion2dTestWithType(np.int8)
-    self.Conversion2dTestWithType(np.int16)
-    self.Conversion2dTestWithType(np.int32)
-    self.Conversion2dTestWithType(np.int64)
-    self.Conversion2dTestWithType(np.float16)
-    self.Conversion2dTestWithType(np.float32)
-    self.Conversion2dTestWithType(np.float64)
+    def testConversion2dWithType(self):
+        self.Conversion2dTestWithType(np.int8)
+        self.Conversion2dTestWithType(np.int16)
+        self.Conversion2dTestWithType(np.int32)
+        self.Conversion2dTestWithType(np.int64)
+        self.Conversion2dTestWithType(np.float16)
+        self.Conversion2dTestWithType(np.float32)
+        self.Conversion2dTestWithType(np.float64)
 
-  def testConversion3dWithType(self):
-    self.Conversion3dTestWithType(np.int8)
-    self.Conversion3dTestWithType(np.int16)
-    self.Conversion3dTestWithType(np.int32)
-    self.Conversion3dTestWithType(np.int64)
-    self.Conversion3dTestWithType(np.float16)
-    self.Conversion3dTestWithType(np.float32)
-    self.Conversion3dTestWithType(np.float64)
+    def testConversion3dWithType(self):
+        self.Conversion3dTestWithType(np.int8)
+        self.Conversion3dTestWithType(np.int16)
+        self.Conversion3dTestWithType(np.int32)
+        self.Conversion3dTestWithType(np.int64)
+        self.Conversion3dTestWithType(np.float16)
+        self.Conversion3dTestWithType(np.float32)
+        self.Conversion3dTestWithType(np.float64)
 
-  def testWriteAndReadToFile(self):
-    data = np.array([[[-1.0, 125.0, -2.5], [14.5, 3.5, 0.0]],
-                     [[20.0, 0.0, 30.0], [25.5, 36.0, 42.0]]])
-    tmpdir = tf.test.get_temp_dir()
-    filename = os.path.join(tmpdir, 'test.datum')
-    datum_io.WriteToFile(data, filename)
-    data_read = datum_io.ReadFromFile(filename)
-    self.assertAllEqual(data_read, data)
+    def testWriteAndReadToFile(self):
+        data = np.array([[[-1.0, 125.0, -2.5], [14.5, 3.5, 0.0]],
+                         [[20.0, 0.0, 30.0], [25.5, 36.0, 42.0]]])
+        tmpdir = tf.test.get_temp_dir()
+        filename = os.path.join(tmpdir, 'test.datum')
+        datum_io.WriteToFile(data, filename)
+        data_read = datum_io.ReadFromFile(filename)
+        self.assertAllEqual(data_read, data)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

@@ -34,10 +34,10 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from . import vggish_input
-from . import vggish_params
-from . import vggish_postprocess
-from . import vggish_slim
+from research.audioset import vggish_input
+from research.audioset import vggish_params
+from research.audioset import vggish_postprocess
+from research.audioset import vggish_slim
 
 print('\nTesting your install of VGGish\n')
 

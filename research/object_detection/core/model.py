@@ -274,8 +274,7 @@ class DetectionModel(object):
         self._groundtruth_lists[
             fields.BoxListFields.classes] = groundtruth_classes_list
         if groundtruth_weights_list:
-            self._groundtruth_lists[fields.BoxListFields.
-                weights] = groundtruth_weights_list
+            self._groundtruth_lists[fields.BoxListFields.weights] = groundtruth_weights_list
         if groundtruth_masks_list:
             self._groundtruth_lists[
                 fields.BoxListFields.masks] = groundtruth_masks_list

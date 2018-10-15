@@ -21,11 +21,11 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from ..astro_cnn_model import astro_cnn_model
-from ..astro_cnn_model import configurations
-from ..ops import input_ops
-from ..ops import testing
-from ..util import configdict
+from research.astronet.astronet.astro_cnn_model import astro_cnn_model
+from research.astronet.astronet.astro_cnn_model import configurations
+from research.astronet.astronet.ops import input_ops
+from research.astronet.astronet.ops import testing
+from research.astronet.astronet.util import configdict
 
 
 class AstroCNNModelTest(tf.test.TestCase):

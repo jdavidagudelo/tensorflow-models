@@ -19,24 +19,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from estimators import mvtcn_estimator as mvtcn_estimators
-from estimators import svtcn_estimator
+from research.tcn.estimators import mvtcn_estimator as mvtcn_estimators
+from research.tcn.estimators import svtcn_estimator
 
 
 def get_mvtcn_estimator(loss_strategy, config, logdir):
-  """Returns a configured MVTCN estimator."""
-  loss_to_trainer = {
-      'triplet_semihard': mvtcn_estimators.MVTCNTripletEstimator,
-      'npairs': mvtcn_estimators.MVTCNNpairsEstimator,
-  }
-  if loss_strategy not in loss_to_trainer:
-    raise ValueError('Unknown loss for MVTCN: %s' % loss_strategy)
-  estimator = loss_to_trainer[loss_strategy](config, logdir)
-  return estimator
+    """Returns a configured MVTCN estimator."""
+    loss_to_trainer = {
+        'triplet_semihard': mvtcn_estimators.MVTCNTripletEstimator,
+        'npairs': mvtcn_estimators.MVTCNNpairsEstimator,
+    }
+    if loss_strategy not in loss_to_trainer:
+        raise ValueError('Unknown loss for MVTCN: %s' % loss_strategy)
+    estimator = loss_to_trainer[loss_strategy](config, logdir)
+    return estimator
 
 
 def get_estimator(config, logdir):
-  """Returns an unsupervised model trainer based on config.
+    """Returns an unsupervised model trainer based on config.
 
   Args:
     config: A T object holding training configs.
@@ -47,14 +47,14 @@ def get_estimator(config, logdir):
   Raises:
     ValueError: If unknown training strategy is specified.
   """
-  # Get the training strategy.
-  training_strategy = config.training_strategy
-  if training_strategy == 'mvtcn':
-    loss_strategy = config.loss_strategy
-    estimator = get_mvtcn_estimator(
-        loss_strategy, config, logdir)
-  elif training_strategy == 'svtcn':
-    estimator = svtcn_estimator.SVTCNTripletEstimator(config, logdir)
-  else:
-    raise ValueError('Unknown training strategy: %s' % training_strategy)
-  return estimator
+    # Get the training strategy.
+    training_strategy = config.training_strategy
+    if training_strategy == 'mvtcn':
+        loss_strategy = config.loss_strategy
+        estimator = get_mvtcn_estimator(
+            loss_strategy, config, logdir)
+    elif training_strategy == 'svtcn':
+        estimator = svtcn_estimator.SVTCNTripletEstimator(config, logdir)
+    else:
+        raise ValueError('Unknown training strategy: %s' % training_strategy)
+    return estimator

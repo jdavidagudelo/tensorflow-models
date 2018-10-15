@@ -48,11 +48,11 @@ class BalancedPositiveNegativeSamplerTest(test_case.TestCase):
 
         labels = np.array(numpy_labels, np.bool)
 
-        def graph_fn(indicator, labels):
+        def graph_fn(ind, ls):
             sampler = (
                 balanced_positive_negative_sampler.BalancedPositiveNegativeSampler(
                     is_static=True))
-            return sampler.subsample(indicator, 64, labels)
+            return sampler.subsample(ind, 64, ls)
 
         is_sampled = self.execute(graph_fn, [indicator, labels])
         self.assertTrue(sum(is_sampled) == 64)
@@ -92,11 +92,11 @@ class BalancedPositiveNegativeSamplerTest(test_case.TestCase):
 
         labels = np.array(numpy_labels, np.bool)
 
-        def graph_fn(indicator, labels):
+        def graph_fn(ind, ls):
             sampler = (
                 balanced_positive_negative_sampler.BalancedPositiveNegativeSampler(
                     is_static=True))
-            return sampler.subsample(indicator, 64, labels)
+            return sampler.subsample(ind, 64, ls)
 
         is_sampled = self.execute(graph_fn, [indicator, labels])
         self.assertTrue(sum(is_sampled) == 64)
@@ -141,11 +141,11 @@ class BalancedPositiveNegativeSamplerTest(test_case.TestCase):
 
         labels = np.array(numpy_labels, np.bool)
 
-        def graph_fn(indicator, labels):
+        def graph_fn(ind, ls):
             sampler = (
                 balanced_positive_negative_sampler.BalancedPositiveNegativeSampler(
                     is_static=True))
-            return sampler.subsample(indicator, 64, labels)
+            return sampler.subsample(ind, 64, ls)
 
         is_sampled = self.execute(graph_fn, [indicator, labels])
         self.assertTrue(sum(is_sampled) == 64)

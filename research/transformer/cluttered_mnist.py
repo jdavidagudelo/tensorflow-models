@@ -13,9 +13,9 @@
 # limitations under the License.
 # =============================================================================
 import tensorflow as tf
-from spatial_transformer import transformer
+from research.transformer.spatial_transformer import transformer
 import numpy as np
-from tf_utils import weight_variable, bias_variable, dense_to_one_hot
+from research.transformer.tf_utils import weight_variable, bias_variable, dense_to_one_hot
 
 # %% Load data
 mnist_cluttered = np.load('./data/mnist_sequence1_sample_5distortions5x5.npz')

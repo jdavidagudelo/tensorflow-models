@@ -31,18 +31,17 @@ from __future__ import print_function
 
 import os.path
 
-
 import nltk
 import nltk.tokenize
 import numpy as np
 import tensorflow as tf
 
-from skip_thoughts import skip_thoughts_model
-from skip_thoughts.data import special_words
+from research.skip_thoughts.skip_thoughts import skip_thoughts_model
+from research.skip_thoughts.skip_thoughts.data import special_words
 
 
 def _pad(seq, target_len):
-  """Pads a sequence of word embeddings up to the target length.
+    """Pads a sequence of word embeddings up to the target length.
 
   Args:
     seq: Sequence of word embeddings.
@@ -56,22 +55,22 @@ def _pad(seq, target_len):
   Raises:
     ValueError: If len(seq) is not in the interval (0, target_len].
   """
-  seq_len = len(seq)
-  if seq_len <= 0 or seq_len > target_len:
-    raise ValueError("Expected 0 < len(seq) <= %d, got %d" % (target_len,
-                                                              seq_len))
+    seq_len = len(seq)
+    if seq_len <= 0 or seq_len > target_len:
+        raise ValueError("Expected 0 < len(seq) <= %d, got %d" % (target_len,
+                                                                  seq_len))
 
-  emb_dim = seq[0].shape[0]
-  padded_seq = np.zeros(shape=(target_len, emb_dim), dtype=seq[0].dtype)
-  mask = np.zeros(shape=(target_len,), dtype=np.int8)
-  for i in range(seq_len):
-    padded_seq[i] = seq[i]
-    mask[i] = 1
-  return padded_seq, mask
+    emb_dim = seq[0].shape[0]
+    padded_seq = np.zeros(shape=(target_len, emb_dim), dtype=seq[0].dtype)
+    mask = np.zeros(shape=(target_len,), dtype=np.int8)
+    for i in range(seq_len):
+        padded_seq[i] = seq[i]
+        mask[i] = 1
+    return padded_seq, mask
 
 
 def _batch_and_pad(sequences):
-  """Batches and pads sequences of word embeddings into a 2D array.
+    """Batches and pads sequences of word embeddings into a 2D array.
 
   Args:
     sequences: A list of batch_size sequences of word embeddings.
@@ -81,30 +80,31 @@ def _batch_and_pad(sequences):
     mask: A numpy 0/1 array with shape [batch_size, padded_length] with zeros
       corresponding to padded elements.
   """
-  batch_embeddings = []
-  batch_mask = []
-  batch_len = max([len(seq) for seq in sequences])
-  for seq in sequences:
-    embeddings, mask = _pad(seq, batch_len)
-    batch_embeddings.append(embeddings)
-    batch_mask.append(mask)
-  return np.array(batch_embeddings), np.array(batch_mask)
+    batch_embeddings = []
+    batch_mask = []
+    batch_len = max([len(seq) for seq in sequences])
+    for seq in sequences:
+        embeddings, mask = _pad(seq, batch_len)
+        batch_embeddings.append(embeddings)
+        batch_mask.append(mask)
+    return np.array(batch_embeddings), np.array(batch_mask)
 
 
 class SkipThoughtsEncoder(object):
-  """Skip-thoughts sentence encoder."""
+    """Skip-thoughts sentence encoder."""
 
-  def __init__(self, embeddings):
-    """Initializes the encoder.
+    def __init__(self, embeddings):
+        """Initializes the encoder.
 
     Args:
       embeddings: Dictionary of word to embedding vector (1D numpy array).
     """
-    self._sentence_detector = nltk.data.load("tokenizers/punkt/english.pickle")
-    self._embeddings = embeddings
+        self._sentence_detector = nltk.data.load("tokenizers/punkt/english.pickle")
+        self._embeddings = embeddings
 
-  def _create_restore_fn(self, checkpoint_path, saver):
-    """Creates a function that restores a model from checkpoint.
+    @staticmethod
+    def _create_restore_fn(checkpoint_path, saver):
+        """Creates a function that restores a model from checkpoint.
 
     Args:
       checkpoint_path: Checkpoint file or a directory containing a checkpoint
@@ -119,22 +119,22 @@ class SkipThoughtsEncoder(object):
       ValueError: If checkpoint_path does not refer to a checkpoint file or a
         directory containing a checkpoint file.
     """
-    if tf.gfile.IsDirectory(checkpoint_path):
-      latest_checkpoint = tf.train.latest_checkpoint(checkpoint_path)
-      if not latest_checkpoint:
-        raise ValueError("No checkpoint file found in: %s" % checkpoint_path)
-      checkpoint_path = latest_checkpoint
+        if tf.gfile.IsDirectory(checkpoint_path):
+            latest_checkpoint = tf.train.latest_checkpoint(checkpoint_path)
+            if not latest_checkpoint:
+                raise ValueError("No checkpoint file found in: %s" % checkpoint_path)
+            checkpoint_path = latest_checkpoint
 
-    def _restore_fn(sess):
-      tf.logging.info("Loading model from checkpoint: %s", checkpoint_path)
-      saver.restore(sess, checkpoint_path)
-      tf.logging.info("Successfully loaded checkpoint: %s",
-                      os.path.basename(checkpoint_path))
+        def _restore_fn(sess):
+            tf.logging.info("Loading model from checkpoint: %s", checkpoint_path)
+            saver.restore(sess, checkpoint_path)
+            tf.logging.info("Successfully loaded checkpoint: %s",
+                            os.path.basename(checkpoint_path))
 
-    return _restore_fn
+        return _restore_fn
 
-  def build_graph_from_config(self, model_config, checkpoint_path):
-    """Builds the inference graph from a configuration object.
+    def build_graph_from_config(self, model_config, checkpoint_path):
+        """Builds the inference graph from a configuration object.
 
     Args:
       model_config: Object containing configuration for building the model.
@@ -145,16 +145,16 @@ class SkipThoughtsEncoder(object):
       restore_fn: A function such that restore_fn(sess) loads model variables
         from the checkpoint file.
     """
-    tf.logging.info("Building model.")
-    model = skip_thoughts_model.SkipThoughtsModel(model_config, mode="encode")
-    model.build()
-    saver = tf.train.Saver()
+        tf.logging.info("Building model.")
+        model = skip_thoughts_model.SkipThoughtsModel(model_config, mode="encode")
+        model.build()
+        saver = tf.train.Saver()
 
-    return self._create_restore_fn(checkpoint_path, saver)
+        return self._create_restore_fn(checkpoint_path, saver)
 
-  def build_graph_from_proto(self, graph_def_file, saver_def_file,
-                             checkpoint_path):
-    """Builds the inference graph from serialized GraphDef and SaverDef protos.
+    def build_graph_from_proto(self, graph_def_file, saver_def_file,
+                               checkpoint_path):
+        """Builds the inference graph from serialized GraphDef and SaverDef protos.
 
     Args:
       graph_def_file: File containing a serialized GraphDef proto.
@@ -166,36 +166,36 @@ class SkipThoughtsEncoder(object):
       restore_fn: A function such that restore_fn(sess) loads model variables
         from the checkpoint file.
     """
-    # Load the Graph.
-    tf.logging.info("Loading GraphDef from file: %s", graph_def_file)
-    graph_def = tf.GraphDef()
-    with tf.gfile.FastGFile(graph_def_file, "rb") as f:
-      graph_def.ParseFromString(f.read())
-    tf.import_graph_def(graph_def, name="")
+        # Load the Graph.
+        tf.logging.info("Loading GraphDef from file: %s", graph_def_file)
+        graph_def = tf.GraphDef()
+        with tf.gfile.FastGFile(graph_def_file, "rb") as f:
+            graph_def.ParseFromString(f.read())
+        tf.import_graph_def(graph_def, name="")
 
-    # Load the Saver.
-    tf.logging.info("Loading SaverDef from file: %s", saver_def_file)
-    saver_def = tf.train.SaverDef()
-    with tf.gfile.FastGFile(saver_def_file, "rb") as f:
-      saver_def.ParseFromString(f.read())
-    saver = tf.train.Saver(saver_def=saver_def)
+        # Load the Saver.
+        tf.logging.info("Loading SaverDef from file: %s", saver_def_file)
+        saver_def = tf.train.SaverDef()
+        with tf.gfile.FastGFile(saver_def_file, "rb") as f:
+            saver_def.ParseFromString(f.read())
+        saver = tf.train.Saver(saver_def=saver_def)
 
-    return self._create_restore_fn(checkpoint_path, saver)
+        return self._create_restore_fn(checkpoint_path, saver)
 
-  def _tokenize(self, item):
-    """Tokenizes an input string into a list of words."""
-    tokenized = []
-    for s in self._sentence_detector.tokenize(item):
-      tokenized.extend(nltk.tokenize.word_tokenize(s))
+    def _tokenize(self, item):
+        """Tokenizes an input string into a list of words."""
+        tokenized = []
+        for s in self._sentence_detector.tokenize(item):
+            tokenized.extend(nltk.tokenize.word_tokenize(s))
 
-    return tokenized
+        return tokenized
 
-  def _word_to_embedding(self, w):
-    """Returns the embedding of a word."""
-    return self._embeddings.get(w, self._embeddings[special_words.UNK])
+    def _word_to_embedding(self, w):
+        """Returns the embedding of a word."""
+        return self._embeddings.get(w, self._embeddings[special_words.UNK])
 
-  def _preprocess(self, data, use_eos):
-    """Preprocesses text for the encoder.
+    def _preprocess(self, data, use_eos):
+        """Preprocesses text for the encoder.
 
     Args:
       data: A list of input strings.
@@ -205,22 +205,22 @@ class SkipThoughtsEncoder(object):
       embeddings: A list of word embedding sequences corresponding to the input
         strings.
     """
-    preprocessed_data = []
-    for item in data:
-      tokenized = self._tokenize(item)
-      if use_eos:
-        tokenized.append(special_words.EOS)
-      preprocessed_data.append([self._word_to_embedding(w) for w in tokenized])
-    return preprocessed_data
+        preprocessed_data = []
+        for item in data:
+            tokenized = self._tokenize(item)
+            if use_eos:
+                tokenized.append(special_words.EOS)
+            preprocessed_data.append([self._word_to_embedding(w) for w in tokenized])
+        return preprocessed_data
 
-  def encode(self,
-             sess,
-             data,
-             use_norm=True,
-             verbose=True,
-             batch_size=128,
-             use_eos=False):
-    """Encodes a sequence of sentences as skip-thought vectors.
+    def encode(self,
+               sess,
+               data,
+               use_norm=True,
+               verbose=True,
+               batch_size=128,
+               use_eos=False):
+        """Encodes a sequence of sentences as skip-thought vectors.
 
     Args:
       sess: TensorFlow Session.
@@ -235,24 +235,24 @@ class SkipThoughtsEncoder(object):
       thought_vectors: A list of numpy arrays corresponding to the skip-thought
         encodings of sentences in 'data'.
     """
-    data = self._preprocess(data, use_eos)
-    thought_vectors = []
+        data = self._preprocess(data, use_eos)
+        thought_vectors = []
 
-    batch_indices = np.arange(0, len(data), batch_size)
-    for batch, start_index in enumerate(batch_indices):
-      if verbose:
-        tf.logging.info("Batch %d / %d.", batch, len(batch_indices))
+        batch_indices = np.arange(0, len(data), batch_size)
+        for batch, start_index in enumerate(batch_indices):
+            if verbose:
+                tf.logging.info("Batch %d / %d.", batch, len(batch_indices))
 
-      embeddings, mask = _batch_and_pad(
-          data[start_index:start_index + batch_size])
-      feed_dict = {
-          "encode_emb:0": embeddings,
-          "encode_mask:0": mask,
-      }
-      thought_vectors.extend(
-          sess.run("encoder/thought_vectors:0", feed_dict=feed_dict))
+            embeddings, mask = _batch_and_pad(
+                data[start_index:start_index + batch_size])
+            feed_dict = {
+                "encode_emb:0": embeddings,
+                "encode_mask:0": mask,
+            }
+            thought_vectors.extend(
+                sess.run("encoder/thought_vectors:0", feed_dict=feed_dict))
 
-    if use_norm:
-      thought_vectors = [v / np.linalg.norm(v) for v in thought_vectors]
+        if use_norm:
+            thought_vectors = [v / np.linalg.norm(v) for v in thought_vectors]
 
-    return thought_vectors
+        return thought_vectors

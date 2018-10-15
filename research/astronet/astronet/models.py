@@ -18,12 +18,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .astro_cnn_model import astro_cnn_model
-from .astro_cnn_model import configurations as astro_cnn_configurations
-from .astro_fc_model import astro_fc_model
-from .astro_fc_model import configurations as astro_fc_configurations
-from .astro_model import astro_model
-from .astro_model import configurations as astro_configurations
+from research.astronet.astronet.astro_cnn_model import astro_cnn_model
+from research.astronet.astronet.astro_cnn_model import configurations as astro_cnn_configurations
+from research.astronet.astronet.astro_fc_model import astro_fc_model
+from research.astronet.astronet.astro_fc_model import configurations as astro_fc_configurations
+from research.astronet.astronet.astro_model import astro_model
+from research.astronet.astronet.astro_model import configurations as astro_configurations
 
 # Dictionary of model name to (model_class, configuration_module).
 _MODELS = {

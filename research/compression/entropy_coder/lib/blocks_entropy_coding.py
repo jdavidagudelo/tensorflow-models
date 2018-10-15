@@ -19,21 +19,22 @@ import math
 
 import tensorflow as tf
 
-import block_base
+from research.compression.entropy_coder.lib import block_base
+
 
 # pylint does not recognize block_base.BlockBase.__call__().
 # pylint: disable=not-callable
 
 
 class CodeLength(block_base.BlockBase):
-  """Theoretical bound for a code length given a probability distribution.
+    """Theoretical bound for a code length given a probability distribution.
   """
 
-  def __init__(self, name=None):
-    super(CodeLength, self).__init__(name)
+    def __init__(self, name=None):
+        super(CodeLength, self).__init__(name)
 
-  def _Apply(self, c, p):
-    """Theoretical bound of the coded length given a probability distribution.
+    def _Apply(self, c, p):
+        """Theoretical bound of the coded length given a probability distribution.
 
     Args:
       c: The binary codes. Belong to {0, 1}.
@@ -44,6 +45,6 @@ class CodeLength(block_base.BlockBase):
       Note: the average code length can be greater than 1 bit (e.g. when
           encoding the least likely symbol).
     """
-    entropy = ((1.0 - c) * tf.log(1.0 - p) + c * tf.log(p)) / (-math.log(2))
-    entropy = tf.reduce_mean(entropy)
-    return entropy
+        entropy = ((1.0 - c) * tf.log(1.0 - p) + c * tf.log(p)) / (-math.log(2))
+        entropy = tf.reduce_mean(entropy)
+        return entropy

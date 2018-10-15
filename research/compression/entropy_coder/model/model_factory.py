@@ -17,37 +17,37 @@
 
 
 class ModelFactory(object):
-  """Factory of encoder/decoder models."""
+    """Factory of encoder/decoder models."""
 
-  def __init__(self):
-    self._model_dictionary = dict()
+    def __init__(self):
+        self._model_dictionary = dict()
 
-  def RegisterModel(self,
-                    entropy_coder_model_name,
-                    entropy_coder_model_factory):
-    self._model_dictionary[entropy_coder_model_name] = (
-        entropy_coder_model_factory)
+    def RegisterModel(self,
+                      entropy_coder_model_name,
+                      entropy_coder_model_factory):
+        self._model_dictionary[entropy_coder_model_name] = (
+            entropy_coder_model_factory)
 
-  def CreateModel(self, model_name):
-    current_model_factory = self._model_dictionary[model_name]
-    return current_model_factory()
+    def CreateModel(self, model_name):
+        current_model_factory = self._model_dictionary[model_name]
+        return current_model_factory()
 
-  def GetAvailableModels(self):
-    return self._model_dictionary.keys()
+    def GetAvailableModels(self):
+        return self._model_dictionary.keys()
 
 
 _model_registry = ModelFactory()
 
 
 def GetModelRegistry():
-  return _model_registry
+    return _model_registry
 
 
 class RegisterEntropyCoderModel(object):
 
-  def __init__(self, model_name):
-    self._model_name = model_name
+    def __init__(self, model_name):
+        self._model_name = model_name
 
-  def __call__(self, f):
-    _model_registry.RegisterModel(self._model_name, f)
-    return f
+    def __call__(self, f):
+        _model_registry.RegisterModel(self._model_name, f)
+        return f

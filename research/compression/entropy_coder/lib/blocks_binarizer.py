@@ -15,21 +15,18 @@
 
 """Activation and weight binarizer implementations."""
 
-import math
-
-import numpy as np
 import tensorflow as tf
 
 
 def ConvertSignCodeToZeroOneCode(x):
-  """Conversion from codes {-1, +1} to codes {0, 1}."""
-  return 0.5 * (x + 1.0)
+    """Conversion from codes {-1, +1} to codes {0, 1}."""
+    return 0.5 * (x + 1.0)
 
 
 def ConvertZeroOneCodeToSignCode(x):
-  """Convert from codes {0, 1} to codes {-1, +1}."""
-  return 2.0 * x - 1.0
+    """Convert from codes {0, 1} to codes {-1, +1}."""
+    return 2.0 * x - 1.0
 
 
 def CheckZeroOneCode(x):
-  return tf.reduce_all(tf.equal(x * (x - 1.0), 0))
+    return tf.reduce_all(tf.equal(x * (x - 1.0), 0))

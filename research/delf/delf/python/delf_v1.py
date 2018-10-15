@@ -27,7 +27,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from nets import resnet_v1
+from research.slim.nets import resnet_v1
 
 slim = tf.contrib.slim
 
@@ -58,7 +58,7 @@ _SUPPORTED_ATTENTION_NONLINEARITY = ['softplus']
 
 
 class DelfV1(object):
-  """Creates a DELF model.
+    """Creates a DELF model.
 
   Args:
     target_layer_type: The name of target CNN architecture and its layer.
@@ -67,23 +67,23 @@ class DelfV1(object):
     ValueError: If an unknown target_layer_type is provided.
   """
 
-  def __init__(self, target_layer_type=_SUPPORTED_TARGET_LAYER[0]):
-    tf.logging.info('Creating model %s ', target_layer_type)
+    def __init__(self, target_layer_type=_SUPPORTED_TARGET_LAYER[0]):
+        tf.logging.info('Creating model %s ', target_layer_type)
 
-    self._target_layer_type = target_layer_type
-    if self._target_layer_type not in _SUPPORTED_TARGET_LAYER:
-      raise ValueError('Unknown model type.')
+        self._target_layer_type = target_layer_type
+        if self._target_layer_type not in _SUPPORTED_TARGET_LAYER:
+            raise ValueError('Unknown model type.')
 
-  @property
-  def target_layer_type(self):
-    return self._target_layer_type
+    @property
+    def target_layer_type(self):
+        return self._target_layer_type
 
-  def _PerformAttention(self,
-                        attention_feature_map,
-                        feature_map,
-                        attention_nonlinear,
-                        kernel=1):
-    """Helper function to construct the attention part of the model.
+    def _PerformAttention(self,
+                          attention_feature_map,
+                          feature_map,
+                          attention_nonlinear,
+                          kernel=1):
+        """Helper function to construct the attention part of the model.
 
     Computes attention score map and aggregates the input feature map based on
     the attention score map.
@@ -105,51 +105,51 @@ class DelfV1(object):
     Raises:
       ValueError: If unknown attention non-linearity type is provided.
     """
-    with tf.variable_scope(
-        'attention', values=[attention_feature_map, feature_map]):
-      with tf.variable_scope('compute', values=[feature_map]):
-        activation_fn_conv1 = tf.nn.relu
-        feature_map_conv1 = slim.conv2d(
+        with tf.variable_scope(
+                'attention', values=[attention_feature_map, feature_map]):
+            with tf.variable_scope('compute', values=[feature_map]):
+                activation_fn_conv1 = tf.nn.relu
+                feature_map_conv1 = slim.conv2d(
+                    feature_map,
+                    512,
+                    kernel,
+                    rate=1,
+                    activation_fn=activation_fn_conv1,
+                    scope='conv1')
+
+                attention_score = slim.conv2d(
+                    feature_map_conv1,
+                    1,
+                    kernel,
+                    rate=1,
+                    activation_fn=None,
+                    normalizer_fn=None,
+                    scope='conv2')
+
+            # Set activation of conv2 layer of attention model.
+            with tf.variable_scope(
+                    'merge', values=[attention_feature_map, attention_score]):
+                if attention_nonlinear not in _SUPPORTED_ATTENTION_NONLINEARITY:
+                    raise ValueError('Unknown attention non-linearity.')
+                if attention_nonlinear == 'softplus':
+                    with tf.variable_scope(
+                            'softplus_attention',
+                            values=[attention_feature_map, attention_score]):
+                        attention_prob = tf.nn.softplus(attention_score)
+                        attention_feat = tf.reduce_mean(
+                            tf.multiply(attention_feature_map, attention_prob), [1, 2])
+                attention_feat = tf.expand_dims(tf.expand_dims(attention_feat, 1), 2)
+        return attention_feat, attention_prob, attention_score
+
+    def _GetAttentionSubnetwork(
+            self,
             feature_map,
-            512,
-            kernel,
-            rate=1,
-            activation_fn=activation_fn_conv1,
-            scope='conv1')
-
-        attention_score = slim.conv2d(
-            feature_map_conv1,
-            1,
-            kernel,
-            rate=1,
-            activation_fn=None,
-            normalizer_fn=None,
-            scope='conv2')
-
-      # Set activation of conv2 layer of attention model.
-      with tf.variable_scope(
-          'merge', values=[attention_feature_map, attention_score]):
-        if attention_nonlinear not in _SUPPORTED_ATTENTION_NONLINEARITY:
-          raise ValueError('Unknown attention non-linearity.')
-        if attention_nonlinear == 'softplus':
-          with tf.variable_scope(
-              'softplus_attention',
-              values=[attention_feature_map, attention_score]):
-            attention_prob = tf.nn.softplus(attention_score)
-            attention_feat = tf.reduce_mean(
-                tf.multiply(attention_feature_map, attention_prob), [1, 2])
-        attention_feat = tf.expand_dims(tf.expand_dims(attention_feat, 1), 2)
-    return attention_feat, attention_prob, attention_score
-
-  def _GetAttentionSubnetwork(
-      self,
-      feature_map,
-      end_points,
-      attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
-      attention_type=_SUPPORTED_ATTENTION_TYPES[0],
-      kernel=1,
-      reuse=False):
-    """Constructs the part of the model performing attention.
+            end_points,
+            attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
+            attention_type=_SUPPORTED_ATTENTION_TYPES[0],
+            kernel=1,
+            reuse=False):
+        """Constructs the part of the model performing attention.
 
     Args:
       feature_map: A tensor of size [batch, height, width, channels]. Usually it
@@ -169,33 +169,33 @@ class DelfV1(object):
     Raises:
       ValueError: If unknown attention_type is provided.
     """
-    with tf.variable_scope(
-        _ATTENTION_VARIABLE_SCOPE,
-        values=[feature_map, end_points],
-        reuse=reuse):
-      if attention_type not in _SUPPORTED_ATTENTION_TYPES:
-        raise ValueError('Unknown attention_type.')
-      if attention_type == 'use_l2_normalized_feature':
-        attention_feature_map = tf.nn.l2_normalize(
-            feature_map, 3, name='l2_normalize')
-      elif attention_type == 'use_default_input_feature':
-        attention_feature_map = feature_map
-      end_points['attention_feature_map'] = attention_feature_map
+        with tf.variable_scope(
+                _ATTENTION_VARIABLE_SCOPE,
+                values=[feature_map, end_points],
+                reuse=reuse):
+            if attention_type not in _SUPPORTED_ATTENTION_TYPES:
+                raise ValueError('Unknown attention_type.')
+            if attention_type == 'use_l2_normalized_feature':
+                attention_feature_map = tf.nn.l2_normalize(
+                    feature_map, 3, name='l2_normalize')
+            elif attention_type == 'use_default_input_feature':
+                attention_feature_map = feature_map
+            end_points['attention_feature_map'] = attention_feature_map
 
-      attention_outputs = self._PerformAttention(
-          attention_feature_map, feature_map, attention_nonlinear, kernel)
-      prelogits, attention_prob, attention_score = attention_outputs
-      end_points['prelogits'] = prelogits
-      end_points['attention_prob'] = attention_prob
-      end_points['attention_score'] = attention_score
-    return prelogits, attention_prob, attention_score, end_points
+            attention_outputs = self._PerformAttention(
+                attention_feature_map, feature_map, attention_nonlinear, kernel)
+            prelogits, attention_prob, attention_score = attention_outputs
+            end_points['prelogits'] = prelogits
+            end_points['attention_prob'] = attention_prob
+            end_points['attention_score'] = attention_score
+        return prelogits, attention_prob, attention_score, end_points
 
-  def GetResnet50Subnetwork(self,
-                            images,
-                            is_training=False,
-                            global_pool=False,
-                            reuse=None):
-    """Constructs resnet_v1_50 part of the DELF model.
+    def GetResnet50Subnetwork(self,
+                              images,
+                              is_training=False,
+                              global_pool=False,
+                              reuse=None):
+        """Constructs resnet_v1_50 part of the DELF model.
 
     Args:
       images: A tensor of size [batch, height, width, channels].
@@ -209,35 +209,35 @@ class DelfV1(object):
         If global_pool is True, height_out = width_out = 1.
       end_points: A set of activations for external use.
     """
-    block = resnet_v1.resnet_v1_block
-    blocks = [
-        block('block1', base_depth=64, num_units=3, stride=2),
-        block('block2', base_depth=128, num_units=4, stride=2),
-        block('block3', base_depth=256, num_units=6, stride=2),
-    ]
-    if self._target_layer_type == 'resnet_v1_50/block4':
-      blocks.append(block('block4', base_depth=512, num_units=3, stride=1))
-    net, end_points = resnet_v1.resnet_v1(
-        images,
-        blocks,
-        is_training=is_training,
-        global_pool=global_pool,
-        reuse=reuse,
-        scope='resnet_v1_50')
-    return net, end_points
+        block = resnet_v1.resnet_v1_block
+        blocks = [
+            block('block1', base_depth=64, num_units=3, stride=2),
+            block('block2', base_depth=128, num_units=4, stride=2),
+            block('block3', base_depth=256, num_units=6, stride=2),
+        ]
+        if self._target_layer_type == 'resnet_v1_50/block4':
+            blocks.append(block('block4', base_depth=512, num_units=3, stride=1))
+        net, end_points = resnet_v1.resnet_v1(
+            images,
+            blocks,
+            is_training=is_training,
+            global_pool=global_pool,
+            reuse=reuse,
+            scope='resnet_v1_50')
+        return net, end_points
 
-  def GetAttentionPrelogit(
-      self,
-      images,
-      weight_decay=0.0001,
-      attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
-      attention_type=_SUPPORTED_ATTENTION_TYPES[0],
-      kernel=1,
-      training_resnet=False,
-      training_attention=False,
-      reuse=False,
-      use_batch_norm=True):
-    """Constructs attention model on resnet_v1_50.
+    def GetAttentionPrelogit(
+            self,
+            images,
+            weight_decay=0.0001,
+            attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
+            attention_type=_SUPPORTED_ATTENTION_TYPES[0],
+            kernel=1,
+            training_resnet=False,
+            training_attention=False,
+            reuse=False,
+            use_batch_norm=True):
+        """Constructs attention model on resnet_v1_50.
 
     Args:
       images: A tensor of size [batch, height, width, channels].
@@ -261,42 +261,42 @@ class DelfV1(object):
         l2-normalized.
       end_points: Set of activations for external use.
     """
-    # Construct Resnet50 features.
-    with slim.arg_scope(
-        resnet_v1.resnet_arg_scope(use_batch_norm=use_batch_norm)):
-      _, end_points = self.GetResnet50Subnetwork(
-          images, is_training=training_resnet, reuse=reuse)
+        # Construct Resnet50 features.
+        with slim.arg_scope(
+                resnet_v1.resnet_arg_scope(use_batch_norm=use_batch_norm)):
+            _, end_points = self.GetResnet50Subnetwork(
+                images, is_training=training_resnet, reuse=reuse)
 
-    feature_map = end_points[self._target_layer_type]
+        feature_map = end_points[self._target_layer_type]
 
-    # Construct attention subnetwork on top of features.
-    with slim.arg_scope(
-        resnet_v1.resnet_arg_scope(
-            weight_decay=weight_decay, use_batch_norm=use_batch_norm)):
-      with slim.arg_scope([slim.batch_norm], is_training=training_attention):
-        (prelogits, attention_prob, attention_score,
-         end_points) = self._GetAttentionSubnetwork(
-             feature_map,
-             end_points,
-             attention_nonlinear=attention_nonlinear,
-             attention_type=attention_type,
-             kernel=kernel,
-             reuse=reuse)
+        # Construct attention subnetwork on top of features.
+        with slim.arg_scope(
+                resnet_v1.resnet_arg_scope(
+                    weight_decay=weight_decay, use_batch_norm=use_batch_norm)):
+            with slim.arg_scope([slim.batch_norm], is_training=training_attention):
+                (prelogits, attention_prob, attention_score,
+                 end_points) = self._GetAttentionSubnetwork(
+                    feature_map,
+                    end_points,
+                    attention_nonlinear=attention_nonlinear,
+                    attention_type=attention_type,
+                    kernel=kernel,
+                    reuse=reuse)
 
-    return prelogits, attention_prob, attention_score, feature_map, end_points
+        return prelogits, attention_prob, attention_score, feature_map, end_points
 
-  def _GetAttentionModel(
-      self,
-      images,
-      num_classes,
-      weight_decay=0.0001,
-      attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
-      attention_type=_SUPPORTED_ATTENTION_TYPES[0],
-      kernel=1,
-      training_resnet=False,
-      training_attention=False,
-      reuse=False):
-    """Constructs attention model on resnet_v1_50.
+    def _GetAttentionModel(
+            self,
+            images,
+            num_classes,
+            weight_decay=0.0001,
+            attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
+            attention_type=_SUPPORTED_ATTENTION_TYPES[0],
+            kernel=1,
+            training_resnet=False,
+            training_attention=False,
+            reuse=False):
+        """Constructs attention model on resnet_v1_50.
 
     Args:
       images: A tensor of size [batch, height, width, channels]
@@ -320,42 +320,42 @@ class DelfV1(object):
         l2-normalized.
     """
 
-    attention_feat, attention_prob, attention_score, feature_map, _ = (
-        self.GetAttentionPrelogit(
-            images,
-            weight_decay,
-            attention_nonlinear=attention_nonlinear,
-            attention_type=attention_type,
-            kernel=kernel,
-            training_resnet=training_resnet,
-            training_attention=training_attention,
-            reuse=reuse))
-    with slim.arg_scope(
-        resnet_v1.resnet_arg_scope(
-            weight_decay=weight_decay, batch_norm_scale=True)):
-      with slim.arg_scope([slim.batch_norm], is_training=training_attention):
-        with tf.variable_scope(
-            _ATTENTION_VARIABLE_SCOPE, values=[attention_feat], reuse=reuse):
-          logits = slim.conv2d(
-              attention_feat,
-              num_classes, [1, 1],
-              activation_fn=None,
-              normalizer_fn=None,
-              scope='logits')
-          logits = tf.squeeze(logits, [1, 2], name='spatial_squeeze')
-    return logits, attention_prob, attention_score, feature_map
+        attention_feat, attention_prob, attention_score, feature_map, _ = (
+            self.GetAttentionPrelogit(
+                images,
+                weight_decay,
+                attention_nonlinear=attention_nonlinear,
+                attention_type=attention_type,
+                kernel=kernel,
+                training_resnet=training_resnet,
+                training_attention=training_attention,
+                reuse=reuse))
+        with slim.arg_scope(
+                resnet_v1.resnet_arg_scope(
+                    weight_decay=weight_decay, batch_norm_scale=True)):
+            with slim.arg_scope([slim.batch_norm], is_training=training_attention):
+                with tf.variable_scope(
+                        _ATTENTION_VARIABLE_SCOPE, values=[attention_feat], reuse=reuse):
+                    logits = slim.conv2d(
+                        attention_feat,
+                        num_classes, [1, 1],
+                        activation_fn=None,
+                        normalizer_fn=None,
+                        scope='logits')
+                    logits = tf.squeeze(logits, [1, 2], name='spatial_squeeze')
+        return logits, attention_prob, attention_score, feature_map
 
-  def AttentionModel(self,
-                     images,
-                     num_classes,
-                     weight_decay=0.0001,
-                     attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
-                     attention_type=_SUPPORTED_ATTENTION_TYPES[0],
-                     kernel=1,
-                     training_resnet=False,
-                     training_attention=False,
-                     reuse=False):
-    """Constructs attention based classification model for training.
+    def AttentionModel(self,
+                       images,
+                       num_classes,
+                       weight_decay=0.0001,
+                       attention_nonlinear=_SUPPORTED_ATTENTION_NONLINEARITY[0],
+                       attention_type=_SUPPORTED_ATTENTION_TYPES[0],
+                       kernel=1,
+                       training_resnet=False,
+                       training_attention=False,
+                       reuse=False):
+        """Constructs attention based classification model for training.
 
     Args:
       images: A tensor of size [batch, height, width, channels]
@@ -381,18 +381,18 @@ class DelfV1(object):
     Raises:
       ValueError: If unknown target_layer_type is provided.
     """
-    if 'resnet_v1_50' in self._target_layer_type:
-      net_outputs = self._GetAttentionModel(
-          images,
-          num_classes,
-          weight_decay,
-          attention_nonlinear=attention_nonlinear,
-          attention_type=attention_type,
-          kernel=kernel,
-          training_resnet=training_resnet,
-          training_attention=training_attention,
-          reuse=reuse)
-      logits, attention, _, feature_map = net_outputs
-    else:
-      raise ValueError('Unknown target_layer_type.')
-    return logits, attention, feature_map
+        if 'resnet_v1_50' in self._target_layer_type:
+            net_outputs = self._GetAttentionModel(
+                images,
+                num_classes,
+                weight_decay,
+                attention_nonlinear=attention_nonlinear,
+                attention_type=attention_type,
+                kernel=kernel,
+                training_resnet=training_resnet,
+                training_attention=training_attention,
+                reuse=reuse)
+            logits, attention, _, feature_map = net_outputs
+        else:
+            raise ValueError('Unknown target_layer_type.')
+        return logits, attention, feature_map

@@ -364,15 +364,15 @@ class BoxListOpsTest(test_case.TestCase):
             self.assertAllClose(subset_output, expected_subset)
 
     def test_static_boolean_mask_with_field(self):
-        def graph_fn(corners, weights, indicator):
-            boxes = box_list.BoxList(corners)
-            boxes.add_field('weights', weights)
+        def graph_fn(c, w, i):
+            boxes = box_list.BoxList(c)
+            boxes.add_field('weights', w)
             subset = box_list_ops.boolean_mask(
                 boxes,
-                indicator, ['weights'],
+                i, ['weights'],
                 use_static_shapes=True,
                 indicator_sum=3)
-            return (subset.get_field('boxes'), subset.get_field('weights'))
+            return subset.get_field('boxes'), subset.get_field('weights')
 
         corners = np.array(
             [4 * [0.0], 4 * [1.0], 4 * [2.0], 4 * [3.0], 4 * [4.0]],
@@ -424,12 +424,12 @@ class BoxListOpsTest(test_case.TestCase):
             self.assertAllClose(subset_output, expected_subset)
 
     def test_static_gather_with_field(self):
-        def graph_fn(corners, weights, indices):
-            boxes = box_list.BoxList(corners)
-            boxes.add_field('weights', weights)
+        def graph_fn(c, w, i):
+            boxes = box_list.BoxList(c)
+            boxes.add_field('weights', w)
             subset = box_list_ops.gather(
-                boxes, indices, ['weights'], use_static_shapes=True)
-            return (subset.get_field('boxes'), subset.get_field('weights'))
+                boxes, i, ['weights'], use_static_shapes=True)
+            return subset.get_field('boxes'), subset.get_field('weights')
 
         corners = np.array([4 * [0.0], 4 * [1.0], 4 * [2.0], 4 * [3.0],
                             4 * [4.0]], dtype=np.float32)

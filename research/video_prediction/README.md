@@ -5,7 +5,7 @@
 This video prediction model, which is optionally conditioned on actions,
 predictions future video by internally predicting how to transform the last
 image (which may have been predicted) into the next image. As a result, it can
-reuse apperance information from previous frames and can better generalize to
+reuse appearance information from previous frames and can better generalize to
 objects not seen in the training set. Some example predictions on novel objects
 are shown below:
 

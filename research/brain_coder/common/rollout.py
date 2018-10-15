@@ -12,7 +12,7 @@ from collections import namedtuple
 import numpy as np
 import scipy.signal
 
-from . import utils  # brain coder
+from research.brain_coder.common import utils  # brain coder
 
 
 class Rollout(object):

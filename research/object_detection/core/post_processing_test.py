@@ -108,8 +108,7 @@ class MulticlassNonMaxSuppressionTest(test_case.TestCase):
                 nms.get_field(fields.BoxListFields.scores),
                 nms.get_field(fields.BoxListFields.classes),
                 nms.get_field(fields.BoxListFields.keypoints),
-                exp_nms_keypoints_tensor
-            ])
+                exp_nms_keypoints_tensor])
             self.assertAllClose(nms_corners_output, exp_nms_corners)
             self.assertAllClose(nms_scores_output, exp_nms_scores)
             self.assertAllClose(nms_classes_output, exp_nms_classes)

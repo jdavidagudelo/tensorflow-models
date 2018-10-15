@@ -7,8 +7,8 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from ..single_task import misc  # brain coder
-from ..single_task import test_tasks  # brain coder
+from research.brain_coder.single_task import misc  # brain coder
+from research.brain_coder.single_task import test_tasks  # brain coder
 
 
 def get_reward(reward_fn, candidate):

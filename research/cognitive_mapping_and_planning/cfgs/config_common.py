@@ -15,9 +15,9 @@
 
 import numpy as np
 import logging
-from ..src import utils as utils
-from ..datasets import nav_env_config as nec
-from ..datasets import factory
+from research.cognitive_mapping_and_planning.src import utils as utils
+from research.cognitive_mapping_and_planning.datasets import nav_env_config as nec
+from research.cognitive_mapping_and_planning.datasets import factory
 
 
 def adjust_args_for_mode(args, mode):

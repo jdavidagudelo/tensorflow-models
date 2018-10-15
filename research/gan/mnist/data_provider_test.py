@@ -20,30 +20,29 @@ from __future__ import print_function
 
 import os
 
-
-from absl import flags
 import tensorflow as tf
 
-import data_provider
+from research.gan.mnist import data_provider
+
+flags = tf.app.flags
 
 
 class DataProviderTest(tf.test.TestCase):
 
-  def test_mnist_data_reading(self):
-    dataset_dir = os.path.join(
-        flags.FLAGS.test_srcdir,
-        'google3/third_party/tensorflow_models/gan/mnist/testdata')
+    def test_mnist_data_reading(self):
+        dataset_dir = os.path.join('', 'testdata')
 
-    batch_size = 5
-    images, labels, num_samples = data_provider.provide_data(
-        'test', batch_size, dataset_dir)
-    self.assertEqual(num_samples, 10000)
+        batch_size = 5
+        images, labels, num_samples = data_provider.provide_data(
+            'test', batch_size, dataset_dir)
+        self.assertEqual(num_samples, 10000)
 
-    with self.test_session() as sess:
-      with tf.contrib.slim.queues.QueueRunners(sess):
-        images, labels = sess.run([images, labels])
-        self.assertEqual(images.shape, (batch_size, 28, 28, 1))
-        self.assertEqual(labels.shape, (batch_size, 10))
+        with self.test_session() as sess:
+            with tf.contrib.slim.queues.QueueRunners(sess):
+                images, labels = sess.run([images, labels])
+                self.assertEqual(images.shape, (batch_size, 28, 28, 1))
+                self.assertEqual(labels.shape, (batch_size, 10))
+
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

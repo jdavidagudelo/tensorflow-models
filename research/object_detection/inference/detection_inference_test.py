@@ -15,7 +15,7 @@
 r"""Tests for detection_inference.py."""
 
 import os
-import io as StringIO
+import io
 
 import numpy as np
 from PIL import Image
@@ -32,7 +32,7 @@ def get_mock_tfrecord_path():
 
 def create_mock_tfrecord():
     pil_image = Image.fromarray(np.array([[[123, 0, 0]]], dtype=np.uint8), 'RGB')
-    image_output_stream = StringIO.BytesIO()
+    image_output_stream = io.BytesIO()
     pil_image.save(image_output_stream, format='png')
     encoded_image = image_output_stream.getvalue()
 

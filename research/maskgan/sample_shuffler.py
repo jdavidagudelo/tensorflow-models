@@ -51,45 +51,45 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def shuffle_samples(input_file_1, input_file_2):
-  """Shuffle the examples."""
-  shuffled = []
+    """Shuffle the examples."""
+    shuffled = []
 
-  # Set a random seed to keep fixed mask.
-  np.random.seed(0)
+    # Set a random seed to keep fixed mask.
+    np.random.seed(0)
 
-  for line_1, line_2 in zip(input_file_1, input_file_2):
-    rand = np.random.randint(1, 3)
-    if rand == 1:
-      shuffled.append((rand, line_1, line_2))
-    else:
-      shuffled.append((rand, line_2, line_1))
-  input_file_1.close()
-  input_file_2.close()
-  return shuffled
+    for line_1, line_2 in zip(input_file_1, input_file_2):
+        rand = np.random.randint(1, 3)
+        if rand == 1:
+            shuffled.append((rand, line_1, line_2))
+        else:
+            shuffled.append((rand, line_2, line_1))
+    input_file_1.close()
+    input_file_2.close()
+    return shuffled
 
 
 def generate_output(shuffled_tuples, output_file_name):
-  output_file = tf.gfile.GFile(output_file_name, mode='w')
+    output_file = tf.gfile.GFile(output_file_name, mode='w')
 
-  for tup in shuffled_tuples:
-    formatted_tuple = ('\n{:<1}, {:<1}, {:<1}').format(tup[0], tup[1].rstrip(),
-                                                       tup[2].rstrip())
-    output_file.write(formatted_tuple)
-  output_file.close()
+    for tup in shuffled_tuples:
+        formatted_tuple = ('\n{:<1}, {:<1}, {:<1}').format(tup[0], tup[1].rstrip(),
+                                                           tup[2].rstrip())
+        output_file.write(formatted_tuple)
+    output_file.close()
 
 
 def main(_):
-  ml_samples_file = tf.gfile.GFile(
-      os.path.join(FLAGS.input_ml_path, 'reviews.txt'), mode='r')
-  gan_samples_file = tf.gfile.GFile(
-      os.path.join(FLAGS.input_gan_path, 'reviews.txt'), mode='r')
+    ml_samples_file = tf.gfile.GFile(
+        os.path.join(FLAGS.input_ml_path, 'reviews.txt'), mode='r')
+    gan_samples_file = tf.gfile.GFile(
+        os.path.join(FLAGS.input_gan_path, 'reviews.txt'), mode='r')
 
-  # Generate shuffled tuples.
-  shuffled_tuples = shuffle_samples(ml_samples_file, gan_samples_file)
+    # Generate shuffled tuples.
+    shuffled_tuples = shuffle_samples(ml_samples_file, gan_samples_file)
 
-  # Output to file.
-  generate_output(shuffled_tuples, FLAGS.output_file_name)
+    # Output to file.
+    generate_output(shuffled_tuples, FLAGS.output_file_name)
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

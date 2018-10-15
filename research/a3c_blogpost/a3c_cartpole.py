@@ -45,7 +45,7 @@ class ActorCriticModel(keras.Model):
         self.dense2 = layers.Dense(100, activation='relu')
         self.values = layers.Dense(1)
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         # Forward pass
         x = self.dense1(inputs)
         logits = self.policy_logits(x)
@@ -127,7 +127,7 @@ class RandomAgent:
         return final_avg
 
 
-class MasterAgent():
+class MasterAgent:
     def __init__(self):
         self.game_name = 'CartPole-v0'
         save_dir = args.save_dir

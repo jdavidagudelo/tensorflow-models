@@ -18,18 +18,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-
 import tensorflow as tf
 
-from slim.datasets import dataset_factory as datasets
+from research.slim.datasets import dataset_factory as datasets
 
 slim = tf.contrib.slim
 
 
 def provide_data(split_name, batch_size, dataset_dir, num_readers=1,
                  num_threads=1):
-  """Provides batches of MNIST digits.
+    """Provides batches of MNIST digits.
 
   Args:
     split_name: Either 'train' or 'test'.
@@ -47,31 +45,31 @@ def provide_data(split_name, batch_size, dataset_dir, num_readers=1,
   Raises:
     ValueError: If `split_name` is not either 'train' or 'test'.
   """
-  dataset = datasets.get_dataset('mnist', split_name, dataset_dir=dataset_dir)
-  provider = slim.dataset_data_provider.DatasetDataProvider(
-      dataset,
-      num_readers=num_readers,
-      common_queue_capacity=2 * batch_size,
-      common_queue_min=batch_size,
-      shuffle=(split_name == 'train'))
-  [image, label] = provider.get(['image', 'label'])
+    dataset = datasets.get_dataset('mnist', split_name, dataset_dir=dataset_dir)
+    provider = slim.dataset_data_provider.DatasetDataProvider(
+        dataset,
+        num_readers=num_readers,
+        common_queue_capacity=2 * batch_size,
+        common_queue_min=batch_size,
+        shuffle=(split_name == 'train'))
+    [image, label] = provider.get(['image', 'label'])
 
-  # Preprocess the images.
-  image = (tf.to_float(image) - 128.0) / 128.0
+    # Preprocess the images.
+    image = (tf.to_float(image) - 128.0) / 128.0
 
-  # Creates a QueueRunner for the pre-fetching operation.
-  images, labels = tf.train.batch(
-      [image, label],
-      batch_size=batch_size,
-      num_threads=num_threads,
-      capacity=5 * batch_size)
+    # Creates a QueueRunner for the pre-fetching operation.
+    images, labels = tf.train.batch(
+        [image, label],
+        batch_size=batch_size,
+        num_threads=num_threads,
+        capacity=5 * batch_size)
 
-  one_hot_labels = tf.one_hot(labels, dataset.num_classes)
-  return images, one_hot_labels, dataset.num_samples
+    one_hot_labels = tf.one_hot(labels, dataset.num_classes)
+    return images, one_hot_labels, dataset.num_samples
 
 
 def float_image_to_uint8(image):
-  """Convert float image in [-1, 1) to [0, 255] uint8.
+    """Convert float image in [-1, 1) to [0, 255] uint8.
 
   Note that `1` gets mapped to `0`, but `1 - epsilon` gets mapped to 255.
 
@@ -81,5 +79,5 @@ def float_image_to_uint8(image):
   Returns:
     Input image cast to uint8 and with integer values in [0, 255].
   """
-  image = (image * 128.0) + 128.0
-  return tf.cast(image, tf.uint8)
+    image = (image * 128.0) + 128.0
+    return tf.cast(image, tf.uint8)

@@ -23,8 +23,8 @@ from collections import defaultdict
 
 import tensorflow as tf
 
-from .data import data_utils
-from .data import document_generators
+from research.adversarial_text.data import data_utils
+from research.adversarial_text.data import document_generators
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS

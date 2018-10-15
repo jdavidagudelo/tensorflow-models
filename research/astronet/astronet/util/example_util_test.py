@@ -21,7 +21,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from ..util import example_util
+from research.astronet.astronet.util import example_util
 
 
 class ExampleUtilTest(tf.test.TestCase):

@@ -45,7 +45,7 @@ def bottleneck(inputs,
                rate=1,
                outputs_collections=None,
                scope=None):
-  """Bottleneck residual unit variant with BN after convolutions.
+    """Bottleneck residual unit variant with BN after convolutions.
 
   This is the original residual unit proposed in [1]. See Fig. 1(a) of [2] for
   its definition. Note that we use here the bottleneck variant which has an
@@ -68,34 +68,34 @@ def bottleneck(inputs,
   Returns:
     The ResNet unit's output.
   """
-  with tf.variable_scope(scope, 'bottleneck_v1', [inputs]) as sc:
-    depth_in = slim.utils.last_dimension(inputs.get_shape(), min_rank=4)
-    if depth == depth_in:
-      shortcut = resnet_utils.subsample(inputs, stride, 'shortcut')
-    else:
-      shortcut = slim.conv2d(
-          inputs,
-          depth,
-          [1, 1],
-          stride=stride,
-          activation_fn=None,
-          scope='shortcut')
+    with tf.variable_scope(scope, 'bottleneck_v1', [inputs]) as sc:
+        depth_in = slim.utils.last_dimension(inputs.get_shape(), min_rank=4)
+        if depth == depth_in:
+            shortcut = resnet_utils.subsample(inputs, stride, 'shortcut')
+        else:
+            shortcut = slim.conv2d(
+                inputs,
+                depth,
+                [1, 1],
+                stride=stride,
+                activation_fn=None,
+                scope='shortcut')
 
-    residual = slim.conv2d(inputs, depth_bottleneck, [1, 1], stride=1,
-                           scope='conv1')
-    residual = resnet_utils.conv2d_same(residual, depth_bottleneck, 3, stride,
-                                        rate=rate*unit_rate, scope='conv2')
-    residual = slim.conv2d(residual, depth, [1, 1], stride=1,
-                           activation_fn=None, scope='conv3')
-    output = tf.nn.relu(shortcut + residual)
+        residual = slim.conv2d(inputs, depth_bottleneck, [1, 1], stride=1,
+                               scope='conv1')
+        residual = resnet_utils.conv2d_same(residual, depth_bottleneck, 3, stride,
+                                            rate=rate * unit_rate, scope='conv2')
+        residual = slim.conv2d(residual, depth, [1, 1], stride=1,
+                               activation_fn=None, scope='conv3')
+        output = tf.nn.relu(shortcut + residual)
 
-    return slim.utils.collect_named_outputs(outputs_collections,
-                                            sc.name,
-                                            output)
+        return slim.utils.collect_named_outputs(outputs_collections,
+                                                sc.name,
+                                                output)
 
 
 def root_block_fn_for_beta_variant(net):
-  """Gets root_block_fn for beta variant.
+    """Gets root_block_fn for beta variant.
 
   ResNet-v1 beta variant modifies the first original 7x7 convolution to three
   3x3 convolutions.
@@ -106,11 +106,11 @@ def root_block_fn_for_beta_variant(net):
   Returns:
     A tensor after three 3x3 convolutions.
   """
-  net = resnet_utils.conv2d_same(net, 64, 3, stride=2, scope='conv1_1')
-  net = resnet_utils.conv2d_same(net, 64, 3, stride=1, scope='conv1_2')
-  net = resnet_utils.conv2d_same(net, 128, 3, stride=1, scope='conv1_3')
+    net = resnet_utils.conv2d_same(net, 64, 3, stride=2, scope='conv1_1')
+    net = resnet_utils.conv2d_same(net, 64, 3, stride=1, scope='conv1_2')
+    net = resnet_utils.conv2d_same(net, 128, 3, stride=1, scope='conv1_3')
 
-  return net
+    return net
 
 
 def resnet_v1_beta(inputs,
@@ -122,7 +122,7 @@ def resnet_v1_beta(inputs,
                    root_block_fn=None,
                    reuse=None,
                    scope=None):
-  """Generator for v1 ResNet models (beta variant).
+    """Generator for v1 ResNet models (beta variant).
 
   This function generates a family of modified ResNet v1 models. In particular,
   the first original 7x7 convolution is replaced with three 3x3 convolutions.
@@ -166,47 +166,47 @@ def resnet_v1_beta(inputs,
   Raises:
     ValueError: If the target output_stride is not valid.
   """
-  if root_block_fn is None:
-    root_block_fn = functools.partial(resnet_utils.conv2d_same,
-                                      num_outputs=64,
-                                      kernel_size=7,
-                                      stride=2,
-                                      scope='conv1')
-  with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
-    end_points_collection = sc.original_name_scope + '_end_points'
-    with slim.arg_scope([slim.conv2d, bottleneck,
-                         resnet_utils.stack_blocks_dense],
-                        outputs_collections=end_points_collection):
-      if is_training is not None:
-        arg_scope = slim.arg_scope([slim.batch_norm], is_training=is_training)
-      else:
-        arg_scope = slim.arg_scope([])
-      with arg_scope:
-        net = inputs
-        if output_stride is not None:
-          if output_stride % 4 != 0:
-            raise ValueError('The output_stride needs to be a multiple of 4.')
-          output_stride /= 4
-        net = root_block_fn(net)
-        net = slim.max_pool2d(net, 3, stride=2, padding='SAME', scope='pool1')
-        net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
+    if root_block_fn is None:
+        root_block_fn = functools.partial(resnet_utils.conv2d_same,
+                                          num_outputs=64,
+                                          kernel_size=7,
+                                          stride=2,
+                                          scope='conv1')
+    with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
+        end_points_collection = sc.original_name_scope + '_end_points'
+        with slim.arg_scope([slim.conv2d, bottleneck,
+                             resnet_utils.stack_blocks_dense],
+                            outputs_collections=end_points_collection):
+            if is_training is not None:
+                arg_scope = slim.arg_scope([slim.batch_norm], is_training=is_training)
+            else:
+                arg_scope = slim.arg_scope([])
+            with arg_scope:
+                net = inputs
+                if output_stride is not None:
+                    if output_stride % 4 != 0:
+                        raise ValueError('The output_stride needs to be a multiple of 4.')
+                    output_stride /= 4
+                net = root_block_fn(net)
+                net = slim.max_pool2d(net, 3, stride=2, padding='SAME', scope='pool1')
+                net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
 
-        if global_pool:
-          # Global average pooling.
-          net = tf.reduce_mean(net, [1, 2], name='pool5', keepdims=True)
-        if num_classes is not None:
-          net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
-                            normalizer_fn=None, scope='logits')
-        # Convert end_points_collection into a dictionary of end_points.
-        end_points = slim.utils.convert_collection_to_dict(
-            end_points_collection)
-        if num_classes is not None:
-          end_points['predictions'] = slim.softmax(net, scope='predictions')
-        return net, end_points
+                if global_pool:
+                    # Global average pooling.
+                    net = tf.reduce_mean(net, [1, 2], name='pool5', keepdims=True)
+                if num_classes is not None:
+                    net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
+                                      normalizer_fn=None, scope='logits')
+                # Convert end_points_collection into a dictionary of end_points.
+                end_points = slim.utils.convert_collection_to_dict(
+                    end_points_collection)
+                if num_classes is not None:
+                    end_points['predictions'] = slim.softmax(net, scope='predictions')
+                return net, end_points
 
 
 def resnet_v1_beta_block(scope, base_depth, num_units, stride):
-  """Helper function for creating a resnet_v1 beta variant bottleneck block.
+    """Helper function for creating a resnet_v1 beta variant bottleneck block.
 
   Args:
     scope: The scope of the block.
@@ -218,17 +218,17 @@ def resnet_v1_beta_block(scope, base_depth, num_units, stride):
   Returns:
     A resnet_v1 bottleneck block.
   """
-  return resnet_utils.Block(scope, bottleneck, [{
-      'depth': base_depth * 4,
-      'depth_bottleneck': base_depth,
-      'stride': 1,
-      'unit_rate': 1
-  }] * (num_units - 1) + [{
-      'depth': base_depth * 4,
-      'depth_bottleneck': base_depth,
-      'stride': stride,
-      'unit_rate': 1
-  }])
+    return resnet_utils.Block(scope, bottleneck, [{
+        'depth': base_depth * 4,
+        'depth_bottleneck': base_depth,
+        'stride': 1,
+        'unit_rate': 1
+    }] * (num_units - 1) + [{
+        'depth': base_depth * 4,
+        'depth_bottleneck': base_depth,
+        'stride': stride,
+        'unit_rate': 1
+    }])
 
 
 def resnet_v1_50(inputs,
@@ -239,7 +239,7 @@ def resnet_v1_50(inputs,
                  multi_grid=None,
                  reuse=None,
                  scope='resnet_v1_50'):
-  """Resnet v1 50.
+    """Resnet v1 50.
 
   Args:
     inputs: A tensor of size [batch, height_in, width_in, channels].
@@ -270,34 +270,34 @@ def resnet_v1_50(inputs,
   Raises:
     ValueError: if multi_grid is not None and does not have length = 3.
   """
-  if multi_grid is None:
-    multi_grid = _DEFAULT_MULTI_GRID
-  else:
-    if len(multi_grid) != 3:
-      raise ValueError('Expect multi_grid to have length 3.')
+    if multi_grid is None:
+        multi_grid = _DEFAULT_MULTI_GRID
+    else:
+        if len(multi_grid) != 3:
+            raise ValueError('Expect multi_grid to have length 3.')
 
-  blocks = [
-      resnet_v1_beta_block(
-          'block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_beta_block(
-          'block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_beta_block(
-          'block3', base_depth=256, num_units=6, stride=2),
-      resnet_utils.Block('block4', bottleneck, [
-          {'depth': 2048,
-           'depth_bottleneck': 512,
-           'stride': 1,
-           'unit_rate': rate} for rate in multi_grid]),
-  ]
-  return resnet_v1_beta(
-      inputs,
-      blocks=blocks,
-      num_classes=num_classes,
-      is_training=is_training,
-      global_pool=global_pool,
-      output_stride=output_stride,
-      reuse=reuse,
-      scope=scope)
+    blocks = [
+        resnet_v1_beta_block(
+            'block1', base_depth=64, num_units=3, stride=2),
+        resnet_v1_beta_block(
+            'block2', base_depth=128, num_units=4, stride=2),
+        resnet_v1_beta_block(
+            'block3', base_depth=256, num_units=6, stride=2),
+        resnet_utils.Block('block4', bottleneck, [
+            {'depth': 2048,
+             'depth_bottleneck': 512,
+             'stride': 1,
+             'unit_rate': rate} for rate in multi_grid]),
+    ]
+    return resnet_v1_beta(
+        inputs,
+        blocks=blocks,
+        num_classes=num_classes,
+        is_training=is_training,
+        global_pool=global_pool,
+        output_stride=output_stride,
+        reuse=reuse,
+        scope=scope)
 
 
 def resnet_v1_50_beta(inputs,
@@ -308,7 +308,7 @@ def resnet_v1_50_beta(inputs,
                       multi_grid=None,
                       reuse=None,
                       scope='resnet_v1_50'):
-  """Resnet v1 50 beta variant.
+    """Resnet v1 50 beta variant.
 
   This variant modifies the first convolution layer of ResNet-v1-50. In
   particular, it changes the original one 7x7 convolution to three 3x3
@@ -343,35 +343,35 @@ def resnet_v1_50_beta(inputs,
   Raises:
     ValueError: if multi_grid is not None and does not have length = 3.
   """
-  if multi_grid is None:
-    multi_grid = _DEFAULT_MULTI_GRID
-  else:
-    if len(multi_grid) != 3:
-      raise ValueError('Expect multi_grid to have length 3.')
+    if multi_grid is None:
+        multi_grid = _DEFAULT_MULTI_GRID
+    else:
+        if len(multi_grid) != 3:
+            raise ValueError('Expect multi_grid to have length 3.')
 
-  blocks = [
-      resnet_v1_beta_block(
-          'block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_beta_block(
-          'block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_beta_block(
-          'block3', base_depth=256, num_units=6, stride=2),
-      resnet_utils.Block('block4', bottleneck, [
-          {'depth': 2048,
-           'depth_bottleneck': 512,
-           'stride': 1,
-           'unit_rate': rate} for rate in multi_grid]),
-  ]
-  return resnet_v1_beta(
-      inputs,
-      blocks=blocks,
-      num_classes=num_classes,
-      is_training=is_training,
-      global_pool=global_pool,
-      output_stride=output_stride,
-      root_block_fn=functools.partial(root_block_fn_for_beta_variant),
-      reuse=reuse,
-      scope=scope)
+    blocks = [
+        resnet_v1_beta_block(
+            'block1', base_depth=64, num_units=3, stride=2),
+        resnet_v1_beta_block(
+            'block2', base_depth=128, num_units=4, stride=2),
+        resnet_v1_beta_block(
+            'block3', base_depth=256, num_units=6, stride=2),
+        resnet_utils.Block('block4', bottleneck, [
+            {'depth': 2048,
+             'depth_bottleneck': 512,
+             'stride': 1,
+             'unit_rate': rate} for rate in multi_grid]),
+    ]
+    return resnet_v1_beta(
+        inputs,
+        blocks=blocks,
+        num_classes=num_classes,
+        is_training=is_training,
+        global_pool=global_pool,
+        output_stride=output_stride,
+        root_block_fn=functools.partial(root_block_fn_for_beta_variant),
+        reuse=reuse,
+        scope=scope)
 
 
 def resnet_v1_101(inputs,
@@ -382,7 +382,7 @@ def resnet_v1_101(inputs,
                   multi_grid=None,
                   reuse=None,
                   scope='resnet_v1_101'):
-  """Resnet v1 101.
+    """Resnet v1 101.
 
   Args:
     inputs: A tensor of size [batch, height_in, width_in, channels].
@@ -413,34 +413,34 @@ def resnet_v1_101(inputs,
   Raises:
     ValueError: if multi_grid is not None and does not have length = 3.
   """
-  if multi_grid is None:
-    multi_grid = _DEFAULT_MULTI_GRID
-  else:
-    if len(multi_grid) != 3:
-      raise ValueError('Expect multi_grid to have length 3.')
+    if multi_grid is None:
+        multi_grid = _DEFAULT_MULTI_GRID
+    else:
+        if len(multi_grid) != 3:
+            raise ValueError('Expect multi_grid to have length 3.')
 
-  blocks = [
-      resnet_v1_beta_block(
-          'block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_beta_block(
-          'block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_beta_block(
-          'block3', base_depth=256, num_units=23, stride=2),
-      resnet_utils.Block('block4', bottleneck, [
-          {'depth': 2048,
-           'depth_bottleneck': 512,
-           'stride': 1,
-           'unit_rate': rate} for rate in multi_grid]),
-  ]
-  return resnet_v1_beta(
-      inputs,
-      blocks=blocks,
-      num_classes=num_classes,
-      is_training=is_training,
-      global_pool=global_pool,
-      output_stride=output_stride,
-      reuse=reuse,
-      scope=scope)
+    blocks = [
+        resnet_v1_beta_block(
+            'block1', base_depth=64, num_units=3, stride=2),
+        resnet_v1_beta_block(
+            'block2', base_depth=128, num_units=4, stride=2),
+        resnet_v1_beta_block(
+            'block3', base_depth=256, num_units=23, stride=2),
+        resnet_utils.Block('block4', bottleneck, [
+            {'depth': 2048,
+             'depth_bottleneck': 512,
+             'stride': 1,
+             'unit_rate': rate} for rate in multi_grid]),
+    ]
+    return resnet_v1_beta(
+        inputs,
+        blocks=blocks,
+        num_classes=num_classes,
+        is_training=is_training,
+        global_pool=global_pool,
+        output_stride=output_stride,
+        reuse=reuse,
+        scope=scope)
 
 
 def resnet_v1_101_beta(inputs,
@@ -451,7 +451,7 @@ def resnet_v1_101_beta(inputs,
                        multi_grid=None,
                        reuse=None,
                        scope='resnet_v1_101'):
-  """Resnet v1 101 beta variant.
+    """Resnet v1 101 beta variant.
 
   This variant modifies the first convolution layer of ResNet-v1-101. In
   particular, it changes the original one 7x7 convolution to three 3x3
@@ -486,32 +486,32 @@ def resnet_v1_101_beta(inputs,
   Raises:
     ValueError: if multi_grid is not None and does not have length = 3.
   """
-  if multi_grid is None:
-    multi_grid = _DEFAULT_MULTI_GRID
-  else:
-    if len(multi_grid) != 3:
-      raise ValueError('Expect multi_grid to have length 3.')
+    if multi_grid is None:
+        multi_grid = _DEFAULT_MULTI_GRID
+    else:
+        if len(multi_grid) != 3:
+            raise ValueError('Expect multi_grid to have length 3.')
 
-  blocks = [
-      resnet_v1_beta_block(
-          'block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_beta_block(
-          'block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_beta_block(
-          'block3', base_depth=256, num_units=23, stride=2),
-      resnet_utils.Block('block4', bottleneck, [
-          {'depth': 2048,
-           'depth_bottleneck': 512,
-           'stride': 1,
-           'unit_rate': rate} for rate in multi_grid]),
-  ]
-  return resnet_v1_beta(
-      inputs,
-      blocks=blocks,
-      num_classes=num_classes,
-      is_training=is_training,
-      global_pool=global_pool,
-      output_stride=output_stride,
-      root_block_fn=functools.partial(root_block_fn_for_beta_variant),
-      reuse=reuse,
-      scope=scope)
+    blocks = [
+        resnet_v1_beta_block(
+            'block1', base_depth=64, num_units=3, stride=2),
+        resnet_v1_beta_block(
+            'block2', base_depth=128, num_units=4, stride=2),
+        resnet_v1_beta_block(
+            'block3', base_depth=256, num_units=23, stride=2),
+        resnet_utils.Block('block4', bottleneck, [
+            {'depth': 2048,
+             'depth_bottleneck': 512,
+             'stride': 1,
+             'unit_rate': rate} for rate in multi_grid]),
+    ]
+    return resnet_v1_beta(
+        inputs,
+        blocks=blocks,
+        num_classes=num_classes,
+        is_training=is_training,
+        global_pool=global_pool,
+        output_stride=output_stride,
+        root_block_fn=functools.partial(root_block_fn_for_beta_variant),
+        reuse=reuse,
+        scope=scope)

@@ -28,7 +28,7 @@ MAX_SEED = 4294967295
 
 
 class Dataset(namedtuple("Dataset", "data labels")):
-  """Helper class for managing a supervised learning dataset.
+    """Helper class for managing a supervised learning dataset.
 
   Args:
     data: an array of type float32 with N samples, each of which is the set
@@ -37,16 +37,16 @@ class Dataset(namedtuple("Dataset", "data labels")):
     labels: an array of type int32 or int64 with N elements, indicating the
       class label for the corresponding set of features in data.
   """
-  # Since this is an immutable object, we don't need to reserve slots.
-  __slots__ = ()
+    # Since this is an immutable object, we don't need to reserve slots.
+    __slots__ = ()
 
-  @property
-  def size(self):
-    """Dataset size (number of samples)."""
-    return len(self.data)
+    @property
+    def size(self):
+        """Dataset size (number of samples)."""
+        return len(self.data)
 
-  def batch_indices(self, num_batches, batch_size):
-    """Creates indices of shuffled minibatches.
+    def batch_indices(self, num_batches, batch_size):
+        """Creates indices of shuffled minibatches.
 
     Args:
       num_batches: the number of batches to generate
@@ -59,33 +59,32 @@ class Dataset(namedtuple("Dataset", "data labels")):
     Raises:
       ValueError: if the data and labels have different lengths
     """
-    if len(self.data) != len(self.labels):
-      raise ValueError("Labels and data must have the same number of samples.")
+        if len(self.data) != len(self.labels):
+            raise ValueError("Labels and data must have the same number of samples.")
 
-    batch_indices = []
+        batch_indices = []
 
-    # Follows logic in mnist.py to ensure we cover the entire dataset.
-    index_in_epoch = 0
-    dataset_size = len(self.data)
-    dataset_indices = np.arange(dataset_size)
-    np.random.shuffle(dataset_indices)
-
-    for _ in range(num_batches):
-      start = index_in_epoch
-      index_in_epoch += batch_size
-      if index_in_epoch > dataset_size:
-
-        # Finished epoch, reshuffle.
+        # Follows logic in mnist.py to ensure we cover the entire dataset.
+        index_in_epoch = 0
+        dataset_size = len(self.data)
+        dataset_indices = np.arange(dataset_size)
         np.random.shuffle(dataset_indices)
 
-        # Start next epoch.
-        start = 0
-        index_in_epoch = batch_size
+        for _ in range(num_batches):
+            start = index_in_epoch
+            index_in_epoch += batch_size
+            if index_in_epoch > dataset_size:
+                # Finished epoch, reshuffle.
+                np.random.shuffle(dataset_indices)
 
-      end = index_in_epoch
-      batch_indices.append(dataset_indices[start:end].tolist())
+                # Start next epoch.
+                start = 0
+                index_in_epoch = batch_size
 
-    return batch_indices
+            end = index_in_epoch
+            batch_indices.append(dataset_indices[start:end].tolist())
+
+        return batch_indices
 
 
 def noisy_parity_class(n_samples,
@@ -93,7 +92,7 @@ def noisy_parity_class(n_samples,
                        n_context_ids=5,
                        noise_prob=0.25,
                        random_seed=None):
-  """Returns a randomly generated sparse-to-sparse dataset.
+    """Returns a randomly generated sparse-to-sparse dataset.
 
   The label is a parity class of a set of context classes.
 
@@ -106,15 +105,15 @@ def noisy_parity_class(n_samples,
   Returns:
     dataset: A Dataset namedtuple containing the generated data and labels
   """
-  np.random.seed(random_seed)
-  x = np.random.randint(0, n_classes, [n_samples, n_context_ids])
-  noise = np.random.binomial(1, noise_prob, [n_samples])
-  y = (np.sum(x, 1) + noise) % n_classes
-  return Dataset(x.astype("float32"), y.astype("int32"))
+    np.random.seed(random_seed)
+    x = np.random.randint(0, n_classes, [n_samples, n_context_ids])
+    noise = np.random.binomial(1, noise_prob, [n_samples])
+    y = (np.sum(x, 1) + noise) % n_classes
+    return Dataset(x.astype("float32"), y.astype("int32"))
 
 
 def random(n_features, n_samples, n_classes=2, sep=1.0, random_seed=None):
-  """Returns a randomly generated classification dataset.
+    """Returns a randomly generated classification dataset.
 
   Args:
     n_features: number of features (dependent variables)
@@ -127,20 +126,20 @@ def random(n_features, n_samples, n_classes=2, sep=1.0, random_seed=None):
   Returns:
     dataset: A Dataset namedtuple containing the generated data and labels
   """
-  # Generate the problem data.
-  x, y = make_classification(n_samples=n_samples,
-                             n_features=n_features,
-                             n_informative=n_features,
-                             n_redundant=0,
-                             n_classes=n_classes,
-                             class_sep=sep,
-                             random_state=random_seed)
+    # Generate the problem data.
+    x, y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
+                               n_informative=n_features,
+                               n_redundant=0,
+                               n_classes=n_classes,
+                               class_sep=sep,
+                               random_state=random_seed)
 
-  return Dataset(x.astype("float32"), y.astype("int32"))
+    return Dataset(x.astype("float32"), y.astype("int32"))
 
 
 def random_binary(n_features, n_samples, random_seed=None):
-  """Returns a randomly generated dataset of binary values.
+    """Returns a randomly generated dataset of binary values.
 
   Args:
     n_features: number of features (dependent variables)
@@ -150,18 +149,18 @@ def random_binary(n_features, n_samples, random_seed=None):
   Returns:
     dataset: A Dataset namedtuple containing the generated data and labels
   """
-  random_seed = (np.random.randint(MAX_SEED) if random_seed is None
-                 else random_seed)
-  np.random.seed(random_seed)
+    random_seed = (np.random.randint(MAX_SEED) if random_seed is None
+                   else random_seed)
+    np.random.seed(random_seed)
 
-  x = np.random.randint(2, size=(n_samples, n_features))
-  y = np.zeros((n_samples, 1))
+    x = np.random.randint(2, size=(n_samples, n_features))
+    y = np.zeros((n_samples, 1))
 
-  return Dataset(x.astype("float32"), y.astype("int32"))
+    return Dataset(x.astype("float32"), y.astype("int32"))
 
 
 def random_symmetric(n_features, n_samples, random_seed=None):
-  """Returns a randomly generated dataset of values and their negatives.
+    """Returns a randomly generated dataset of values and their negatives.
 
   Args:
     n_features: number of features (dependent variables)
@@ -171,19 +170,19 @@ def random_symmetric(n_features, n_samples, random_seed=None):
   Returns:
     dataset: A Dataset namedtuple containing the generated data and labels
   """
-  random_seed = (np.random.randint(MAX_SEED) if random_seed is None
-                 else random_seed)
-  np.random.seed(random_seed)
+    random_seed = (np.random.randint(MAX_SEED) if random_seed is None
+                   else random_seed)
+    np.random.seed(random_seed)
 
-  x1 = np.random.normal(size=(int(n_samples/2), n_features))
-  x = np.concatenate((x1, -x1), axis=0)
-  y = np.zeros((n_samples, 1))
+    x1 = np.random.normal(size=(int(n_samples / 2), n_features))
+    x = np.concatenate((x1, -x1), axis=0)
+    y = np.zeros((n_samples, 1))
 
-  return Dataset(x.astype("float32"), y.astype("int32"))
+    return Dataset(x.astype("float32"), y.astype("int32"))
 
 
 def random_mlp(n_features, n_samples, random_seed=None, n_layers=6, width=20):
-  """Returns a generated output of an MLP with random weights.
+    """Returns a generated output of an MLP with random weights.
 
   Args:
     n_features: number of features (dependent variables)
@@ -195,23 +194,23 @@ def random_mlp(n_features, n_samples, random_seed=None, n_layers=6, width=20):
   Returns:
     dataset: A Dataset namedtuple containing the generated data and labels
   """
-  random_seed = (np.random.randint(MAX_SEED) if random_seed is None
-                 else random_seed)
-  np.random.seed(random_seed)
+    random_seed = (np.random.randint(MAX_SEED) if random_seed is None
+                   else random_seed)
+    np.random.seed(random_seed)
 
-  x = np.random.normal(size=(n_samples, n_features))
-  y = x
-  n_in = n_features
-  scale_factor = np.sqrt(2.) / np.sqrt(n_features)
-  for _ in range(n_layers):
-    weights = np.random.normal(size=(n_in, width)) * scale_factor
-    y = np.dot(y, weights).clip(min=0)
-    n_in = width
+    x = np.random.normal(size=(n_samples, n_features))
+    y = x
+    n_in = n_features
+    scale_factor = np.sqrt(2.) / np.sqrt(n_features)
+    for _ in range(n_layers):
+        weights = np.random.normal(size=(n_in, width)) * scale_factor
+        y = np.dot(y, weights).clip(min=0)
+        n_in = width
 
-  y = y[:, 0]
-  y[y > 0] = 1
+    y = y[:, 0]
+    y[y > 0] = 1
 
-  return Dataset(x.astype("float32"), y.astype("int32"))
+    return Dataset(x.astype("float32"), y.astype("int32"))
 
 
 EMPTY_DATASET = Dataset(np.array([], dtype="float32"),

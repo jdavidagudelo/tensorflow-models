@@ -34,7 +34,7 @@ def attention_decoder_fn_train(encoder_state,
                                attention_score_fn,
                                attention_construct_fn,
                                name=None):
-  """Attentional decoder function for `dynamic_rnn_decoder` during training.
+    """Attentional decoder function for `dynamic_rnn_decoder` during training.
 
   The `attention_decoder_fn_train` is a training function for an
   attention-based sequence-to-sequence model. It should be used when
@@ -65,14 +65,14 @@ def attention_decoder_fn_train(encoder_state,
     A decoder function with the required interface of `dynamic_rnn_decoder`
     intended for training.
   """
-  with tf.name_scope(name, "attention_decoder_fn_train", [
-      encoder_state, attention_keys, attention_values, attention_score_fn,
-      attention_construct_fn
-  ]):
-    pass
+    with tf.name_scope(name, "attention_decoder_fn_train", [
+        encoder_state, attention_keys, attention_values, attention_score_fn,
+        attention_construct_fn
+    ]):
+        pass
 
-  def decoder_fn(time, cell_state, cell_input, cell_output, context_state):
-    """Decoder function used in the `dynamic_rnn_decoder` for training.
+    def decoder_fn(time, cell_state, cell_input, cell_output, context_state):
+        """Decoder function used in the `dynamic_rnn_decoder` for training.
 
     Args:
       time: positive integer constant reflecting the current timestep.
@@ -101,26 +101,26 @@ def attention_decoder_fn_train(encoder_state,
       modify the given context state. The context state could be modified when
       applying e.g. beam search.
     """
-    with tf.name_scope(
-        name, "attention_decoder_fn_train",
-        [time, cell_state, cell_input, cell_output, context_state]):
-      if cell_state is None:  # first call, return encoder_state
-        cell_state = encoder_state
+        with tf.name_scope(
+                name, "attention_decoder_fn_train",
+                [time, cell_state, cell_input, cell_output, context_state]):
+            if cell_state is None:  # first call, return encoder_state
+                cell_state = encoder_state
 
-        # init attention
-        attention = _init_attention(encoder_state)
-      else:
-        # construct attention
-        attention = attention_construct_fn(cell_output, attention_keys,
-                                           attention_values)
-        cell_output = attention
+                # init attention
+                attention = _init_attention(encoder_state)
+            else:
+                # construct attention
+                attention = attention_construct_fn(cell_output, attention_keys,
+                                                   attention_values)
+                cell_output = attention
 
-      # combine cell_input and attention
-      next_input = tf.concat([cell_input, attention], 1)
+            # combine cell_input and attention
+            next_input = tf.concat([cell_input, attention], 1)
 
-      return (None, cell_state, next_input, cell_output, context_state)
+            return (None, cell_state, next_input, cell_output, context_state)
 
-  return decoder_fn
+    return decoder_fn
 
 
 def attention_decoder_fn_inference(output_fn,
@@ -136,7 +136,7 @@ def attention_decoder_fn_inference(output_fn,
                                    num_decoder_symbols,
                                    dtype=tf.int32,
                                    name=None):
-  """Attentional decoder function for `dynamic_rnn_decoder` during inference.
+    """Attentional decoder function for `dynamic_rnn_decoder` during inference.
 
   The `attention_decoder_fn_inference` is a simple inference function for a
   sequence-to-sequence model. It should be used when `dynamic_rnn_decoder` is
@@ -196,25 +196,25 @@ def attention_decoder_fn_inference(output_fn,
     A decoder function with the required interface of `dynamic_rnn_decoder`
     intended for inference.
   """
-  with tf.name_scope(name, "attention_decoder_fn_inference", [
-      output_fn, encoder_state, attention_keys, attention_values,
-      attention_score_fn, attention_construct_fn, embeddings,
-      start_of_sequence_id, end_of_sequence_id, maximum_length,
-      num_decoder_symbols, dtype
-  ]):
-    start_of_sequence_id = tf.convert_to_tensor(start_of_sequence_id, dtype)
-    end_of_sequence_id = tf.convert_to_tensor(end_of_sequence_id, dtype)
-    maximum_length = tf.convert_to_tensor(maximum_length, dtype)
-    num_decoder_symbols = tf.convert_to_tensor(num_decoder_symbols, dtype)
-    encoder_info = tf.contrib.framework.nest.flatten(encoder_state)[0]
-    batch_size = encoder_info.get_shape()[0].value
-    if output_fn is None:
-      output_fn = lambda x: x
-    if batch_size is None:
-      batch_size = tf.shape(encoder_info)[0]
+    with tf.name_scope(name, "attention_decoder_fn_inference", [
+        output_fn, encoder_state, attention_keys, attention_values,
+        attention_score_fn, attention_construct_fn, embeddings,
+        start_of_sequence_id, end_of_sequence_id, maximum_length,
+        num_decoder_symbols, dtype
+    ]):
+        start_of_sequence_id = tf.convert_to_tensor(start_of_sequence_id, dtype)
+        end_of_sequence_id = tf.convert_to_tensor(end_of_sequence_id, dtype)
+        maximum_length = tf.convert_to_tensor(maximum_length, dtype)
+        num_decoder_symbols = tf.convert_to_tensor(num_decoder_symbols, dtype)
+        encoder_info = tf.contrib.framework.nest.flatten(encoder_state)[0]
+        batch_size = encoder_info.get_shape()[0].value
+        if output_fn is None:
+            output_fn = lambda x: x
+        if batch_size is None:
+            batch_size = tf.shape(encoder_info)[0]
 
-  def decoder_fn(time, cell_state, cell_input, cell_output, context_state):
-    """Decoder function used in the `dynamic_rnn_decoder` for inference.
+    def decoder_fn(time, cell_state, cell_input, cell_output, context_state):
+        """Decoder function used in the `dynamic_rnn_decoder` for inference.
 
     The main difference between this decoder function and the `decoder_fn` in
     `attention_decoder_fn_train` is how `next_cell_input` is calculated. In
@@ -257,58 +257,58 @@ def attention_decoder_fn_inference(output_fn,
       ValueError: if cell_input is not None.
 
     """
-    with tf.name_scope(
-        name, "attention_decoder_fn_inference",
-        [time, cell_state, cell_input, cell_output, context_state]):
-      if cell_input is not None:
-        raise ValueError(
-            "Expected cell_input to be None, but saw: %s" % cell_input)
-      if cell_output is None:
-        # invariant that this is time == 0
-        next_input_id = tf.ones(
-            [
-                batch_size,
-            ], dtype=dtype) * (
-                start_of_sequence_id)
-        done = tf.zeros(
-            [
-                batch_size,
-            ], dtype=tf.bool)
-        cell_state = encoder_state
-        cell_output = tf.zeros([num_decoder_symbols], dtype=tf.float32)
-        cell_input = tf.gather(embeddings, next_input_id)
+        with tf.name_scope(
+                name, "attention_decoder_fn_inference",
+                [time, cell_state, cell_input, cell_output, context_state]):
+            if cell_input is not None:
+                raise ValueError(
+                    "Expected cell_input to be None, but saw: %s" % cell_input)
+            if cell_output is None:
+                # invariant that this is time == 0
+                next_input_id = tf.ones(
+                    [
+                        batch_size,
+                    ], dtype=dtype) * (
+                                    start_of_sequence_id)
+                done = tf.zeros(
+                    [
+                        batch_size,
+                    ], dtype=tf.bool)
+                cell_state = encoder_state
+                cell_output = tf.zeros([num_decoder_symbols], dtype=tf.float32)
+                cell_input = tf.gather(embeddings, next_input_id)
 
-        # init attention
-        attention = _init_attention(encoder_state)
-      else:
-        # construct attention
-        attention = attention_construct_fn(cell_output, attention_keys,
-                                           attention_values)
-        cell_output = attention
+                # init attention
+                attention = _init_attention(encoder_state)
+            else:
+                # construct attention
+                attention = attention_construct_fn(cell_output, attention_keys,
+                                                   attention_values)
+                cell_output = attention
 
-        # argmax decoder
-        cell_output = output_fn(cell_output)  # logits
-        next_input_id = tf.cast(tf.argmax(cell_output, 1), dtype=dtype)
-        done = tf.equal(next_input_id, end_of_sequence_id)
-        cell_input = tf.gather(embeddings, next_input_id)
+                # argmax decoder
+                cell_output = output_fn(cell_output)  # logits
+                next_input_id = tf.cast(tf.argmax(cell_output, 1), dtype=dtype)
+                done = tf.equal(next_input_id, end_of_sequence_id)
+                cell_input = tf.gather(embeddings, next_input_id)
 
-      # combine cell_input and attention
-      next_input = tf.concat([cell_input, attention], 1)
+            # combine cell_input and attention
+            next_input = tf.concat([cell_input, attention], 1)
 
-      # if time > maxlen, return all true vector
-      done = tf.cond(
-          tf.greater(time, maximum_length),
-          lambda: tf.ones([
-              batch_size,], dtype=tf.bool), lambda: done)
-      return (done, cell_state, next_input, cell_output, context_state)
+            # if time > maxlen, return all true vector
+            done = tf.cond(
+                tf.greater(time, maximum_length),
+                lambda: tf.ones([
+                    batch_size, ], dtype=tf.bool), lambda: done)
+            return (done, cell_state, next_input, cell_output, context_state)
 
-  return decoder_fn
+    return decoder_fn
 
 
 ## Helper functions ##
 def prepare_attention(attention_states, attention_option, num_units,
                       reuse=None):
-  """Prepare keys/values/functions for attention.
+    """Prepare keys/values/functions for attention.
 
   Args:
     attention_states: hidden states to attend over.
@@ -322,25 +322,25 @@ def prepare_attention(attention_states, attention_option, num_units,
     attention_score_fn: to compute similarity between key and target states.
     attention_construct_fn: to build attention states.
   """
-  # Prepare attention keys / values from attention_states
-  with tf.variable_scope("attention_keys", reuse=reuse) as scope:
-    attention_keys = tf.contrib.layers.linear(
-        attention_states, num_units, biases_initializer=None, scope=scope)
-  attention_values = attention_states
+    # Prepare attention keys / values from attention_states
+    with tf.variable_scope("attention_keys", reuse=reuse) as scope:
+        attention_keys = tf.contrib.layers.linear(
+            attention_states, num_units, biases_initializer=None, scope=scope)
+    attention_values = attention_states
 
-  # Attention score function
-  attention_score_fn = _create_attention_score_fn("attention_score", num_units,
-                                                  attention_option, reuse)
-  # Attention construction function
-  attention_construct_fn = _create_attention_construct_fn(
-      "attention_construct", num_units, attention_score_fn, reuse)
+    # Attention score function
+    attention_score_fn = _create_attention_score_fn("attention_score", num_units,
+                                                    attention_option, reuse)
+    # Attention construction function
+    attention_construct_fn = _create_attention_construct_fn(
+        "attention_construct", num_units, attention_score_fn, reuse)
 
-  return (attention_keys, attention_values, attention_score_fn,
-          attention_construct_fn)
+    return (attention_keys, attention_values, attention_score_fn,
+            attention_construct_fn)
 
 
 def _init_attention(encoder_state):
-  """Initialize attention. Handling both LSTM and GRU.
+    """Initialize attention. Handling both LSTM and GRU.
 
   Args:
     encoder_state: The encoded state to initialize the `dynamic_rnn_decoder`.
@@ -349,24 +349,24 @@ def _init_attention(encoder_state):
     attn: initial zero attention vector.
   """
 
-  # Multi- vs single-layer
-  # TODO(thangluong): is this the best way to check?
-  if isinstance(encoder_state, tuple):
-    top_state = encoder_state[-1]
-  else:
-    top_state = encoder_state
+    # Multi- vs single-layer
+    # TODO(thangluong): is this the best way to check?
+    if isinstance(encoder_state, tuple):
+        top_state = encoder_state[-1]
+    else:
+        top_state = encoder_state
 
-  # LSTM vs GRU
-  if isinstance(top_state, tf.contrib.rnn.LSTMStateTuple):
-    attn = tf.zeros_like(top_state.h)
-  else:
-    attn = tf.zeros_like(top_state)
+    # LSTM vs GRU
+    if isinstance(top_state, tf.contrib.rnn.LSTMStateTuple):
+        attn = tf.zeros_like(top_state.h)
+    else:
+        attn = tf.zeros_like(top_state)
 
-  return attn
+    return attn
 
 
 def _create_attention_construct_fn(name, num_units, attention_score_fn, reuse):
-  """Function to compute attention vectors.
+    """Function to compute attention vectors.
 
   Args:
     name: to label variables.
@@ -378,16 +378,16 @@ def _create_attention_construct_fn(name, num_units, attention_score_fn, reuse):
     attention_construct_fn: to build attention states.
   """
 
-  def construct_fn(attention_query, attention_keys, attention_values):
-    with tf.variable_scope(name, reuse=reuse) as scope:
-      context = attention_score_fn(attention_query, attention_keys,
-                                   attention_values)
-      concat_input = tf.concat([attention_query, context], 1)
-      attention = tf.contrib.layers.linear(
-          concat_input, num_units, biases_initializer=None, scope=scope)
-      return attention
+    def construct_fn(attention_query, attention_keys, attention_values):
+        with tf.variable_scope(name, reuse=reuse) as scope:
+            context = attention_score_fn(attention_query, attention_keys,
+                                         attention_values)
+            concat_input = tf.concat([attention_query, context], 1)
+            attention = tf.contrib.layers.linear(
+                concat_input, num_units, biases_initializer=None, scope=scope)
+            return attention
 
-  return construct_fn
+    return construct_fn
 
 
 # keys: [batch_size, attention_length, attn_size]
@@ -395,12 +395,12 @@ def _create_attention_construct_fn(name, num_units, attention_score_fn, reuse):
 # return weights [batch_size, attention_length]
 @function.Defun(func_name="attn_add_fun", noinline=True)
 def _attn_add_fun(v, keys, query):
-  return tf.reduce_sum(v * tf.tanh(keys + query), [2])
+    return tf.reduce_sum(v * tf.tanh(keys + query), [2])
 
 
 @function.Defun(func_name="attn_mul_fun", noinline=True)
 def _attn_mul_fun(keys, query):
-  return tf.reduce_sum(keys * query, [2])
+    return tf.reduce_sum(keys * query, [2])
 
 
 def _create_attention_score_fn(name,
@@ -408,7 +408,7 @@ def _create_attention_score_fn(name,
                                attention_option,
                                reuse,
                                dtype=tf.float32):
-  """Different ways to compute attention scores.
+    """Different ways to compute attention scores.
 
   Args:
     name: to label variables.
@@ -422,13 +422,13 @@ def _create_attention_score_fn(name,
   Returns:
     attention_score_fn: to compute similarity between key and target states.
   """
-  with tf.variable_scope(name, reuse=reuse):
-    if attention_option == "bahdanau":
-      query_w = tf.get_variable("attnW", [num_units, num_units], dtype=dtype)
-      score_v = tf.get_variable("attnV", [num_units], dtype=dtype)
+    with tf.variable_scope(name, reuse=reuse):
+        if attention_option == "bahdanau":
+            query_w = tf.get_variable("attnW", [num_units, num_units], dtype=dtype)
+            score_v = tf.get_variable("attnV", [num_units], dtype=dtype)
 
-    def attention_score_fn(query, keys, values):
-      """Put attention masks on attention_values using attention_keys and query.
+        def attention_score_fn(query, keys, values):
+            """Put attention masks on attention_values using attention_keys and query.
 
       Args:
         query: A Tensor of shape [batch_size, num_units].
@@ -443,35 +443,35 @@ def _create_attention_score_fn(name,
 
 
       """
-      if attention_option == "bahdanau":
-        # transform query
-        query = tf.matmul(query, query_w)
+            if attention_option == "bahdanau":
+                # transform query
+                query = tf.matmul(query, query_w)
 
-        # reshape query: [batch_size, 1, num_units]
-        query = tf.reshape(query, [-1, 1, num_units])
+                # reshape query: [batch_size, 1, num_units]
+                query = tf.reshape(query, [-1, 1, num_units])
 
-        # attn_fun
-        scores = _attn_add_fun(score_v, keys, query)
-      elif attention_option == "luong":
-        # reshape query: [batch_size, 1, num_units]
-        query = tf.reshape(query, [-1, 1, num_units])
+                # attn_fun
+                scores = _attn_add_fun(score_v, keys, query)
+            elif attention_option == "luong":
+                # reshape query: [batch_size, 1, num_units]
+                query = tf.reshape(query, [-1, 1, num_units])
 
-        # attn_fun
-        scores = _attn_mul_fun(keys, query)
-      else:
-        raise ValueError("Unknown attention option %s!" % attention_option)
+                # attn_fun
+                scores = _attn_mul_fun(keys, query)
+            else:
+                raise ValueError("Unknown attention option %s!" % attention_option)
 
-      # Compute alignment weights
-      #   scores: [batch_size, length]
-      #   alignments: [batch_size, length]
-      # TODO(thangluong): not normalize over padding positions.
-      alignments = tf.nn.softmax(scores)
+            # Compute alignment weights
+            #   scores: [batch_size, length]
+            #   alignments: [batch_size, length]
+            # TODO(thangluong): not normalize over padding positions.
+            alignments = tf.nn.softmax(scores)
 
-      # Now calculate the attention-weighted vector.
-      alignments = tf.expand_dims(alignments, 2)
-      context_vector = tf.reduce_sum(alignments * values, [1])
-      context_vector.set_shape([None, num_units])
+            # Now calculate the attention-weighted vector.
+            alignments = tf.expand_dims(alignments, 2)
+            context_vector = tf.reduce_sum(alignments * values, [1])
+            context_vector.set_shape([None, num_units])
 
-      return context_vector
+            return context_vector
 
-    return attention_score_fn
+        return attention_score_fn

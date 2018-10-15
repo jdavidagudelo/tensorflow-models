@@ -40,41 +40,41 @@ T(h='f', x=4)
 
 
 class T(object):
-  """Class for emulating lua tables."""
+    """Class for emulating lua tables."""
 
-  def __init__(self, *args, **kwargs):
-    if len(args) > 1 or (len(args) == 1 and len(kwargs) > 0):
-      errmsg = '''constructor only allows a single dict as a positional
+    def __init__(self, *args, **kwargs):
+        if len(args) > 1 or (len(args) == 1 and len(kwargs) > 0):
+            errmsg = '''constructor only allows a single dict as a positional
       argument or keyword arguments'''
-      raise ValueError(errmsg)
-    if len(args) == 1 and isinstance(args[0], dict):
-      self.__dict__.update(args[0])
-    else:
-      self.__dict__.update(kwargs)
+            raise ValueError(errmsg)
+        if len(args) == 1 and isinstance(args[0], dict):
+            self.__dict__.update(args[0])
+        else:
+            self.__dict__.update(kwargs)
 
-  def __repr__(self):
-    fmt = ', '.join('%s=%s' for i in range(len(self.__dict__)))
-    kwargstr = fmt % tuple(
-        x for tup in self.__dict__.items() for x in [str(tup[0]), repr(tup[1])])
-    return 'T(' + kwargstr + ')'
+    def __repr__(self):
+        fmt = ', '.join('%s=%s' for i in range(len(self.__dict__)))
+        kwargstr = fmt % tuple(
+            x for tup in self.__dict__.items() for x in [str(tup[0]), repr(tup[1])])
+        return 'T(' + kwargstr + ')'
 
-  def __getitem__(self, key):
-    return self.__dict__[key]
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
-  def __setitem__(self, key, val):
-    self.__dict__[key] = val
+    def __setitem__(self, key, val):
+        self.__dict__[key] = val
 
-  def __delitem__(self, key):
-    del self.__dict__[key]
+    def __delitem__(self, key):
+        del self.__dict__[key]
 
-  def __iter__(self):
-    return iter(self.__dict__)
+    def __iter__(self):
+        return iter(self.__dict__)
 
-  def __len__(self):
-    return len(self.__dict__)
+    def __len__(self):
+        return len(self.__dict__)
 
-  def keys(self):  # Needed for dict(T( ... )) to work.
-    return self.__dict__.keys()
+    def keys(self):  # Needed for dict(T( ... )) to work.
+        return self.__dict__.keys()
 
-  def iteritems(self):
-    return self.__dict__.iteritems()
+    def iteritems(self):
+        return [(k, self.__dict__.get(k)) for k in self.__dict__]

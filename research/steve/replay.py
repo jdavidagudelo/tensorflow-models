@@ -1,5 +1,6 @@
 from __future__ import print_function
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import zip
 from builtins import str
@@ -22,6 +23,7 @@ from builtins import object
 import numpy as np
 import pickle
 import multiprocessing
+
 
 class ReplayBuffer(object):
     """
@@ -57,8 +59,10 @@ class ReplayBuffer(object):
 
     def add_replay(self, obs, next_obs, action, reward, done):
         if self.count >= self.max_size:
-            if self.roundrobin: index = self.count % self.max_size
-            else:               index = np.random.randint(0, self.max_size)
+            if self.roundrobin:
+                index = self.count % self.max_size
+            else:
+                index = np.random.randint(0, self.max_size)
         else:
             index = self.count
 
@@ -74,9 +78,9 @@ class ReplayBuffer(object):
         def _save(datas, fnames):
             print("saving replay buffer...")
             for data, fname in zip(datas, fnames):
-                with open("%s.npz"%fname, "w") as f:
+                with open("%s.npz" % fname, "w") as f:
                     pickle.dump(data, f)
-            with open("%s/%s.count" % (path,name), "w") as f:
+            with open("%s/%s.count" % (path, name), "w") as f:
                 f.write(str(self.count))
             print("...done saving.")
 
@@ -94,16 +98,16 @@ class ReplayBuffer(object):
             "%s/%s.action_buffer" % (path, name),
             "%s/%s.reward_buffer" % (path, name),
             "%s/%s.done_buffer" % (path, name)
-         ]
+        ]
 
         proc = multiprocessing.Process(target=_save, args=(datas, fnames))
         proc.start()
 
     def load(self, path, name):
         print("Loading %s replay buffer (may take a while...)" % name)
-        with open("%s/%s.obs_buffer.npz" % (path,name)) as f: self.obs_buffer = pickle.load(f)
-        with open("%s/%s.next_obs_buffer.npz" % (path,name)) as f: self.next_obs_buffer = pickle.load(f)
-        with open("%s/%s.action_buffer.npz" % (path,name)) as f: self.action_buffer = pickle.load(f)
-        with open("%s/%s.reward_buffer.npz" % (path,name)) as f: self.reward_buffer = pickle.load(f)
-        with open("%s/%s.done_buffer.npz" % (path,name)) as f: self.done_buffer = pickle.load(f)
-        with open("%s/%s.count" % (path,name), "r") as f: self.count = int(f.read())
+        with open("%s/%s.obs_buffer.npz" % (path, name)) as f: self.obs_buffer = pickle.load(f)
+        with open("%s/%s.next_obs_buffer.npz" % (path, name)) as f: self.next_obs_buffer = pickle.load(f)
+        with open("%s/%s.action_buffer.npz" % (path, name)) as f: self.action_buffer = pickle.load(f)
+        with open("%s/%s.reward_buffer.npz" % (path, name)) as f: self.reward_buffer = pickle.load(f)
+        with open("%s/%s.done_buffer.npz" % (path, name)) as f: self.done_buffer = pickle.load(f)
+        with open("%s/%s.count" % (path, name), "r") as f: self.count = int(f.read())

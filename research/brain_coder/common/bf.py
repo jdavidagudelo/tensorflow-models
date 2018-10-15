@@ -45,7 +45,7 @@ class LookAheadIterator(object):
 
     def _preload_next(self):
         try:
-            self._current_element = self._it.next()
+            self._current_element = next(self._it)
         except StopIteration:
             self._done = True
 
@@ -196,8 +196,13 @@ def evaluate(code, input_buffer=None, init_memory=None, base=256, timeout=1.0,
         if command == '[' and cells[cellptr] == 0: codeptr = bracemap[codeptr]
         if command == ']' and cells[cellptr] != 0: codeptr = bracemap[codeptr]
 
-        if command == '.': output_buffer.append(cells[cellptr])
-        if command == ',': cells[cellptr] = next(input_iter, null_value)
+        if command == '.':
+            output_buffer.append(cells[cellptr])
+        if command == ',':
+            try:
+                cells[cellptr] = input_iter.next()
+            except StopIteration:
+                cells[cellptr] = null_value
 
         codeptr += 1
         steps += 1

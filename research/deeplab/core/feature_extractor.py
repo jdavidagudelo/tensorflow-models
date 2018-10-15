@@ -18,10 +18,9 @@ import functools
 import tensorflow as tf
 
 from research.deeplab.core import resnet_v1_beta
-from research.deeplab.core  import xception
+from research.deeplab.core import xception
 from tensorflow.contrib.slim.nets import resnet_utils
-from nets.mobilenet import mobilenet_v2
-
+from research.slim.nets.mobilenet import mobilenet_v2
 
 slim = tf.contrib.slim
 
@@ -35,7 +34,7 @@ def _mobilenet_v2(net,
                   reuse=None,
                   scope=None,
                   final_endpoint=None):
-  """Auxiliary function to add support for 'reuse' to mobilenet_v2.
+    """Auxiliary function to add support for 'reuse' to mobilenet_v2.
 
   Args:
     net: Input tensor of shape [batch_size, height, width, channels].
@@ -55,17 +54,17 @@ def _mobilenet_v2(net,
   Returns:
     Features extracted by MobileNetv2.
   """
-  with tf.variable_scope(
-      scope, 'MobilenetV2', [net], reuse=reuse) as scope:
-    return mobilenet_v2.mobilenet_base(
-        net,
-        conv_defs=mobilenet_v2.V2_DEF,
-        depth_multiplier=depth_multiplier,
-        min_depth=8 if depth_multiplier == 1.0 else 1,
-        divisible_by=8 if depth_multiplier == 1.0 else 1,
-        final_endpoint=final_endpoint or _MOBILENET_V2_FINAL_ENDPOINT,
-        output_stride=output_stride,
-        scope=scope)
+    with tf.variable_scope(
+            scope, 'MobilenetV2', [net], reuse=reuse) as scope:
+        return mobilenet_v2.mobilenet_base(
+            net,
+            conv_defs=mobilenet_v2.V2_DEF,
+            depth_multiplier=depth_multiplier,
+            min_depth=8 if depth_multiplier == 1.0 else 1,
+            divisible_by=8 if depth_multiplier == 1.0 else 1,
+            final_endpoint=final_endpoint or _MOBILENET_V2_FINAL_ENDPOINT,
+            output_stride=output_stride,
+            scope=scope)
 
 
 # A map from network name to network function.
@@ -150,14 +149,14 @@ _MEAN_RGB = [123.15, 115.90, 103.06]
 
 
 def _preprocess_subtract_imagenet_mean(inputs):
-  """Subtract Imagenet mean RGB value."""
-  mean_rgb = tf.reshape(_MEAN_RGB, [1, 1, 1, 3])
-  return inputs - mean_rgb
+    """Subtract Imagenet mean RGB value."""
+    mean_rgb = tf.reshape(_MEAN_RGB, [1, 1, 1, 3])
+    return inputs - mean_rgb
 
 
 def _preprocess_zero_mean_unit_range(inputs):
-  """Map image values from [0, 255] to [-1, 1]."""
-  return (2.0 / 255.0) * tf.to_float(inputs) - 1.0
+    """Map image values from [0, 255] to [-1, 1]."""
+    return (2.0 / 255.0) * tf.to_float(inputs) - 1.0
 
 
 _PREPROCESS_FN = {
@@ -173,7 +172,7 @@ _PREPROCESS_FN = {
 
 
 def mean_pixel(model_variant=None):
-  """Gets mean pixel value.
+    """Gets mean pixel value.
 
   This function returns different mean pixel value, depending on the input
   model_variant which adopts different preprocessing functions. We currently
@@ -190,11 +189,11 @@ def mean_pixel(model_variant=None):
   Returns:
     Mean pixel value.
   """
-  if model_variant in ['resnet_v1_50',
-                       'resnet_v1_101'] or model_variant is None:
-    return _MEAN_RGB
-  else:
-    return [127.5, 127.5, 127.5]
+    if model_variant in ['resnet_v1_50',
+                         'resnet_v1_101'] or model_variant is None:
+        return _MEAN_RGB
+    else:
+        return [127.5, 127.5, 127.5]
 
 
 def extract_features(images,
@@ -211,7 +210,7 @@ def extract_features(images,
                      preprocess_images=True,
                      num_classes=None,
                      global_pool=False):
-  """Extracts features by the particular model_variant.
+    """Extracts features by the particular model_variant.
 
   Args:
     images: A tensor of size [batch, height, width, channels].
@@ -246,14 +245,14 @@ def extract_features(images,
   Raises:
     ValueError: Unrecognized model variant.
   """
-  if 'resnet' in model_variant:
-    arg_scope = arg_scopes_map[model_variant](
-        weight_decay=weight_decay,
-        batch_norm_decay=0.95,
-        batch_norm_epsilon=1e-5,
-        batch_norm_scale=True)
-    features, end_points = get_network(
-        model_variant, preprocess_images, arg_scope)(
+    if 'resnet' in model_variant:
+        arg_scope = arg_scopes_map[model_variant](
+            weight_decay=weight_decay,
+            batch_norm_decay=0.95,
+            batch_norm_epsilon=1e-5,
+            batch_norm_scale=True)
+        features, end_points = get_network(
+            model_variant, preprocess_images, arg_scope)(
             inputs=images,
             num_classes=num_classes,
             is_training=(is_training and fine_tune_batch_norm),
@@ -262,15 +261,15 @@ def extract_features(images,
             multi_grid=multi_grid,
             reuse=reuse,
             scope=name_scope[model_variant])
-  elif 'xception' in model_variant:
-    arg_scope = arg_scopes_map[model_variant](
-        weight_decay=weight_decay,
-        batch_norm_decay=0.9997,
-        batch_norm_epsilon=1e-3,
-        batch_norm_scale=True,
-        regularize_depthwise=regularize_depthwise)
-    features, end_points = get_network(
-        model_variant, preprocess_images, arg_scope)(
+    elif 'xception' in model_variant:
+        arg_scope = arg_scopes_map[model_variant](
+            weight_decay=weight_decay,
+            batch_norm_decay=0.9997,
+            batch_norm_epsilon=1e-3,
+            batch_norm_scale=True,
+            regularize_depthwise=regularize_depthwise)
+        features, end_points = get_network(
+            model_variant, preprocess_images, arg_scope)(
             inputs=images,
             num_classes=num_classes,
             is_training=(is_training and fine_tune_batch_norm),
@@ -280,26 +279,26 @@ def extract_features(images,
             multi_grid=multi_grid,
             reuse=reuse,
             scope=name_scope[model_variant])
-  elif 'mobilenet' in model_variant:
-    arg_scope = arg_scopes_map[model_variant](
-        is_training=(is_training and fine_tune_batch_norm),
-        weight_decay=weight_decay)
-    features, end_points = get_network(
-        model_variant, preprocess_images, arg_scope)(
+    elif 'mobilenet' in model_variant:
+        arg_scope = arg_scopes_map[model_variant](
+            is_training=(is_training and fine_tune_batch_norm),
+            weight_decay=weight_decay)
+        features, end_points = get_network(
+            model_variant, preprocess_images, arg_scope)(
             inputs=images,
             depth_multiplier=depth_multiplier,
             output_stride=output_stride,
             reuse=reuse,
             scope=name_scope[model_variant],
             final_endpoint=final_endpoint)
-  else:
-    raise ValueError('Unknown model variant %s.' % model_variant)
+    else:
+        raise ValueError('Unknown model variant %s.' % model_variant)
 
-  return features, end_points
+    return features, end_points
 
 
 def get_network(network_name, preprocess_images, arg_scope=None):
-  """Gets the network.
+    """Gets the network.
 
   Args:
     network_name: Network name.
@@ -313,18 +312,22 @@ def get_network(network_name, preprocess_images, arg_scope=None):
   Raises:
     ValueError: network is not supported.
   """
-  if network_name not in networks_map:
-    raise ValueError('Unsupported network %s.' % network_name)
-  arg_scope = arg_scope or arg_scopes_map[network_name]()
-  def _identity_function(inputs):
-    return inputs
-  if preprocess_images:
-    preprocess_function = _PREPROCESS_FN[network_name]
-  else:
-    preprocess_function = _identity_function
-  func = networks_map[network_name]
-  @functools.wraps(func)
-  def network_fn(inputs, *args, **kwargs):
-    with slim.arg_scope(arg_scope):
-      return func(preprocess_function(inputs), *args, **kwargs)
-  return network_fn
+    if network_name not in networks_map:
+        raise ValueError('Unsupported network %s.' % network_name)
+    arg_scope = arg_scope or arg_scopes_map[network_name]()
+
+    def _identity_function(inputs):
+        return inputs
+
+    if preprocess_images:
+        preprocess_function = _PREPROCESS_FN[network_name]
+    else:
+        preprocess_function = _identity_function
+    func = networks_map[network_name]
+
+    @functools.wraps(func)
+    def network_fn(inputs, *args, **kwargs):
+        with slim.arg_scope(arg_scope):
+            return func(preprocess_function(inputs), *args, **kwargs)
+
+    return network_fn

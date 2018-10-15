@@ -24,11 +24,11 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from morph_net.framework import generic_regularizers
+from research.morph_net.framework import generic_regularizers
 
 
 class ConvGroupLassoRegularizer(generic_regularizers.OpRegularizer):
-  """A regularizer for convolutions, based on group-lasso.
+    """A regularizer for convolutions, based on group-lasso.
 
   Supported ops: Conv2D and Conv2DBackpropInput (transposed Conv2D).
   are supported. The grouping is done according to the formula:
@@ -41,8 +41,8 @@ class ConvGroupLassoRegularizer(generic_regularizers.OpRegularizer):
   l1_fraction.
   """
 
-  def __init__(self, op, threshold, l1_fraction=0.0):
-    """Creates an instance.
+    def __init__(self, op, threshold, l1_fraction=0.0):
+        """Creates an instance.
 
     Args:
       op: A tf.Operation object of type Conv2D or Conv2DBackpropInput.
@@ -55,45 +55,45 @@ class ConvGroupLassoRegularizer(generic_regularizers.OpRegularizer):
       ValueError: `op` is not of type 'Conv2D' or 'Conv2DBackpropInput', or
         l1_fraction is outside interval [0.0, 1.0].
     """
-    if op.type not in ('Conv2D', 'Conv2DBackpropInput'):
-      raise ValueError('The given op is not Conv2D or Conv2DBackpropInput.')
-    if l1_fraction < 0.0 or l1_fraction > 1.0:
-      raise ValueError(
-          'l1_fraction should be in [0.0, 1.0], not %e.' % l1_fraction)
+        if op.type not in ('Conv2D', 'Conv2DBackpropInput'):
+            raise ValueError('The given op is not Conv2D or Conv2DBackpropInput.')
+        if l1_fraction < 0.0 or l1_fraction > 1.0:
+            raise ValueError(
+                'l1_fraction should be in [0.0, 1.0], not %e.' % l1_fraction)
 
-    self._threshold = threshold
-    conv_weights = op.inputs[1]
-    # For a Conv2D (Conv2DBackpropInput) the output dimension of the weight
-    # matrix is 3 (2). We thus reduce over all other dimensions.
+        self._threshold = threshold
+        conv_weights = op.inputs[1]
+        # For a Conv2D (Conv2DBackpropInput) the output dimension of the weight
+        # matrix is 3 (2). We thus reduce over all other dimensions.
 
-    l2_norm = tf.sqrt(
-        tf.reduce_mean(tf.square(conv_weights), axis=_get_reduce_dims(op)))
-    if l1_fraction > 0.0:
-      l1_norm = tf.reduce_mean(tf.abs(conv_weights), axis=_get_reduce_dims(op))
-      norm = l1_fraction * l1_norm + (1.0 - l1_fraction) * l2_norm
-    else:
-      norm = l2_norm
-    # Sanity check: Output dimension of 'op' should match that of 'norm':
-    assert op.outputs[0].shape.ndims == 4
-    assert norm.shape.ndims == 1
-    op.outputs[0].shape.dims[3].assert_is_compatible_with(norm.shape.dims[0])
-    self._regularization_vector = norm
-    self._alive_vector = norm > threshold
+        l2_norm = tf.sqrt(
+            tf.reduce_mean(tf.square(conv_weights), axis=_get_reduce_dims(op)))
+        if l1_fraction > 0.0:
+            l1_norm = tf.reduce_mean(tf.abs(conv_weights), axis=_get_reduce_dims(op))
+            norm = l1_fraction * l1_norm + (1.0 - l1_fraction) * l2_norm
+        else:
+            norm = l2_norm
+        # Sanity check: Output dimension of 'op' should match that of 'norm':
+        assert op.outputs[0].shape.ndims == 4
+        assert norm.shape.ndims == 1
+        op.outputs[0].shape.dims[3].assert_is_compatible_with(norm.shape.dims[0])
+        self._regularization_vector = norm
+        self._alive_vector = norm > threshold
 
-  @property
-  def regularization_vector(self):
-    return self._regularization_vector
+    @property
+    def regularization_vector(self):
+        return self._regularization_vector
 
-  @property
-  def alive_vector(self):
-    return self._alive_vector
+    @property
+    def alive_vector(self):
+        return self._alive_vector
 
 
 class ConvGroupLassoRegularizerFactory(object):
-  """A class for creating a ConvGroupLassoRegularizer for convolutions."""
+    """A class for creating a ConvGroupLassoRegularizer for convolutions."""
 
-  def __init__(self, threshold, l1_fraction=0.0):
-    """Creates an instance.
+    def __init__(self, threshold, l1_fraction=0.0):
+        """Creates an instance.
 
     Args:
       threshold: A float scalar, will be used as a threshold for all
@@ -101,11 +101,11 @@ class ConvGroupLassoRegularizerFactory(object):
       l1_fraction: A float scalar, will be passed as l1_fraction to all
         ConvGroupLassoRegularizer-s created by this class.
     """
-    self._threshold = threshold
-    self._l1_fraction = l1_fraction
+        self._threshold = threshold
+        self._l1_fraction = l1_fraction
 
-  def create_regularizer(self, op, opreg_manager=None):
-    """Creates a ConvGroupLassoRegularizer for `op`.
+    def create_regularizer(self, op, opreg_manager=None):
+        """Creates a ConvGroupLassoRegularizer for `op`.
 
     Args:
       op: A tf.Operation of type 'Conv2D'.
@@ -114,14 +114,14 @@ class ConvGroupLassoRegularizerFactory(object):
     Returns:
       a ConvGroupLassoRegularizer that corresponds to `op`.
     """
-    del opreg_manager  # unused
-    return ConvGroupLassoRegularizer(op, self._threshold, self._l1_fraction)
+        del opreg_manager  # unused
+        return ConvGroupLassoRegularizer(op, self._threshold, self._l1_fraction)
 
 
 def _get_reduce_dims(op):
-  """Returns the reduction dimensions for grouping weights of various ops."""
-  type_to_dims = {'Conv2D': (0, 1, 2), 'Conv2DBackpropInput': (0, 1, 3)}
-  try:
-    return type_to_dims[op.type]
-  except KeyError:
-    raise ValueError('Reduce dims are unknown for op type %s' % op.type)
+    """Returns the reduction dimensions for grouping weights of various ops."""
+    type_to_dims = {'Conv2D': (0, 1, 2), 'Conv2DBackpropInput': (0, 1, 3)}
+    try:
+        return type_to_dims[op.type]
+    except KeyError:
+        raise ValueError('Reduce dims are unknown for op type %s' % op.type)

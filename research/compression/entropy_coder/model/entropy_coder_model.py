@@ -17,39 +17,39 @@
 
 
 class EntropyCoderModel(object):
-  """Entropy coder model."""
+    """Entropy coder model."""
 
-  def __init__(self):
-    # Loss used for training the model.
-    self.loss = None
+    def __init__(self):
+        # Loss used for training the model.
+        self.loss = None
 
-    # Tensorflow op to run to train the model.
-    self.train_op = None
+        # Tensorflow op to run to train the model.
+        self.train_op = None
 
-    # Tensor corresponding to the average code length of the input bit field
-    # tensor. The average code length is a number of output bits per input bit.
-    # To get an effective compression, this number should be between 0.0
-    # and 1.0 (1.0 corresponds to no compression).
-    self.average_code_length = None
+        # Tensor corresponding to the average code length of the input bit field
+        # tensor. The average code length is a number of output bits per input bit.
+        # To get an effective compression, this number should be between 0.0
+        # and 1.0 (1.0 corresponds to no compression).
+        self.average_code_length = None
 
-  def Initialize(self, global_step, optimizer, config_string):
-    raise NotImplementedError()
+    def Initialize(self, global_step, optimizer, config_string):
+        raise NotImplementedError()
 
-  def BuildGraph(self, input_codes):
-    """Build the Tensorflow graph corresponding to the entropy coder model.
+    def BuildGraph(self, input_codes):
+        """Build the Tensorflow graph corresponding to the entropy coder model.
 
     Args:
       input_codes: Tensor of size: batch_size x height x width x bit_depth
         corresponding to the codes to compress.
         The input codes are {-1, +1} codes.
     """
-    # TODO:
-    # - consider switching to {0, 1} codes.
-    # - consider passing an extra tensor which gives for each (b, y, x)
-    #   what is the actual depth (which would allow to use more or less bits
-    #   for each (y, x) location.
-    raise NotImplementedError()
+        # TODO:
+        # - consider switching to {0, 1} codes.
+        # - consider passing an extra tensor which gives for each (b, y, x)
+        #   what is the actual depth (which would allow to use more or less bits
+        #   for each (y, x) location.
+        raise NotImplementedError()
 
-  def GetConfigStringForUnitTest(self):
-    """Returns a default model configuration to be used for unit tests."""
-    return None
+    def GetConfigStringForUnitTest(self):
+        """Returns a default model configuration to be used for unit tests."""
+        return None

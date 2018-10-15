@@ -21,7 +21,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from ..util import example_util
+from research.astronet.astronet.util import example_util
 from research.astronet.light_curve_util import kepler_io
 from research.astronet.light_curve_util import median_filter
 from research.astronet.light_curve_util import util

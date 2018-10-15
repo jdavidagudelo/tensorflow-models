@@ -29,7 +29,7 @@ import tensorflow as tf
 
 
 def rotate_dimensions(num_dims, src_dim, dest_dim):
-  """Returns a list of dimension indices that will rotate src_dim to dest_dim.
+    """Returns a list of dimension indices that will rotate src_dim to dest_dim.
 
   src_dim is moved to dest_dim, with all intervening dimensions shifted towards
   the hole left by src_dim. Eg:
@@ -44,13 +44,13 @@ def rotate_dimensions(num_dims, src_dim, dest_dim):
   Returns:
     A list of rotated dimension indices.
   """
-  # List of dimensions for transpose.
-  dim_list = range(num_dims)
-  # Shuffle src_dim to dest_dim by swapping to shuffle up the other dims.
-  step = 1 if dest_dim > src_dim else -1
-  for x in xrange(src_dim, dest_dim, step):
-    dim_list[x], dim_list[x + step] = dim_list[x + step], dim_list[x]
-  return dim_list
+    # List of dimensions for transpose.
+    dim_list = [x for x in range(num_dims)]
+    # Shuffle src_dim to dest_dim by swapping to shuffle up the other dims.
+    step = 1 if dest_dim > src_dim else -1
+    for x in xrange(src_dim, dest_dim, step):
+        dim_list[x], dim_list[x + step] = dim_list[x + step], dim_list[x]
+    return dim_list
 
 
 def transposing_reshape(tensor,
@@ -60,7 +60,7 @@ def transposing_reshape(tensor,
                         dest_dim_a,
                         dest_dim_b,
                         name=None):
-  """Splits src_dim and sends one of the pieces to another dim.
+    """Splits src_dim and sends one of the pieces to another dim.
 
   Terminology:
   A matrix is often described as 'row-major' or 'column-major', which doesn't
@@ -145,40 +145,40 @@ def transposing_reshape(tensor,
   Raises:
     ValueError: If the args are invalid.
   """
-  if dest_dim_a != src_dim and dest_dim_b != src_dim:
-    raise ValueError(
-        'At least one of dest_dim_a, dest_dim_b must equal src_dim!')
-  if part_a == 0 or part_b == 0:
-    raise ValueError('Zero not allowed for part_a or part_b!')
-  if part_a < 0 and part_b < 0:
-    raise ValueError('At least one of part_a and part_b must be positive!')
-  if not name:
-    name = 'transposing_reshape'
-  prev_shape = tensor_shape(tensor)
-  expanded = tf.reshape(
-      tensor,
-      prev_shape[:src_dim] + [part_a, part_b] + prev_shape[src_dim + 1:],
-      name=name + '_reshape_in')
-  dest = dest_dim_b
-  if dest_dim_a != src_dim:
-    # We are just moving part_a to dest_dim_a.
-    dest = dest_dim_a
-  else:
-    # We are moving part_b to dest_dim_b.
-    src_dim += 1
-  dim_list = rotate_dimensions(len(expanded.get_shape()), src_dim, dest)
-  expanded = tf.transpose(expanded, dim_list, name=name + '_rot_transpose')
-  # Reshape identity except dest,dest+1, which get merged.
-  ex_shape = tensor_shape(expanded)
-  combined = ex_shape[dest] * ex_shape[dest + 1]
-  return tf.reshape(
-      expanded,
-      ex_shape[:dest] + [combined] + ex_shape[dest + 2:],
-      name=name + '_reshape_out')
+    if dest_dim_a != src_dim and dest_dim_b != src_dim:
+        raise ValueError(
+            'At least one of dest_dim_a, dest_dim_b must equal src_dim!')
+    if part_a == 0 or part_b == 0:
+        raise ValueError('Zero not allowed for part_a or part_b!')
+    if part_a < 0 and part_b < 0:
+        raise ValueError('At least one of part_a and part_b must be positive!')
+    if not name:
+        name = 'transposing_reshape'
+    prev_shape = tensor_shape(tensor)
+    expanded = tf.reshape(
+        tensor,
+        prev_shape[:src_dim] + [part_a, part_b] + prev_shape[src_dim + 1:],
+        name=name + '_reshape_in')
+    dest = dest_dim_b
+    if dest_dim_a != src_dim:
+        # We are just moving part_a to dest_dim_a.
+        dest = dest_dim_a
+    else:
+        # We are moving part_b to dest_dim_b.
+        src_dim += 1
+    dim_list = rotate_dimensions(len(expanded.get_shape()), src_dim, dest)
+    expanded = tf.transpose(expanded, dim_list, name=name + '_rot_transpose')
+    # Reshape identity except dest,dest+1, which get merged.
+    ex_shape = tensor_shape(expanded)
+    combined = ex_shape[dest] * ex_shape[dest + 1]
+    return tf.reshape(
+        expanded,
+        ex_shape[:dest] + [combined] + ex_shape[dest + 2:],
+        name=name + '_reshape_out')
 
 
 def tensor_dim(tensor, dim):
-  """Returns int dimension if known at a graph build time else a tensor.
+    """Returns int dimension if known at a graph build time else a tensor.
 
   If the size of the dim of tensor is known at graph building time, then that
   known value is returned, otherwise (instead of None), a Tensor that will give
@@ -195,14 +195,14 @@ def tensor_dim(tensor, dim):
   Returns:
     An integer if shape is known at build time, otherwise a tensor of int32.
   """
-  result = tensor.get_shape().as_list()[dim]
-  if result is None:
-    result = tf.shape(tensor)[dim]
-  return result
+    result = tensor.get_shape().as_list()[dim]
+    if result is None:
+        result = tf.shape(tensor)[dim]
+    return result
 
 
 def tensor_shape(tensor):
-  """Returns a heterogeneous list of tensor_dim for the tensor.
+    """Returns a heterogeneous list of tensor_dim for the tensor.
 
   See tensor_dim for a more detailed explanation.
   Args:
@@ -211,7 +211,7 @@ def tensor_shape(tensor):
   Returns:
     A heterogeneous list of integers and int32 tensors.
   """
-  result = []
-  for d in xrange(len(tensor.get_shape())):
-    result.append(tensor_dim(tensor, d))
-  return result
+    result = []
+    for d in xrange(len(tensor.get_shape())):
+        result.append(tensor_dim(tensor, d))
+    return result

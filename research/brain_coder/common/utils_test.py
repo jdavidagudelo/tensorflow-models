@@ -11,7 +11,7 @@ import tempfile
 import numpy as np
 import tensorflow as tf
 
-from . import utils  # brain coder
+from research.brain_coder.common import utils  # brain coder
 
 
 class UtilsTest(tf.test.TestCase):

@@ -19,10 +19,10 @@ from __future__ import print_function
 
 import tensorflow as tf  # pylint: disable=g-bad-import-order
 
-import coords
-import go
-from sgf_wrapper import replay_sgf, translate_sgf_move, make_sgf
-import utils_test
+from research.minigo import coords
+from research.minigo import go
+from research.minigo.sgf_wrapper import replay_sgf, translate_sgf_move, make_sgf
+from research.minigo import utils_test
 
 JAPANESE_HANDICAP_SGF = '''(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]
 SZ[9]HA[2]RE[Void]KM[5.50]PW[test_white]PB[test_black]AB[gc][cg];W[ee];B[dg])'''
@@ -47,49 +47,49 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 
 class TestSgfGeneration(utils_test.MiniGoUnitTest):
 
-  def test_translate_sgf_move(self):
-    self.assertEqual(
-        ';B[db]',
-        translate_sgf_move(go.PlayerMove(go.BLACK, (1, 3)), None))
-    self.assertEqual(
-        ';W[aa]',
-        translate_sgf_move(go.PlayerMove(go.WHITE, (0, 0)), None))
-    self.assertEqual(
-        ';W[]',
-        translate_sgf_move(go.PlayerMove(go.WHITE, None), None))
-    self.assertEqual(
-        ';B[db]C[comment]',
-        translate_sgf_move(go.PlayerMove(go.BLACK, (1, 3)), 'comment'))
+    def test_translate_sgf_move(self):
+        self.assertEqual(
+            ';B[db]',
+            translate_sgf_move(go.PlayerMove(go.BLACK, (1, 3)), None))
+        self.assertEqual(
+            ';W[aa]',
+            translate_sgf_move(go.PlayerMove(go.WHITE, (0, 0)), None))
+        self.assertEqual(
+            ';W[]',
+            translate_sgf_move(go.PlayerMove(go.WHITE, None), None))
+        self.assertEqual(
+            ';B[db]C[comment]',
+            translate_sgf_move(go.PlayerMove(go.BLACK, (1, 3)), 'comment'))
 
-  def test_make_sgf(self):
-    all_pwcs = list(replay_sgf(utils_test.BOARD_SIZE, NO_HANDICAP_SGF))
-    second_last_position, last_move, _ = all_pwcs[-1]
-    last_position = second_last_position.play_move(last_move)
+    def test_make_sgf(self):
+        all_pwcs = list(replay_sgf(utils_test.BOARD_SIZE, NO_HANDICAP_SGF))
+        second_last_position, last_move, _ = all_pwcs[-1]
+        last_position = second_last_position.play_move(last_move)
 
-    back_to_sgf = make_sgf(
-        utils_test.BOARD_SIZE,
-        last_position.recent,
-        last_position.score(),
-        komi=last_position.komi,
-    )
-    reconstructed_positions = list(replay_sgf(
-        utils_test.BOARD_SIZE, back_to_sgf))
-    second_last_position2, last_move2, _ = reconstructed_positions[-1]
-    last_position2 = second_last_position2.play_move(last_move2)
+        back_to_sgf = make_sgf(
+            utils_test.BOARD_SIZE,
+            last_position.recent,
+            last_position.score(),
+            komi=last_position.komi,
+        )
+        reconstructed_positions = list(replay_sgf(
+            utils_test.BOARD_SIZE, back_to_sgf))
+        second_last_position2, last_move2, _ = reconstructed_positions[-1]
+        last_position2 = second_last_position2.play_move(last_move2)
 
-    self.assertEqualPositions(last_position, last_position2)
+        self.assertEqualPositions(last_position, last_position2)
 
 
 class TestSgfWrapper(utils_test.MiniGoUnitTest):
 
-  def test_sgf_props(self):
-    sgf_replayer = replay_sgf(utils_test.BOARD_SIZE, CHINESE_HANDICAP_SGF)
-    initial = next(sgf_replayer)
-    self.assertEqual(initial.result, go.BLACK)
-    self.assertEqual(initial.position.komi, 5.5)
+    def test_sgf_props(self):
+        sgf_replayer = replay_sgf(utils_test.BOARD_SIZE, CHINESE_HANDICAP_SGF)
+        initial = next(sgf_replayer)
+        self.assertEqual(initial.result, go.BLACK)
+        self.assertEqual(initial.position.komi, 5.5)
 
-  def test_japanese_handicap_handling(self):
-    intermediate_board = utils_test.load_board('''
+    def test_japanese_handicap_handling(self):
+        intermediate_board = utils_test.load_board('''
       .........
       .........
       ......X..
@@ -100,17 +100,17 @@ class TestSgfWrapper(utils_test.MiniGoUnitTest):
       .........
       .........
     ''')
-    intermediate_position = go.Position(
-        utils_test.BOARD_SIZE,
-        intermediate_board,
-        n=1,
-        komi=5.5,
-        caps=(0, 0),
-        recent=(go.PlayerMove(go.WHITE, coords.from_kgs(
-            utils_test.BOARD_SIZE, 'E5')),),
-        to_play=go.BLACK,
-    )
-    final_board = utils_test.load_board('''
+        intermediate_position = go.Position(
+            utils_test.BOARD_SIZE,
+            intermediate_board,
+            n=1,
+            komi=5.5,
+            caps=(0, 0),
+            recent=(go.PlayerMove(go.WHITE, coords.from_kgs(
+                utils_test.BOARD_SIZE, 'E5')),),
+            to_play=go.BLACK,
+        )
+        final_board = utils_test.load_board('''
       .........
       .........
       ......X..
@@ -121,29 +121,29 @@ class TestSgfWrapper(utils_test.MiniGoUnitTest):
       .........
       .........
     ''')
-    final_position = go.Position(
-        utils_test.BOARD_SIZE,
-        final_board,
-        n=2,
-        komi=5.5,
-        caps=(0, 0),
-        recent=(
-            go.PlayerMove(go.WHITE, coords.from_kgs(
-                utils_test.BOARD_SIZE, 'E5')),
-            go.PlayerMove(go.BLACK, coords.from_kgs(
-                utils_test.BOARD_SIZE, 'D3')),),
-        to_play=go.WHITE,
-    )
-    positions_w_context = list(replay_sgf(
-        utils_test.BOARD_SIZE, JAPANESE_HANDICAP_SGF))
-    self.assertEqualPositions(
-        intermediate_position, positions_w_context[1].position)
-    final_replayed_position = positions_w_context[-1].position.play_move(
-        positions_w_context[-1].next_move)
-    self.assertEqualPositions(final_position, final_replayed_position)
+        final_position = go.Position(
+            utils_test.BOARD_SIZE,
+            final_board,
+            n=2,
+            komi=5.5,
+            caps=(0, 0),
+            recent=(
+                go.PlayerMove(go.WHITE, coords.from_kgs(
+                    utils_test.BOARD_SIZE, 'E5')),
+                go.PlayerMove(go.BLACK, coords.from_kgs(
+                    utils_test.BOARD_SIZE, 'D3')),),
+            to_play=go.WHITE,
+        )
+        positions_w_context = list(replay_sgf(
+            utils_test.BOARD_SIZE, JAPANESE_HANDICAP_SGF))
+        self.assertEqualPositions(
+            intermediate_position, positions_w_context[1].position)
+        final_replayed_position = positions_w_context[-1].position.play_move(
+            positions_w_context[-1].next_move)
+        self.assertEqualPositions(final_position, final_replayed_position)
 
-  def test_chinese_handicap_handling(self):
-    intermediate_board = utils_test.load_board('''
+    def test_chinese_handicap_handling(self):
+        intermediate_board = utils_test.load_board('''
       .........
       .........
       ......X..
@@ -154,17 +154,17 @@ class TestSgfWrapper(utils_test.MiniGoUnitTest):
       .........
       .........
     ''')
-    intermediate_position = go.Position(
-        utils_test.BOARD_SIZE,
-        intermediate_board,
-        n=1,
-        komi=5.5,
-        caps=(0, 0),
-        recent=(go.PlayerMove(go.BLACK, coords.from_kgs(
-            utils_test.BOARD_SIZE, 'G7')),),
-        to_play=go.BLACK,
-    )
-    final_board = utils_test.load_board('''
+        intermediate_position = go.Position(
+            utils_test.BOARD_SIZE,
+            intermediate_board,
+            n=1,
+            komi=5.5,
+            caps=(0, 0),
+            recent=(go.PlayerMove(go.BLACK, coords.from_kgs(
+                utils_test.BOARD_SIZE, 'G7')),),
+            to_play=go.BLACK,
+        )
+        final_board = utils_test.load_board('''
       ....OX...
       .O.OOX...
       O.O.X.X..
@@ -175,31 +175,31 @@ class TestSgfWrapper(utils_test.MiniGoUnitTest):
       XXXO.OOX.
       .XOOX.O..
     ''')
-    final_position = go.Position(
-        utils_test.BOARD_SIZE,
-        final_board,
-        n=50,
-        komi=5.5,
-        caps=(7, 2),
-        ko=None,
-        recent=(
-            go.PlayerMove(
-                go.WHITE, coords.from_kgs(utils_test.BOARD_SIZE, 'E9')),
-            go.PlayerMove(
-                go.BLACK, coords.from_kgs(utils_test.BOARD_SIZE, 'F9')),),
-        to_play=go.WHITE
-    )
-    positions_w_context = list(replay_sgf(
-        utils_test.BOARD_SIZE, CHINESE_HANDICAP_SGF))
-    self.assertEqualPositions(
-        intermediate_position, positions_w_context[1].position)
-    self.assertEqual(
-        positions_w_context[1].next_move, coords.from_kgs(
-            utils_test.BOARD_SIZE, 'C3'))
-    final_replayed_position = positions_w_context[-1].position.play_move(
-        positions_w_context[-1].next_move)
-    self.assertEqualPositions(final_position, final_replayed_position)
+        final_position = go.Position(
+            utils_test.BOARD_SIZE,
+            final_board,
+            n=50,
+            komi=5.5,
+            caps=(7, 2),
+            ko=None,
+            recent=(
+                go.PlayerMove(
+                    go.WHITE, coords.from_kgs(utils_test.BOARD_SIZE, 'E9')),
+                go.PlayerMove(
+                    go.BLACK, coords.from_kgs(utils_test.BOARD_SIZE, 'F9')),),
+            to_play=go.WHITE
+        )
+        positions_w_context = list(replay_sgf(
+            utils_test.BOARD_SIZE, CHINESE_HANDICAP_SGF))
+        self.assertEqualPositions(
+            intermediate_position, positions_w_context[1].position)
+        self.assertEqual(
+            positions_w_context[1].next_move, coords.from_kgs(
+                utils_test.BOARD_SIZE, 'C3'))
+        final_replayed_position = positions_w_context[-1].position.play_move(
+            positions_w_context[-1].next_move)
+        self.assertEqualPositions(final_position, final_replayed_position)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

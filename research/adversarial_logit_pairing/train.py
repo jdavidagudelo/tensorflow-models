@@ -20,14 +20,14 @@ from __future__ import division
 from __future__ import print_function
 
 from absl import app
-from absl import flags
 
 import tensorflow as tf
 
 from . import adversarial_attack
 from . import model_lib
-from .datasets import dataset_factory
+from research.adversarial_logit_pairing.datasets import dataset_factory
 
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('max_steps', -1, 'Number of steps to stop at.')
@@ -173,7 +173,8 @@ def main(_):
                 logits = model_fn(images, is_training=True)
                 adv_examples = None
             else:
-                model_fn_eval_mode = lambda x: model_fn(x, is_training=False)
+                def model_fn_eval_mode(x):
+                    return model_fn(x, is_training=False)
                 adv_examples = adversarial_attack.generate_adversarial_examples(
                     images, bounds, model_fn_eval_mode, params.train_adv_method)
                 all_examples = tf.concat([images, adv_examples], axis=0)

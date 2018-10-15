@@ -25,25 +25,26 @@ downloads.
 
 import os
 
-_FSNS_BASE_URL  = 'http://download.tensorflow.org/data/fsns-20160927/'
-_SHARDS = {'test': 64, 'train': 512, 'validation':64}
+_FSNS_BASE_URL = 'http://download.tensorflow.org/data/fsns-20160927/'
+_SHARDS = {'test': 64, 'train': 512, 'validation': 64}
 _OUTPUT_FILE = "fsns_urls.txt"
 _OUTPUT_DIR = "data/fsns"
 
+
 def fsns_paths():
-  paths = ['charset_size=134.txt']
-  for name, shards in _SHARDS.items():
-    for i in range(shards):
-      paths.append('%s/%s-%05d-of-%05d' % (name, name, i, shards))
-  return paths
+    paths = ['charset_size=134.txt']
+    for name, shards in _SHARDS.items():
+        for i in range(shards):
+            paths.append('%s/%s-%05d-of-%05d' % (name, name, i, shards))
+    return paths
 
 
 if __name__ == "__main__":
-  with open(_OUTPUT_FILE, "w") as f:
-    for path in fsns_paths():
-      url = _FSNS_BASE_URL + path
-      dst_path = os.path.join(_OUTPUT_DIR, path)
-      f.write("%s\n  out=%s\n" % (url, dst_path))
-  print("To download FSNS dataset execute:")
-  print("aria2c -c -j 20 -i %s" % _OUTPUT_FILE)
-  print("The downloaded FSNS dataset will be stored under %s" % _OUTPUT_DIR)
+    with open(_OUTPUT_FILE, "w") as f:
+        for path in fsns_paths():
+            url = _FSNS_BASE_URL + path
+            dst_path = os.path.join(_OUTPUT_DIR, path)
+            f.write("%s\n  out=%s\n" % (url, dst_path))
+    print("To download FSNS dataset execute:")
+    print("aria2c -c -j 20 -i %s" % _OUTPUT_FILE)
+    print("The downloaded FSNS dataset will be stored under %s" % _OUTPUT_DIR)

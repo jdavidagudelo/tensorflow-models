@@ -6,7 +6,7 @@ from __future__ import print_function
 
 from absl import logging
 
-from ..common import config_lib  # brain coder
+from research.brain_coder.common import config_lib  # brain coder
 
 
 def default_config():

@@ -21,9 +21,9 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from fivo.models import base
-from fivo.models import srnn
-from fivo.models import vrnn
+from research.fivo.fivo.models import base
+from research.fivo.fivo.models import srnn
+from research.fivo.fivo.models import vrnn
 
 
 def create_vrnn(generative_class=base.ConditionalNormalDistribution,
@@ -31,7 +31,7 @@ def create_vrnn(generative_class=base.ConditionalNormalDistribution,
                 latent_size=5, fcnet_hidden_size=7, encoded_data_size=9,
                 encoded_latent_size=11, num_timesteps=7, data_lengths=(7, 4),
                 use_tilt=False, random_seed=None):
-  """Creates a VRNN and some dummy data to feed it for testing purposes.
+    """Creates a VRNN and some dummy data to feed it for testing purposes.
 
   Args:
     generative_class: The class of the generative distribution.
@@ -63,26 +63,26 @@ def create_vrnn(generative_class=base.ConditionalNormalDistribution,
       batch.
   """
 
-  fcnet_hidden_sizes = [fcnet_hidden_size]
-  initializers = {"w": tf.contrib.layers.xavier_initializer(seed=random_seed),
-                  "b": tf.zeros_initializer()}
-  model = vrnn.create_vrnn(
-      data_size,
-      latent_size,
-      generative_class,
-      rnn_hidden_size=rnn_hidden_size,
-      fcnet_hidden_sizes=fcnet_hidden_sizes,
-      encoded_data_size=encoded_data_size,
-      encoded_latent_size=encoded_latent_size,
-      use_tilt=use_tilt,
-      initializers=initializers,
-      random_seed=random_seed)
-  inputs = tf.random_uniform([num_timesteps, batch_size, data_size],
-                             seed=random_seed, dtype=tf.float32)
-  targets = tf.random_uniform([num_timesteps, batch_size, data_size],
-                              seed=random_seed, dtype=tf.float32)
-  lengths = tf.constant(data_lengths, dtype=tf.int32)
-  return model, inputs, targets, lengths
+    fcnet_hidden_sizes = [fcnet_hidden_size]
+    initializers = {"w": tf.contrib.layers.xavier_initializer(seed=random_seed),
+                    "b": tf.zeros_initializer()}
+    model = vrnn.create_vrnn(
+        data_size,
+        latent_size,
+        generative_class,
+        rnn_hidden_size=rnn_hidden_size,
+        fcnet_hidden_sizes=fcnet_hidden_sizes,
+        encoded_data_size=encoded_data_size,
+        encoded_latent_size=encoded_latent_size,
+        use_tilt=use_tilt,
+        initializers=initializers,
+        random_seed=random_seed)
+    inputs = tf.random_uniform([num_timesteps, batch_size, data_size],
+                               seed=random_seed, dtype=tf.float32)
+    targets = tf.random_uniform([num_timesteps, batch_size, data_size],
+                                seed=random_seed, dtype=tf.float32)
+    lengths = tf.constant(data_lengths, dtype=tf.int32)
+    return model, inputs, targets, lengths
 
 
 def create_srnn(generative_class=base.ConditionalNormalDistribution,
@@ -90,7 +90,7 @@ def create_srnn(generative_class=base.ConditionalNormalDistribution,
                 latent_size=5, fcnet_hidden_size=7, encoded_data_size=3,
                 encoded_latent_size=2, num_timesteps=7, data_lengths=(7, 4),
                 use_tilt=False, random_seed=None):
-  """Creates a SRNN and some dummy data to feed it for testing purposes.
+    """Creates a SRNN and some dummy data to feed it for testing purposes.
 
   Args:
     generative_class: The class of the generative distribution.
@@ -122,23 +122,23 @@ def create_srnn(generative_class=base.ConditionalNormalDistribution,
       batch.
   """
 
-  fcnet_hidden_sizes = [fcnet_hidden_size]
-  initializers = {"w": tf.contrib.layers.xavier_initializer(seed=random_seed),
-                  "b": tf.zeros_initializer()}
-  model = srnn.create_srnn(
-      data_size,
-      latent_size,
-      generative_class,
-      rnn_hidden_size=rnn_hidden_size,
-      fcnet_hidden_sizes=fcnet_hidden_sizes,
-      encoded_data_size=encoded_data_size,
-      encoded_latent_size=encoded_latent_size,
-      use_tilt=use_tilt,
-      initializers=initializers,
-      random_seed=random_seed)
-  inputs = tf.random_uniform([num_timesteps, batch_size, data_size],
-                             seed=random_seed, dtype=tf.float32)
-  targets = tf.random_uniform([num_timesteps, batch_size, data_size],
-                              seed=random_seed, dtype=tf.float32)
-  lengths = tf.constant(data_lengths, dtype=tf.int32)
-  return model, inputs, targets, lengths
+    fcnet_hidden_sizes = [fcnet_hidden_size]
+    initializers = {"w": tf.contrib.layers.xavier_initializer(seed=random_seed),
+                    "b": tf.zeros_initializer()}
+    model = srnn.create_srnn(
+        data_size,
+        latent_size,
+        generative_class,
+        rnn_hidden_size=rnn_hidden_size,
+        fcnet_hidden_sizes=fcnet_hidden_sizes,
+        encoded_data_size=encoded_data_size,
+        encoded_latent_size=encoded_latent_size,
+        use_tilt=use_tilt,
+        initializers=initializers,
+        random_seed=random_seed)
+    inputs = tf.random_uniform([num_timesteps, batch_size, data_size],
+                               seed=random_seed, dtype=tf.float32)
+    targets = tf.random_uniform([num_timesteps, batch_size, data_size],
+                                seed=random_seed, dtype=tf.float32)
+    lengths = tf.constant(data_lengths, dtype=tf.int32)
+    return model, inputs, targets, lengths

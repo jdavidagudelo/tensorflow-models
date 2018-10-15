@@ -20,9 +20,9 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-from absl import flags
 import tensorflow as tf
 
+flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('imagenet_data_dir', None,

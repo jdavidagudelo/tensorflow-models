@@ -30,9 +30,11 @@ else:
     from unittest import mock  # pylint: disable=g-import-not-at-top
 
 
+# noinspection PyUnresolvedReferences
 class PreprocessorTest(tf.test.TestCase):
 
-    def createColorfulTestImage(self):
+    @staticmethod
+    def createColorfulTestImage():
         ch255 = tf.fill([1, 100, 200, 1], tf.constant(255, dtype=tf.uint8))
         ch128 = tf.fill([1, 100, 200, 1], tf.constant(128, dtype=tf.uint8))
         ch0 = tf.fill([1, 100, 200, 1], tf.constant(0, dtype=tf.uint8))
@@ -86,14 +88,16 @@ class PreprocessorTest(tf.test.TestCase):
              [255.0, 255.0, 0.0]]])
         return tf.constant(mask, dtype=tf.float32)
 
-    def createTestKeypoints(self):
+    @staticmethod
+    def createTestKeypoints():
         keypoints = np.array([
             [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]],
             [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
         ])
         return tf.constant(keypoints, dtype=tf.float32)
 
-    def createTestKeypointsInsideCrop(self):
+    @staticmethod
+    def createTestKeypointsInsideCrop():
         keypoints = np.array([
             [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
             [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
@@ -107,19 +111,23 @@ class PreprocessorTest(tf.test.TestCase):
         ])
         return tf.constant(keypoints, dtype=tf.float32)
 
-    def createKeypointFlipPermutation(self):
+    @staticmethod
+    def createKeypointFlipPermutation():
         return np.array([0, 2, 1], dtype=np.int32)
 
-    def createTestLabels(self):
+    @staticmethod
+    def createTestLabels():
         labels = tf.constant([1, 2], dtype=tf.int32)
         return labels
 
-    def createTestBoxesOutOfImage(self):
+    @staticmethod
+    def createTestBoxesOutOfImage():
         boxes = tf.constant(
             [[-0.1, 0.25, 0.75, 1], [0.25, 0.5, 0.75, 1.1]], dtype=tf.float32)
         return boxes
 
-    def createTestMultiClassScores(self):
+    @staticmethod
+    def createTestMultiClassScores():
         return tf.constant([[1.0, 0.0], [0.5, 0.5]], dtype=tf.float32)
 
     def expectedImagesAfterNormalization(self):
@@ -170,7 +178,8 @@ class PreprocessorTest(tf.test.TestCase):
         images = tf.concat([images_r, images_g, images_b], 3)
         return images
 
-    def expectedImagesAfterLeftRightFlip(self):
+    @staticmethod
+    def expectedImagesAfterLeftRightFlip():
         images_r = tf.constant([[[0, 0, 0, 0], [0, 0, -1, -1],
                                  [0, 0, 0, -1], [0, 0, 0.5, 0.5]]],
                                dtype=tf.float32)
@@ -947,14 +956,12 @@ class PreprocessorTest(tf.test.TestCase):
                                     test_keypoints=False)
 
     def testRandomAdjustContrast(self):
-        preprocessing_options = []
-        preprocessing_options.append((preprocessor.normalize_image, {
+        preprocessing_options = [(preprocessor.normalize_image, {
             'original_minval': 0,
             'original_maxval': 255,
             'target_minval': 0,
             'target_maxval': 1
-        }))
-        preprocessing_options.append((preprocessor.random_adjust_contrast, {}))
+        }), (preprocessor.random_adjust_contrast, {})]
         images_original = self.createTestImages()
         tensor_dict = {fields.InputDataFields.image: images_original}
         tensor_dict = preprocessor.preprocess(tensor_dict, preprocessing_options)
@@ -2164,16 +2171,14 @@ class PreprocessorTest(tf.test.TestCase):
             self.assertAllEqual(images_shape_, blacked_images_shape_)
 
     def testRandomResizeMethodWithCache(self):
-        preprocess_options = []
-        preprocess_options.append((preprocessor.normalize_image, {
+        preprocess_options = [(preprocessor.normalize_image, {
             'original_minval': 0,
             'original_maxval': 255,
             'target_minval': 0,
             'target_maxval': 1
-        }))
-        preprocess_options.append((preprocessor.random_resize_method, {
+        }), (preprocessor.random_resize_method, {
             'target_size': (75, 150)
-        }))
+        })]
         self._testPreprocessorCache(preprocess_options,
                                     test_boxes=True,
                                     test_masks=True,

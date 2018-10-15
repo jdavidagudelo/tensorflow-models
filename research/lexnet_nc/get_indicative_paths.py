@@ -59,53 +59,54 @@ FLAGS = tf.flags.FLAGS
 
 
 def main(_):
-  hparams = path_model.PathBasedModel.default_hparams()
+    hparams = path_model.PathBasedModel.default_hparams()
 
-  # First things first. Load the path data.
-  path_embeddings_file = 'path_embeddings/{dataset}/{corpus}'.format(
-      dataset=FLAGS.dataset,
-      corpus=FLAGS.corpus)
+    # First things first. Load the path data.
+    path_embeddings_file = 'path_embeddings/{dataset}/{corpus}'.format(
+        dataset=FLAGS.dataset,
+        corpus=FLAGS.corpus)
 
-  path_dim = (hparams.lemma_dim + hparams.pos_dim +
-              hparams.dep_dim + hparams.dir_dim)
+    path_dim = (hparams.lemma_dim + hparams.pos_dim +
+                hparams.dep_dim + hparams.dir_dim)
 
-  path_embeddings, path_to_index = path_model.load_path_embeddings(
-      os.path.join(FLAGS.embeddings_base_path, path_embeddings_file),
-      path_dim)
+    path_embeddings, path_to_index = path_model.load_path_embeddings(
+        os.path.join(FLAGS.embeddings_base_path, path_embeddings_file),
+        path_dim)
 
-  # Load and count the classes so we can correctly instantiate the model.
-  classes_filename = os.path.join(
-      FLAGS.dataset_dir, FLAGS.dataset, 'classes.txt')
+    # Load and count the classes so we can correctly instantiate the model.
+    classes_filename = os.path.join(
+        FLAGS.dataset_dir, FLAGS.dataset, 'classes.txt')
 
-  with open(classes_filename) as f_in:
-    classes = f_in.read().splitlines()
+    with open(classes_filename) as f_in:
+        classes = f_in.read().splitlines()
 
-  hparams.num_classes = len(classes)
+    hparams.num_classes = len(classes)
 
-  # We need the word embeddings to instantiate the model, too.
-  print('Loading word embeddings...')
-  lemma_embeddings = lexnet_common.load_word_embeddings(
-      FLAGS.embeddings_base_path, hparams.lemma_embeddings_file)
+    # We need the word embeddings to instantiate the model, too.
+    print('Loading word embeddings...')
+    lemma_embeddings = lexnet_common.load_word_embeddings(
+        FLAGS.embeddings_base_path, hparams.lemma_embeddings_file)
 
-  # Instantiate the model.
-  with tf.Graph().as_default():
-    with tf.variable_scope('lexnet'):
-      instance = tf.placeholder(dtype=tf.string)
-      model = path_model.PathBasedModel(
-          hparams, lemma_embeddings, instance)
+    # Instantiate the model.
+    with tf.Graph().as_default():
+        with tf.variable_scope('lexnet'):
+            instance = tf.placeholder(dtype=tf.string)
+            model = path_model.PathBasedModel(
+                hparams, lemma_embeddings, instance)
 
-    with tf.Session() as session:
-      model_dir = '{logdir}/results/{dataset}/path/{corpus}'.format(
-          logdir=FLAGS.logdir,
-          dataset=FLAGS.dataset,
-          corpus=FLAGS.corpus)
+        with tf.Session() as session:
+            model_dir = '{logdir}/results/{dataset}/path/{corpus}'.format(
+                logdir=FLAGS.logdir,
+                dataset=FLAGS.dataset,
+                corpus=FLAGS.corpus)
 
-      saver = tf.train.Saver()
-      saver.restore(session, os.path.join(model_dir, 'best.ckpt'))
+            saver = tf.train.Saver()
+            saver.restore(session, os.path.join(model_dir, 'best.ckpt'))
 
-      path_model.get_indicative_paths(
-          model, session, path_to_index, path_embeddings, classes,
-          model_dir, FLAGS.top_k, FLAGS.threshold)
+            path_model.get_indicative_paths(
+                model, session, path_to_index, path_embeddings, classes,
+                model_dir, FLAGS.top_k, FLAGS.threshold)
+
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

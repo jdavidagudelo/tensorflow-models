@@ -16,16 +16,15 @@
 from __future__ import print_function
 
 import os
-import h5py
 import numpy as np
 from six.moves import xrange
 
-from synthetic_data_utils import generate_data, generate_rnn
-from synthetic_data_utils import get_train_n_valid_inds
-from synthetic_data_utils import nparray_and_transpose
-from synthetic_data_utils import spikify_data, split_list_by_inds
+from research.lfads.synth_data.synthetic_data_utils import generate_data, generate_rnn
+from research.lfads.synth_data.synthetic_data_utils import get_train_n_valid_inds
+from research.lfads.synth_data.synthetic_data_utils import nparray_and_transpose
+from research.lfads.synth_data.synthetic_data_utils import spikify_data, split_list_by_inds
 import tensorflow as tf
-from utils import write_datasets
+from research.lfads.utils import write_datasets
 
 DATA_DIR = "rnn_synth_data_v1.0"
 
@@ -38,7 +37,7 @@ flags.DEFINE_integer("synth_data_seed", 5, "Random seed for RNN generation.")
 flags.DEFINE_float("T", 1.0, "Time in seconds to generate.")
 flags.DEFINE_integer("C", 400, "Number of conditions")
 flags.DEFINE_integer("N", 50, "Number of units for the RNN")
-flags.DEFINE_float("train_percentage", 4.0/5.0,
+flags.DEFINE_float("train_percentage", 4.0 / 5.0,
                    "Percentage of train vs validation trials")
 flags.DEFINE_integer("nreplications", 10,
                      "Number of spikifications of the same underlying rates.")
@@ -51,8 +50,8 @@ flags.DEFINE_float("max_firing_rate", 30.0, "Map 1.0 of RNN to a spikes per seco
 FLAGS = flags.FLAGS
 
 rng = np.random.RandomState(seed=FLAGS.synth_data_seed)
-rnn_rngs = [np.random.RandomState(seed=FLAGS.synth_data_seed+1),
-            np.random.RandomState(seed=FLAGS.synth_data_seed+2)]
+rnn_rngs = [np.random.RandomState(seed=FLAGS.synth_data_seed + 1),
+            np.random.RandomState(seed=FLAGS.synth_data_seed + 2)]
 T = FLAGS.T
 C = FLAGS.C
 N = FLAGS.N
@@ -76,11 +75,11 @@ x0s = []
 condition_labels = []
 condition_number = 0
 for c in range(C):
-  x0 = FLAGS.x0_std * rng.randn(N, 1)
-  x0s.append(np.tile(x0, nreplications))
-  for ns in range(nreplications):
-    condition_labels.append(condition_number)
-  condition_number += 1
+    x0 = FLAGS.x0_std * rng.randn(N, 1)
+    x0s.append(np.tile(x0, nreplications))
+    for ns in range(nreplications):
+        condition_labels.append(condition_number)
+    condition_number += 1
 x0s = np.concatenate(x0s, axis=1)
 
 P_nxn = rng.randn(N, N) / np.sqrt(N)
@@ -98,12 +97,12 @@ spikes_b = spikify_data(rates_b, rng, rnn_b['dt'], rnn_b['max_firing_rate'])
 rates = []
 spikes = []
 for trial in xrange(E):
-  if rnn_to_use[trial] == 0:
-    rates.append(rates_a[trial])
-    spikes.append(spikes_a[trial])
-  else:
-    rates.append(rates_b[trial])
-    spikes.append(spikes_b[trial])
+    if rnn_to_use[trial] == 0:
+        rates.append(rates_a[trial])
+        spikes.append(spikes_a[trial])
+    else:
+        rates.append(rates_b[trial])
+        spikes.append(spikes_b[trial])
 
 # split into train and validation sets
 train_inds, valid_inds = get_train_n_valid_inds(E, train_percentage,
@@ -124,16 +123,16 @@ spikes_valid = nparray_and_transpose(spikes_valid)
 # add train_ext_input and valid_ext input
 data = {'train_truth': rates_train,
         'valid_truth': rates_valid,
-        'train_data' : spikes_train,
-        'valid_data' : spikes_valid,
-        'train_ext_input' : np.array(ext_input_train),
+        'train_data': spikes_train,
+        'valid_data': spikes_valid,
+        'train_ext_input': np.array(ext_input_train),
         'valid_ext_input': np.array(ext_input_valid),
-        'train_percentage' : train_percentage,
-        'nreplications' : nreplications,
-        'dt' : FLAGS.dt,
-        'P_sxn' : P_nxn,
-        'condition_labels_train' : condition_labels_train,
-        'condition_labels_valid' : condition_labels_valid,
+        'train_percentage': train_percentage,
+        'nreplications': nreplications,
+        'dt': FLAGS.dt,
+        'P_sxn': P_nxn,
+        'condition_labels_train': condition_labels_train,
+        'condition_labels_valid': condition_labels_valid,
         'conversion_factor': 1.0 / rnn_a['conversion_factor']}
 
 # just one dataset here
@@ -143,5 +142,5 @@ datasets[dataset_name] = data
 
 # write out the dataset
 write_datasets(FLAGS.save_dir, FLAGS.datafile_name, datasets)
-print ('Saved to ', os.path.join(FLAGS.save_dir,
-                                 FLAGS.datafile_name + '_' + dataset_name))
+print('Saved to ', os.path.join(FLAGS.save_dir,
+                                FLAGS.datafile_name + '_' + dataset_name))

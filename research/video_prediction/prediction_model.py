@@ -244,7 +244,7 @@ def stp_transformation(prev_image, stp_input, num_masks):
         params = slim.layers.fully_connected(
             stp_input, 6, scope='stp_params' + str(i),
             activation_fn=None) + identity_params
-        transformed.append(transformer(prev_image, params))
+        transformed.append(transformer(prev_image, params, out_size=100))
     return transformed
 
 

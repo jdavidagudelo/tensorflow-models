@@ -23,7 +23,8 @@ from research.object_detection.core import freezable_batch_norm
 class FreezableBatchNormTest(tf.test.TestCase):
     """Tests for FreezableBatchNorm operations."""
 
-    def _build_model(self, training=None):
+    @staticmethod
+    def _build_model(training=None):
         model = tf.keras.models.Sequential()
         norm = freezable_batch_norm.FreezableBatchNorm(training=training,
                                                        input_shape=(10,),

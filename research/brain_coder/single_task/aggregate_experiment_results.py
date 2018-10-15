@@ -28,8 +28,8 @@ from absl import flags
 import numpy as np
 import tensorflow as tf
 
-from . import misc  # brain coder
-from . import results_lib  # brain coder
+from research.brain_coder.single_task import misc  # brain coder
+from research.brain_coder.single_task import results_lib  # brain coder
 
 DEFAULT_MODELS = [('pg', 'v0'), ('topk', 'v0'), ('ga', 'v0'), ('rand', 'v0')]
 DEFAULT_TASKS = [

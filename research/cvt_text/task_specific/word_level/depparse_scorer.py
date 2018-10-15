@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from ..word_level import word_level_scorer
+from research.cvt_text.task_specific.word_level import word_level_scorer
 
 
 class DepparseScorer(word_level_scorer.WordLevelScorer):

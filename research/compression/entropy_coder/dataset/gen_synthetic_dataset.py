@@ -17,12 +17,10 @@
 
 import os
 
-import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-import synthetic_model
-
+from research.compression.entropy_coder.dataset import synthetic_model
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -35,7 +33,7 @@ tf.app.flags.DEFINE_integer(
 
 
 def int64_feature(values):
-  """Returns a TF-Feature of int64s.
+    """Returns a TF-Feature of int64s.
 
   Args:
     values: A scalar or list of values.
@@ -43,13 +41,13 @@ def int64_feature(values):
   Returns:
     A TF-Feature.
   """
-  if not isinstance(values, (tuple, list)):
-    values = [values]
-  return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
+    if not isinstance(values, (tuple, list)):
+        values = [values]
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 
 
 def float_feature(values):
-  """Returns a TF-Feature of floats.
+    """Returns a TF-Feature of floats.
 
   Args:
     values: A scalar of list of values.
@@ -57,33 +55,33 @@ def float_feature(values):
   Returns:
     A TF-Feature.
   """
-  if not isinstance(values, (tuple, list)):
-    values = [values]
-  return tf.train.Feature(float_list=tf.train.FloatList(value=values))
+    if not isinstance(values, (tuple, list)):
+        values = [values]
+    return tf.train.Feature(float_list=tf.train.FloatList(value=values))
 
 
 def AddToTFRecord(code, tfrecord_writer):
-  example = tf.train.Example(features=tf.train.Features(feature={
-      'code_shape': int64_feature(code.shape),
-      'code': float_feature(code.flatten().tolist()),
-  }))
-  tfrecord_writer.write(example.SerializeToString())
+    example = tf.train.Example(features=tf.train.Features(feature={
+        'code_shape': int64_feature(code.shape),
+        'code': float_feature(code.flatten().tolist()),
+    }))
+    tfrecord_writer.write(example.SerializeToString())
 
 
 def GenerateDataset(filename, count, code_shape):
-  with tf.python_io.TFRecordWriter(filename) as tfrecord_writer:
-    for _ in xrange(count):
-      code = synthetic_model.GenerateSingleCode(code_shape)
-      # Convert {0,1} codes to {-1,+1} codes.
-      code = 2.0 * code - 1.0
-      AddToTFRecord(code, tfrecord_writer)
+    with tf.python_io.TFRecordWriter(filename) as tfrecord_writer:
+        for _ in xrange(count):
+            code = synthetic_model.GenerateSingleCode(code_shape)
+            # Convert {0,1} codes to {-1,+1} codes.
+            code = 2.0 * code - 1.0
+            AddToTFRecord(code, tfrecord_writer)
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-  GenerateDataset(os.path.join(FLAGS.dataset_dir + '/synthetic_dataset'),
-                  FLAGS.count,
-                  [35, 48, 8])
+    GenerateDataset(os.path.join(FLAGS.dataset_dir + '/synthetic_dataset'),
+                    FLAGS.count,
+                    [35, 48, 8])
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

@@ -26,7 +26,7 @@ from tensorflow.python.util import nest
 
 
 def map_nested(map_fn, nested):
-  """Executes map_fn on every element in a (potentially) nested structure.
+    """Executes map_fn on every element in a (potentially) nested structure.
 
   Args:
     map_fn: A callable to execute on each element in 'nested'.
@@ -41,12 +41,12 @@ def map_nested(map_fn, nested):
       contains the result of applying map_fn to each element in 'nested'. For
       example map_nested(lambda x: x+1, [1, (3, 4.3)]) returns [2, (4, 5.3)].
   """
-  out = map(map_fn, nest.flatten(nested))
-  return nest.pack_sequence_as(nested, out)
+    out = map(map_fn, nest.flatten(nested))
+    return nest.pack_sequence_as(nested, out)
 
 
 def tile_tensors(tensors, multiples):
-  """Tiles a set of Tensors.
+    """Tiles a set of Tensors.
 
   Args:
     tensors: A potentially nested tuple or list of Tensors with rank
@@ -62,14 +62,15 @@ def tile_tensors(tensors, multiples):
       at the end with 1s. For example when tiling a 4-dimensional Tensor with
       multiples [3, 4], multiples would be padded to [3, 4, 1, 1] before tiling.
   """
-  def tile_fn(x):
-    return tf.tile(x, multiples + [1] * (x.shape.ndims - len(multiples)))
 
-  return map_nested(tile_fn, tensors)
+    def tile_fn(x):
+        return tf.tile(x, multiples + [1] * (x.shape.ndims - len(multiples)))
+
+    return map_nested(tile_fn, tensors)
 
 
 def where_tensors(condition, x_tensors, y_tensors):
-  """Performs a tf.where operation on a two sets of Tensors.
+    """Performs a tf.where operation on a two sets of Tensors.
 
   Args:
     condition: The condition tensor to use for the where operation.
@@ -82,16 +83,16 @@ def where_tensors(condition, x_tensors, y_tensors):
       applying tf.where(condition, x, y) on each pair of elements in x_tensors
       and y_tensors.
   """
-  flat_x = nest.flatten(x_tensors)
-  flat_y = nest.flatten(y_tensors)
-  result = [tf.where(condition, x, y) for x, y in
-            itertools.izip(flat_x, flat_y)]
+    flat_x = nest.flatten(x_tensors)
+    flat_y = nest.flatten(y_tensors)
+    result = [tf.where(condition, x, y) for x, y in
+              itertools.izip(flat_x, flat_y)]
 
-  return nest.pack_sequence_as(x_tensors, result)
+    return nest.pack_sequence_as(x_tensors, result)
 
 
 def gather_tensors(tensors, indices):
-  """Performs a tf.gather operation on a set of Tensors.
+    """Performs a tf.gather operation on a set of Tensors.
 
   Args:
     tensors: A potentially nested tuple or list of Tensors.
@@ -101,11 +102,11 @@ def gather_tensors(tensors, indices):
       same structure as the 'tensors' input argument. Contains the result of
       applying tf.gather(x, indices) on each element x in 'tensors'.
   """
-  return map_nested(lambda x: tf.gather(x, indices), tensors)
+    return map_nested(lambda x: tf.gather(x, indices), tensors)
 
 
 def tas_for_tensors(tensors, length, **kwargs):
-  """Unstacks a set of Tensors into TensorArrays.
+    """Unstacks a set of Tensors into TensorArrays.
 
   Args:
     tensors: A potentially nested tuple or list of Tensors with length in the
@@ -117,15 +118,17 @@ def tas_for_tensors(tensors, length, **kwargs):
       same structure as 'tensors'. Contains the result of unstacking each Tensor
       in 'tensors'.
   """
-  def map_fn(x):
-    ta = tf.TensorArray(x.dtype, length,
-                        name=x.name.split(':')[0] + '_ta', **kwargs)
-    return ta.unstack(x[:length, :])
-  return map_nested(map_fn, tensors)
+
+    def map_fn(x):
+        ta = tf.TensorArray(x.dtype, length,
+                            name=x.name.split(':')[0] + '_ta', **kwargs)
+        return ta.unstack(x[:length, :])
+
+    return map_nested(map_fn, tensors)
 
 
 def read_tas(tas, index):
-  """Performs a read operation on a set of TensorArrays.
+    """Performs a read operation on a set of TensorArrays.
 
   Args:
     tas: A potentially nested tuple or list of TensorArrays with length greater
@@ -136,4 +139,4 @@ def read_tas(tas, index):
       structure as the 'tas' input argument. Contains the result of
       performing a read operation at 'index' on each TensorArray in 'tas'.
   """
-  return map_nested(lambda ta: ta.read(index), tas)
+    return map_nested(lambda ta: ta.read(index), tas)

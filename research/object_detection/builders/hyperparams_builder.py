@@ -321,9 +321,7 @@ def _build_initializer(initializer, build_for_keras=False):
     if initializer_oneof == 'variance_scaling_initializer':
         enum_descriptor = (hyperparams_pb2.VarianceScalingInitializer.
             DESCRIPTOR.enum_types_by_name['Mode'])
-        mode = enum_descriptor.values_by_number[initializer.
-            variance_scaling_initializer.
-            mode].name
+        mode = enum_descriptor.values_by_number[initializer.variance_scaling_initializer.mode].name
         if build_for_keras:
             if initializer.variance_scaling_initializer.uniform:
                 return tf.variance_scaling_initializer(

@@ -52,62 +52,62 @@ _KGS_COLUMNS = 'ABCDEFGHJKLMNOPQRSTUVWXYZ'
 
 
 def from_flat(board_size, flat):
-  """Converts from a flattened coordinate to a MiniGo coordinate."""
-  if flat == board_size * board_size:
-    return None
-  return divmod(flat, board_size)
+    """Converts from a flattened coordinate to a MiniGo coordinate."""
+    if flat == board_size * board_size:
+        return None
+    return divmod(flat, board_size)
 
 
 def to_flat(board_size, coord):
-  """Converts from a MiniGo coordinate to a flattened coordinate."""
-  if coord is None:
-    return board_size * board_size
-  return board_size * coord[0] + coord[1]
+    """Converts from a MiniGo coordinate to a flattened coordinate."""
+    if coord is None:
+        return board_size * board_size
+    return board_size * coord[0] + coord[1]
 
 
 def from_sgf(sgfc):
-  """Converts from an SGF coordinate to a MiniGo coordinate."""
-  if not sgfc:
-    return None
-  return _SGF_COLUMNS.index(sgfc[1]), _SGF_COLUMNS.index(sgfc[0])
+    """Converts from an SGF coordinate to a MiniGo coordinate."""
+    if not sgfc:
+        return None
+    return _SGF_COLUMNS.index(sgfc[1]), _SGF_COLUMNS.index(sgfc[0])
 
 
 def to_sgf(coord):
-  """Converts from a MiniGo coordinate to an SGF coordinate."""
-  if coord is None:
-    return ''
-  return _SGF_COLUMNS[coord[1]] + _SGF_COLUMNS[coord[0]]
+    """Converts from a MiniGo coordinate to an SGF coordinate."""
+    if coord is None:
+        return ''
+    return _SGF_COLUMNS[coord[1]] + _SGF_COLUMNS[coord[0]]
 
 
 def from_kgs(board_size, kgsc):
-  """Converts from a KGS coordinate to a MiniGo coordinate."""
-  if kgsc == 'pass':
-    return None
-  kgsc = kgsc.upper()
-  col = _KGS_COLUMNS.index(kgsc[0])
-  row_from_bottom = int(kgsc[1:])
-  return board_size - row_from_bottom, col
+    """Converts from a KGS coordinate to a MiniGo coordinate."""
+    if kgsc == 'pass':
+        return None
+    kgsc = kgsc.upper()
+    col = _KGS_COLUMNS.index(kgsc[0])
+    row_from_bottom = int(kgsc[1:])
+    return board_size - row_from_bottom, col
 
 
 def to_kgs(board_size, coord):
-  """Converts from a MiniGo coordinate to a KGS coordinate."""
-  if coord is None:
-    return 'pass'
-  y, x = coord
-  return '{}{}'.format(_KGS_COLUMNS[x], board_size - y)
+    """Converts from a MiniGo coordinate to a KGS coordinate."""
+    if coord is None:
+        return 'pass'
+    y, x = coord
+    return '{}{}'.format(_KGS_COLUMNS[x], board_size - y)
 
 
 def from_pygtp(board_size, pygtpc):
-  """Converts from a pygtp coordinate to a MiniGo coordinate."""
-  # GTP has a notion of both a Pass and a Resign, both of which are mapped to
-  # None, so the conversion is not precisely bijective.
-  if pygtpc in (gtp.PASS, gtp.RESIGN):
-    return None
-  return board_size - pygtpc[1], pygtpc[0] - 1
+    """Converts from a pygtp coordinate to a MiniGo coordinate."""
+    # GTP has a notion of both a Pass and a Resign, both of which are mapped to
+    # None, so the conversion is not precisely bijective.
+    if pygtpc in (gtp.PASS, gtp.RESIGN):
+        return None
+    return board_size - pygtpc[1], pygtpc[0] - 1
 
 
 def to_pygtp(board_size, coord):
-  """Converts from a MiniGo coordinate to a pygtp coordinate."""
-  if coord is None:
-    return gtp.PASS
-  return coord[1] + 1, board_size - coord[0]
+    """Converts from a MiniGo coordinate to a pygtp coordinate."""
+    if coord is None:
+        return gtp.PASS
+    return coord[1] + 1, board_size - coord[0]

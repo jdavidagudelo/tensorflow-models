@@ -16,9 +16,9 @@ from absl import logging
 import numpy as np
 from six.moves import xrange
 
-from ..common import bf  # brain coder
-from ..common import utils  # brain coder
-from ..single_task import misc  # brain coder
+from research.brain_coder.common import bf  # brain coder
+from research.brain_coder.common import utils  # brain coder
+from research.brain_coder.single_task import misc  # brain coder
 
 FLAGS = flags.FLAGS
 

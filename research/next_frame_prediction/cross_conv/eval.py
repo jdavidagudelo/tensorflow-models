@@ -23,8 +23,8 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-import model as cross_conv_model
-import reader
+from research.next_frame_prediction.cross_conv import model as cross_conv_model
+from research.next_frame_prediction.cross_conv import reader
 
 FLAGS = tf.flags.FLAGS
 tf.flags.DEFINE_string('log_root', '/tmp/moving_obj', 'The root dir of output.')
@@ -48,72 +48,72 @@ slim = tf.contrib.slim
 
 
 def _Eval():
-  params = dict()
-  params['batch_size'] = FLAGS.batch_size
-  params['seq_len'] = FLAGS.sequence_length
-  params['image_size'] = FLAGS.image_size
-  params['is_training'] = False
-  params['norm_scale'] = FLAGS.norm_scale
-  params['scale'] = FLAGS.scale
-  params['l2_loss'] = FLAGS.l2_loss
-  params['reconstr_loss'] = FLAGS.reconstr_loss
-  params['kl_loss'] = FLAGS.kl_loss
+    params = dict()
+    params['batch_size'] = FLAGS.batch_size
+    params['seq_len'] = FLAGS.sequence_length
+    params['image_size'] = FLAGS.image_size
+    params['is_training'] = False
+    params['norm_scale'] = FLAGS.norm_scale
+    params['scale'] = FLAGS.scale
+    params['l2_loss'] = FLAGS.l2_loss
+    params['reconstr_loss'] = FLAGS.reconstr_loss
+    params['kl_loss'] = FLAGS.kl_loss
 
-  eval_dir = os.path.join(FLAGS.log_root, 'eval')
+    eval_dir = os.path.join(FLAGS.log_root, 'eval')
 
-  images = reader.ReadInput(
-      FLAGS.data_filepattern, shuffle=False, params=params)
-  images *= params['scale']
-  # Increase the value makes training much faster.
-  image_diff_list = reader.SequenceToImageAndDiff(images)
-  model = cross_conv_model.CrossConvModel(image_diff_list, params)
-  model.Build()
+    images = reader.ReadInput(
+        FLAGS.data_filepattern, shuffle=False, params=params)
+    images *= params['scale']
+    # Increase the value makes training much faster.
+    image_diff_list = reader.SequenceToImageAndDiff(images)
+    model = cross_conv_model.CrossConvModel(image_diff_list, params)
+    model.Build()
 
-  summary_writer = tf.summary.FileWriter(eval_dir)
-  saver = tf.train.Saver()
-  sess = tf.Session('', config=tf.ConfigProto(allow_soft_placement=True))
-  tf.train.start_queue_runners(sess)
+    summary_writer = tf.summary.FileWriter(eval_dir)
+    saver = tf.train.Saver()
+    sess = tf.Session('', config=tf.ConfigProto(allow_soft_placement=True))
+    tf.train.start_queue_runners(sess)
 
-  while True:
-    time.sleep(60)
-    try:
-      ckpt_state = tf.train.get_checkpoint_state(FLAGS.log_root)
-    except tf.errors.OutOfRangeError as e:
-      sys.stderr.write('Cannot restore checkpoint: %s\n' % e)
-      continue
-    if not (ckpt_state and ckpt_state.model_checkpoint_path):
-      sys.stderr.write('No model to eval yet at %s\n' % FLAGS.log_root)
-      continue
-    sys.stderr.write('Loading checkpoint %s\n' %
-                     ckpt_state.model_checkpoint_path)
-    saver.restore(sess, ckpt_state.model_checkpoint_path)
-    # Use the empirical distribution of z from training set.
-    if not tf.gfile.Exists(os.path.join(FLAGS.log_root, 'z_mean.npy')):
-      sys.stderr.write('No z at %s\n' % FLAGS.log_root)
-      continue
+    while True:
+        time.sleep(60)
+        try:
+            ckpt_state = tf.train.get_checkpoint_state(FLAGS.log_root)
+        except tf.errors.OutOfRangeError as e:
+            sys.stderr.write('Cannot restore checkpoint: %s\n' % e)
+            continue
+        if not (ckpt_state and ckpt_state.model_checkpoint_path):
+            sys.stderr.write('No model to eval yet at %s\n' % FLAGS.log_root)
+            continue
+        sys.stderr.write('Loading checkpoint %s\n' %
+                         ckpt_state.model_checkpoint_path)
+        saver.restore(sess, ckpt_state.model_checkpoint_path)
+        # Use the empirical distribution of z from training set.
+        if not tf.gfile.Exists(os.path.join(FLAGS.log_root, 'z_mean.npy')):
+            sys.stderr.write('No z at %s\n' % FLAGS.log_root)
+            continue
 
-    with tf.gfile.Open(os.path.join(FLAGS.log_root, 'z_mean.npy')) as f:
-      sample_z_mean = np.load(io.BytesIO(f.read()))
-    with tf.gfile.Open(
-        os.path.join(FLAGS.log_root, 'z_stddev_log.npy')) as f:
-      sample_z_stddev_log = np.load(io.BytesIO(f.read()))
+        with tf.gfile.Open(os.path.join(FLAGS.log_root, 'z_mean.npy')) as f:
+            sample_z_mean = np.load(io.BytesIO(f.read()))
+        with tf.gfile.Open(
+                os.path.join(FLAGS.log_root, 'z_stddev_log.npy')) as f:
+            sample_z_stddev_log = np.load(io.BytesIO(f.read()))
 
-    total_loss = 0.0
-    for _ in xrange(FLAGS.eval_batch_count):
-      loss_val, total_steps, summaries = sess.run(
-          [model.loss, model.global_step, model.summary_op],
-          feed_dict={model.z_mean: sample_z_mean,
-                     model.z_stddev_log: sample_z_stddev_log})
-      total_loss += loss_val
+        total_loss = 0.0
+        for _ in xrange(FLAGS.eval_batch_count):
+            loss_val, total_steps, summaries = sess.run(
+                [model.loss, model.global_step, model.summary_op],
+                feed_dict={model.z_mean: sample_z_mean,
+                           model.z_stddev_log: sample_z_stddev_log})
+            total_loss += loss_val
 
-    summary_writer.add_summary(summaries, total_steps)
-    sys.stderr.write('steps: %d, loss: %f\n' %
-                     (total_steps, total_loss / FLAGS.eval_batch_count))
+        summary_writer.add_summary(summaries, total_steps)
+        sys.stderr.write('steps: %d, loss: %f\n' %
+                         (total_steps, total_loss / FLAGS.eval_batch_count))
 
 
 def main(_):
-  _Eval()
+    _Eval()
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

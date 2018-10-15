@@ -7,8 +7,8 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from ..single_task import code_tasks  # brain coder
-from ..single_task import defaults  # brain coder
+from research.brain_coder.single_task import code_tasks  # brain coder
+from research.brain_coder.single_task import defaults  # brain coder
 
 
 def pad(string, pad_length, pad_char):
@@ -19,7 +19,7 @@ class CodeTasksTest(tf.test.TestCase):
 
     def assertClose(self, a, b):
         self.assertTrue(
-            np.isclose(a, b, atol=1e-4),
+            np.isclose(a, b, atol=1e-5),
             'Expecting approximately equal values. Got: %s, %s' % (a, b))
 
     def testMultiIOTaskManager(self):

@@ -12,11 +12,11 @@ import tensorflow as tf
 
 
 class CNN(tf.keras.models.Model):
-  """CNN for sentimental analysis."""
+    """CNN for sentimental analysis."""
 
-  def __init__(self, emb_dim, num_words, sentence_length, hid_dim,
-               class_dim, dropout_rate):
-    """Initialize CNN model.
+    def __init__(self, emb_dim, num_words, sentence_length, hid_dim,
+                 class_dim, dropout_rate):
+        """Initialize CNN model.
 
     Args:
       emb_dim: The dimension of the Embedding layer.
@@ -31,20 +31,20 @@ class CNN(tf.keras.models.Model):
       tf.keras.models.Model: A Keras model.
     """
 
-    input_layer = tf.keras.layers.Input(shape=(sentence_length,), dtype=tf.int32)
+        input_layer = tf.keras.layers.Input(shape=(sentence_length,), dtype=tf.int32)
 
-    layer = tf.keras.layers.Embedding(num_words, output_dim=emb_dim)(input_layer)
+        layer = tf.keras.layers.Embedding(num_words, output_dim=emb_dim)(input_layer)
 
-    layer_conv3 = tf.keras.layers.Conv1D(hid_dim, 3, activation="relu")(layer)
-    layer_conv3 = tf.keras.layers.GlobalMaxPooling1D()(layer_conv3)
+        layer_conv3 = tf.keras.layers.Conv1D(hid_dim, 3, activation="relu")(layer)
+        layer_conv3 = tf.keras.layers.GlobalMaxPooling1D()(layer_conv3)
 
-    layer_conv4 = tf.keras.layers.Conv1D(hid_dim, 2, activation="relu")(layer)
-    layer_conv4 = tf.keras.layers.GlobalMaxPooling1D()(layer_conv4)
+        layer_conv4 = tf.keras.layers.Conv1D(hid_dim, 2, activation="relu")(layer)
+        layer_conv4 = tf.keras.layers.GlobalMaxPooling1D()(layer_conv4)
 
-    layer = tf.keras.layers.concatenate([layer_conv4, layer_conv3], axis=1)
-    layer = tf.keras.layers.BatchNormalization()(layer)
-    layer = tf.keras.layers.Dropout(dropout_rate)(layer)
+        layer = tf.keras.layers.concatenate([layer_conv4, layer_conv3], axis=1)
+        layer = tf.keras.layers.BatchNormalization()(layer)
+        layer = tf.keras.layers.Dropout(dropout_rate)(layer)
 
-    output = tf.keras.layers.Dense(class_dim, activation="softmax")(layer)
+        output = tf.keras.layers.Dense(class_dim, activation="softmax")(layer)
 
-    super(CNN, self).__init__(inputs=[input_layer], outputs=output)
+        super(CNN, self).__init__(inputs=[input_layer], outputs=output)

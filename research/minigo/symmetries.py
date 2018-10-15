@@ -61,26 +61,26 @@ SYMMETRIES = list(INVERSES.keys())
 
 # A symmetry is just a string describing the transformation.
 def invert_symmetry(s):
-  return INVERSES[s]
+    return INVERSES[s]
 
 
 def apply_symmetry_feat(s, features):
-  return IMPLS[s](features)
+    return IMPLS[s](features)
 
 
 def apply_symmetry_pi(board_size, s, pi):
-  pi = np.copy(pi)
-  # rotate all moves except for the pass move at end
-  pi[:-1] = IMPLS[s](pi[:-1].reshape([board_size, board_size])).ravel()
-  return pi
+    pi = np.copy(pi)
+    # rotate all moves except for the pass move at end
+    pi[:-1] = IMPLS[s](pi[:-1].reshape([board_size, board_size])).ravel()
+    return pi
 
 
 def randomize_symmetries_feat(features):
-  symmetries_used = [random.choice(SYMMETRIES) for f in features]
-  return symmetries_used, [apply_symmetry_feat(s, f)
-                           for s, f in zip(symmetries_used, features)]
+    symmetries_used = [random.choice(SYMMETRIES) for f in features]
+    return symmetries_used, [apply_symmetry_feat(s, f)
+                             for s, f in zip(symmetries_used, features)]
 
 
 def invert_symmetries_pi(board_size, symmetries, pis):
-  return [apply_symmetry_pi(board_size, invert_symmetry(s), pi)
-          for s, pi in zip(symmetries, pis)]
+    return [apply_symmetry_pi(board_size, invert_symmetry(s), pi)
+            for s, pi in zip(symmetries, pis)]

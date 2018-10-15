@@ -218,4 +218,5 @@ if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
     define_keras_benchmark_flags()
     FLAGS = flags.FLAGS
+    FLAGS.model = 'vgg16'
     absl_app.run(main)

@@ -27,9 +27,9 @@ import sys
 
 
 def to_json(data):
-  return '{"image_bytes":{"b64": "%s"}}' % base64.b64encode(data)
+    return '{"image_bytes":{"b64": "%s"}}' % base64.b64encode(data)
 
 
 if __name__ == '__main__':
-  file = open(sys.argv[1]) if len(sys.argv) > 1 else sys.stdin
-  print(to_json(file.read()))
+    file = open(sys.argv[1]) if len(sys.argv) > 1 else sys.stdin
+    print(to_json(file.read()))

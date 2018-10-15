@@ -85,7 +85,7 @@ class DatasetBuilderTest(tf.test.TestCase):
         self.assertTrue(
             fields.InputDataFields.groundtruth_instance_masks not in output_dict)
         self.assertEqual((1, 4, 5, 3),
-                          output_dict[fields.InputDataFields.image].shape)
+                         output_dict[fields.InputDataFields.image].shape)
         self.assertAllEqual([[2]],
                             output_dict[fields.InputDataFields.groundtruth_classes])
         self.assertEqual(
@@ -129,10 +129,10 @@ class DatasetBuilderTest(tf.test.TestCase):
         input_reader_proto = input_reader_pb2.InputReader()
         text_format.Merge(input_reader_text_proto, input_reader_proto)
 
-        def one_hot_class_encoding_fn(tensor_dict):
-            tensor_dict[fields.InputDataFields.groundtruth_classes] = tf.one_hot(
-                tensor_dict[fields.InputDataFields.groundtruth_classes] - 1, depth=3)
-            return tensor_dict
+        def one_hot_class_encoding_fn(t_dict):
+            t_dict[fields.InputDataFields.groundtruth_classes] = tf.one_hot(
+                t_dict[fields.InputDataFields.groundtruth_classes] - 1, depth=3)
+            return t_dict
 
         tensor_dict = dataset_builder.make_initializable_iterator(
             dataset_builder.build(
@@ -167,10 +167,10 @@ class DatasetBuilderTest(tf.test.TestCase):
         input_reader_proto = input_reader_pb2.InputReader()
         text_format.Merge(input_reader_text_proto, input_reader_proto)
 
-        def one_hot_class_encoding_fn(tensor_dict):
-            tensor_dict[fields.InputDataFields.groundtruth_classes] = tf.one_hot(
-                tensor_dict[fields.InputDataFields.groundtruth_classes] - 1, depth=3)
-            return tensor_dict
+        def one_hot_class_encoding_fn(t_dict):
+            t_dict[fields.InputDataFields.groundtruth_classes] = tf.one_hot(
+                t_dict[fields.InputDataFields.groundtruth_classes] - 1, depth=3)
+            return t_dict
 
         tensor_dict = dataset_builder.make_initializable_iterator(
             dataset_builder.build(
@@ -258,7 +258,8 @@ class ReadDatasetTest(tf.test.TestCase):
             with tf.gfile.Open(path, 'wb') as f:
                 f.write('\n'.join([str(i)] * 5))
 
-    def _get_dataset_next(self, files, config, batch_size):
+    @staticmethod
+    def _get_dataset_next(files, config, batch_size):
 
         def decode_func(value):
             return [tf.string_to_number(value, out_type=tf.int32)]

@@ -31,11 +31,9 @@ import random
 import sys
 
 # Dependency imports
-import numpy as np
-from six.moves import urllib
 import tensorflow as tf
 
-from slim.datasets import dataset_utils
+from research.slim.datasets import dataset_utils
 
 tf.app.flags.DEFINE_string(
     'dataset_dir', None,
@@ -74,27 +72,27 @@ _CLASS_NAMES = [
 
 
 class ImageReader(object):
-  """Helper class that provides TensorFlow image coding utilities."""
+    """Helper class that provides TensorFlow image coding utilities."""
 
-  def __init__(self):
-    # Initializes function that decodes RGB PNG data.
-    self._decode_png_data = tf.placeholder(dtype=tf.string)
-    self._decode_png = tf.image.decode_png(self._decode_png_data, channels=3)
+    def __init__(self):
+        # Initializes function that decodes RGB PNG data.
+        self._decode_png_data = tf.placeholder(dtype=tf.string)
+        self._decode_png = tf.image.decode_png(self._decode_png_data, channels=3)
 
-  def read_image_dims(self, sess, image_data):
-    image = self.decode_png(sess, image_data)
-    return image.shape[0], image.shape[1]
+    def read_image_dims(self, sess, image_data):
+        image = self.decode_png(sess, image_data)
+        return image.shape[0], image.shape[1]
 
-  def decode_png(self, sess, image_data):
-    image = sess.run(
-        self._decode_png, feed_dict={self._decode_png_data: image_data})
-    assert len(image.shape) == 3
-    assert image.shape[2] == 3
-    return image
+    def decode_png(self, sess, image_data):
+        image = sess.run(
+            self._decode_png, feed_dict={self._decode_png_data: image_data})
+        assert len(image.shape) == 3
+        assert image.shape[2] == 3
+        return image
 
 
 def _convert_dataset(split_name, filenames, filename_to_class_id, dataset_dir):
-  """Converts the given filenames to a TFRecord dataset.
+    """Converts the given filenames to a TFRecord dataset.
 
   Args:
     split_name: The name of the dataset, either 'train' or 'valid'.
@@ -103,37 +101,37 @@ def _convert_dataset(split_name, filenames, filename_to_class_id, dataset_dir):
       (integers).
     dataset_dir: The directory where the converted datasets are stored.
   """
-  print('Converting the {} split.'.format(split_name))
-  # Train and validation splits are both in the train directory.
-  if split_name in ['train', 'valid']:
-    png_directory = os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train')
-  elif split_name == 'test':
-    png_directory = os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test')
+    print('Converting the {} split.'.format(split_name))
+    # Train and validation splits are both in the train directory.
+    if split_name in ['train', 'valid']:
+        png_directory = os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train')
+    elif split_name == 'test':
+        png_directory = os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test')
 
-  with tf.Graph().as_default():
-    image_reader = ImageReader()
+    with tf.Graph().as_default():
+        image_reader = ImageReader()
 
-    with tf.Session('') as sess:
-      output_filename = _get_output_filename(dataset_dir, split_name)
+        with tf.Session('') as sess:
+            output_filename = _get_output_filename(dataset_dir, split_name)
 
-      with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
-        for filename in filenames:
-          # Read the filename:
-          image_data = tf.gfile.FastGFile(
-              os.path.join(png_directory, filename), 'r').read()
-          height, width = image_reader.read_image_dims(sess, image_data)
+            with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
+                for filename in filenames:
+                    # Read the filename:
+                    image_data = tf.gfile.FastGFile(
+                        os.path.join(png_directory, filename), 'r').read()
+                    height, width = image_reader.read_image_dims(sess, image_data)
 
-          class_id = filename_to_class_id[filename]
-          example = dataset_utils.image_to_tfexample(image_data, 'png', height,
-                                                     width, class_id)
-          tfrecord_writer.write(example.SerializeToString())
+                    class_id = filename_to_class_id[filename]
+                    example = dataset_utils.image_to_tfexample(image_data, 'png', height,
+                                                               width, class_id)
+                    tfrecord_writer.write(example.SerializeToString())
 
-  sys.stdout.write('\n')
-  sys.stdout.flush()
+    sys.stdout.write('\n')
+    sys.stdout.flush()
 
 
 def _extract_labels(label_filename):
-  """Extract the labels into a dict of filenames to int labels.
+    """Extract the labels into a dict of filenames to int labels.
 
   Args:
     labels_filename: The filename of the MNIST-M labels.
@@ -141,18 +139,18 @@ def _extract_labels(label_filename):
   Returns:
     A dictionary of filenames to int labels.
   """
-  print('Extracting labels from: ', label_filename)
-  label_file = tf.gfile.FastGFile(label_filename, 'r').readlines()
-  label_lines = [line.rstrip('\n').split() for line in label_file]
-  labels = {}
-  for line in label_lines:
-    assert len(line) == 2
-    labels[line[0]] = int(line[1])
-  return labels
+    print('Extracting labels from: ', label_filename)
+    label_file = tf.gfile.FastGFile(label_filename, 'r').readlines()
+    label_lines = [line.rstrip('\n').split() for line in label_file]
+    labels = {}
+    for line in label_lines:
+        assert len(line) == 2
+        labels[line[0]] = int(line[1])
+    return labels
 
 
 def _get_output_filename(dataset_dir, split_name):
-  """Creates the output filename.
+    """Creates the output filename.
 
   Args:
     dataset_dir: The directory where the temporary files are stored.
@@ -161,11 +159,11 @@ def _get_output_filename(dataset_dir, split_name):
   Returns:
     An absolute file path.
   """
-  return '%s/mnist_m_%s.tfrecord' % (dataset_dir, split_name)
+    return '%s/mnist_m_%s.tfrecord' % (dataset_dir, split_name)
 
 
 def _get_filenames(dataset_dir):
-  """Returns a list of filenames and inferred class names.
+    """Returns a list of filenames and inferred class names.
 
   Args:
     dataset_dir: A directory containing a set PNG encoded MNIST-M images.
@@ -173,65 +171,65 @@ def _get_filenames(dataset_dir):
   Returns:
     A list of image file paths, relative to `dataset_dir`.
   """
-  photo_filenames = []
-  for filename in os.listdir(dataset_dir):
-    photo_filenames.append(filename)
-  return photo_filenames
+    photo_filenames = []
+    for filename in os.listdir(dataset_dir):
+        photo_filenames.append(filename)
+    return photo_filenames
 
 
 def run(dataset_dir):
-  """Runs the download and conversion operation.
+    """Runs the download and conversion operation.
 
   Args:
     dataset_dir: The dataset directory where the dataset is stored.
   """
-  if not tf.gfile.Exists(dataset_dir):
-    tf.gfile.MakeDirs(dataset_dir)
+    if not tf.gfile.Exists(dataset_dir):
+        tf.gfile.MakeDirs(dataset_dir)
 
-  train_filename = _get_output_filename(dataset_dir, 'train')
-  testing_filename = _get_output_filename(dataset_dir, 'test')
+    train_filename = _get_output_filename(dataset_dir, 'train')
+    testing_filename = _get_output_filename(dataset_dir, 'test')
 
-  if tf.gfile.Exists(train_filename) and tf.gfile.Exists(testing_filename):
-    print('Dataset files already exist. Exiting without re-creating them.')
-    return
+    if tf.gfile.Exists(train_filename) and tf.gfile.Exists(testing_filename):
+        print('Dataset files already exist. Exiting without re-creating them.')
+        return
 
-  # TODO(konstantinos): Add download and cleanup functionality
+    # TODO(konstantinos): Add download and cleanup functionality
 
-  train_validation_filenames = _get_filenames(
-      os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train'))
-  test_filenames = _get_filenames(
-      os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test'))
+    train_validation_filenames = _get_filenames(
+        os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train'))
+    test_filenames = _get_filenames(
+        os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test'))
 
-  # Divide into train and validation:
-  random.seed(_RANDOM_SEED)
-  random.shuffle(train_validation_filenames)
-  train_filenames = train_validation_filenames[_NUM_VALIDATION:]
-  validation_filenames = train_validation_filenames[:_NUM_VALIDATION]
+    # Divide into train and validation:
+    random.seed(_RANDOM_SEED)
+    random.shuffle(train_validation_filenames)
+    train_filenames = train_validation_filenames[_NUM_VALIDATION:]
+    validation_filenames = train_validation_filenames[:_NUM_VALIDATION]
 
-  train_validation_filenames_to_class_ids = _extract_labels(
-      os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train_labels.txt'))
-  test_filenames_to_class_ids = _extract_labels(
-      os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test_labels.txt'))
+    train_validation_filenames_to_class_ids = _extract_labels(
+        os.path.join(dataset_dir, 'mnist_m', 'mnist_m_train_labels.txt'))
+    test_filenames_to_class_ids = _extract_labels(
+        os.path.join(dataset_dir, 'mnist_m', 'mnist_m_test_labels.txt'))
 
-  # Convert the train, validation, and test sets.
-  _convert_dataset('train', train_filenames,
-                   train_validation_filenames_to_class_ids, dataset_dir)
-  _convert_dataset('valid', validation_filenames,
-                   train_validation_filenames_to_class_ids, dataset_dir)
-  _convert_dataset('test', test_filenames, test_filenames_to_class_ids,
-                   dataset_dir)
+    # Convert the train, validation, and test sets.
+    _convert_dataset('train', train_filenames,
+                     train_validation_filenames_to_class_ids, dataset_dir)
+    _convert_dataset('valid', validation_filenames,
+                     train_validation_filenames_to_class_ids, dataset_dir)
+    _convert_dataset('test', test_filenames, test_filenames_to_class_ids,
+                     dataset_dir)
 
-  # Finally, write the labels file:
-  labels_to_class_names = dict(zip(range(len(_CLASS_NAMES)), _CLASS_NAMES))
-  dataset_utils.write_label_file(labels_to_class_names, dataset_dir)
+    # Finally, write the labels file:
+    labels_to_class_names = dict(zip(range(len(_CLASS_NAMES)), _CLASS_NAMES))
+    dataset_utils.write_label_file(labels_to_class_names, dataset_dir)
 
-  print('\nFinished converting the MNIST-M dataset!')
+    print('\nFinished converting the MNIST-M dataset!')
 
 
 def main(_):
-  assert FLAGS.dataset_dir
-  run(FLAGS.dataset_dir)
+    assert FLAGS.dataset_dir
+    run(FLAGS.dataset_dir)
 
 
 if __name__ == '__main__':
-  tf.app.run()
+    tf.app.run()

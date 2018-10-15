@@ -17,8 +17,8 @@
 
 Base config for stanford navigation enviornment.
 """
-from ..src import utils as utils
-from ..datasets import nav_env as nav_env
+from research.cognitive_mapping_and_planning.src import utils as utils
+from research.cognitive_mapping_and_planning.datasets import nav_env as nav_env
 
 
 def nav_env_base_config():

@@ -20,37 +20,36 @@ from __future__ import unicode_literals
 
 import math
 
-import numpy as np
 import tensorflow as tf
 
-import blocks_entropy_coding
+from research.compression.entropy_coder.lib import blocks_entropy_coding
 
 
 class BlocksEntropyCodingTest(tf.test.TestCase):
 
-  def testCodeLength(self):
-    shape = [2, 4]
-    proba_feed = [[0.65, 0.25, 0.70, 0.10],
-                  [0.28, 0.20, 0.44, 0.54]]
-    symbol_feed = [[1.0, 0.0, 1.0, 0.0],
-                   [0.0, 0.0, 0.0, 1.0]]
-    mean_code_length = - (
-        (math.log(0.65) + math.log(0.75) + math.log(0.70) + math.log(0.90) +
-         math.log(0.72) + math.log(0.80) + math.log(0.56) + math.log(0.54)) /
-        math.log(2.0)) / (shape[0] * shape[1])
+    def testCodeLength(self):
+        shape = [2, 4]
+        proba_feed = [[0.65, 0.25, 0.70, 0.10],
+                      [0.28, 0.20, 0.44, 0.54]]
+        symbol_feed = [[1.0, 0.0, 1.0, 0.0],
+                       [0.0, 0.0, 0.0, 1.0]]
+        mean_code_length = - (
+                (math.log(0.65) + math.log(0.75) + math.log(0.70) + math.log(0.90) +
+                 math.log(0.72) + math.log(0.80) + math.log(0.56) + math.log(0.54)) /
+                math.log(2.0)) / (shape[0] * shape[1])
 
-    symbol = tf.placeholder(dtype=tf.float32, shape=shape)
-    proba = tf.placeholder(dtype=tf.float32, shape=shape)
-    code_length_calculator = blocks_entropy_coding.CodeLength()
-    code_length = code_length_calculator(symbol, proba)
+        symbol = tf.placeholder(dtype=tf.float32, shape=shape)
+        proba = tf.placeholder(dtype=tf.float32, shape=shape)
+        code_length_calculator = blocks_entropy_coding.CodeLength()
+        code_length = code_length_calculator(symbol, proba)
 
-    with self.test_session():
-      tf.global_variables_initializer().run()
-      code_length_eval = code_length.eval(
-          feed_dict={symbol: symbol_feed, proba: proba_feed})
+        with self.test_session():
+            tf.global_variables_initializer().run()
+            code_length_eval = code_length.eval(
+                feed_dict={symbol: symbol_feed, proba: proba_feed})
 
-    self.assertAllClose(mean_code_length, code_length_eval)
+        self.assertAllClose(mean_code_length, code_length_eval)
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    tf.test.main()

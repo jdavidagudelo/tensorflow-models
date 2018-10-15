@@ -12,7 +12,7 @@ OOV_CHAR = 3
 
 
 def pad_sentence(sentence, sentence_length):
-  """Pad the given sentense at the end.
+    """Pad the given sentense at the end.
 
   If the input is longer than sentence_length,
   the remaining portion is dropped.
@@ -24,9 +24,9 @@ def pad_sentence(sentence, sentence_length):
   Returns:
     A numpy array of integers of the given length.
   """
-  sentence = sentence[:sentence_length]
-  if len(sentence) < sentence_length:
-    sentence = np.pad(sentence, (0, sentence_length - len(sentence)),
-                      "constant", constant_values=(START_CHAR, END_CHAR))
+    sentence = sentence[:sentence_length]
+    if len(sentence) < sentence_length:
+        sentence = np.pad(sentence, (0, sentence_length - len(sentence)),
+                          "constant", constant_values=(START_CHAR, END_CHAR))
 
-  return sentence
+    return sentence

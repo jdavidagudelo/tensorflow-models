@@ -42,8 +42,8 @@ import numpy as np
 from six.moves import xrange
 import tensorflow as tf
 
-from ..single_task import defaults  # brain coder
-from ..single_task import run as run_lib  # brain coder
+from research.brain_coder.single_task import defaults  # brain coder
+from research.brain_coder.single_task import run as run_lib  # brain coder
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer(

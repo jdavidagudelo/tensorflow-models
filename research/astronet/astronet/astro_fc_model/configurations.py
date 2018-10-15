@@ -25,7 +25,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from ..astro_model import configurations as parent_configs
+from research.astronet.astronet.astro_model import configurations as parent_configs
 
 
 def base():

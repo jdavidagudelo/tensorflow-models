@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from ..ops import metrics
+from research.astronet.astronet.ops import metrics
 
 
 def _unpack_metric_map(names_to_tuples):

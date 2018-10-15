@@ -18,19 +18,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-
 from absl import app
-from absl import flags
 import tensorflow as tf
 
-import data_provider
-import networks
-import util
+from research.gan.mnist import data_provider
+from research.gan.mnist import networks
+from research.gan.mnist import util
 
-FLAGS = flags.FLAGS
+FLAGS = tf.app.flags.FLAGS
+flags = tf.app.flags
 tfgan = tf.contrib.gan
-
 
 flags.DEFINE_string('checkpoint_dir', '/tmp/mnist/',
                     'Directory where the model was written to.')
@@ -38,7 +35,7 @@ flags.DEFINE_string('checkpoint_dir', '/tmp/mnist/',
 flags.DEFINE_string('eval_dir', '/tmp/mnist/',
                     'Directory where the results are saved to.')
 
-flags.DEFINE_string('dataset_dir', None, 'Location of data.')
+flags.DEFINE_string('dataset_dir', 'testdata', 'Location of data.')
 
 flags.DEFINE_integer('num_images_generated', 1000,
                      'Number of images to generate at once.')
@@ -61,44 +58,44 @@ flags.DEFINE_boolean('write_to_disk', True, 'If `True`, run images to disk.')
 
 
 def main(_, run_eval_loop=True):
-  # Fetch real images.
-  with tf.name_scope('inputs'):
-    real_images, _, _ = data_provider.provide_data(
-        'train', FLAGS.num_images_generated, FLAGS.dataset_dir)
+    # Fetch real images.
+    with tf.name_scope('inputs'):
+        real_images, _, _ = data_provider.provide_data(
+            'train', FLAGS.num_images_generated, FLAGS.dataset_dir)
 
-  image_write_ops = None
-  if FLAGS.eval_real_images:
-    tf.summary.scalar('MNIST_Classifier_score',
-                      util.mnist_score(real_images, FLAGS.classifier_filename))
-  else:
-    # In order for variables to load, use the same variable scope as in the
-    # train job.
-    with tf.variable_scope('Generator'):
-      images = networks.unconditional_generator(
-          tf.random_normal([FLAGS.num_images_generated, FLAGS.noise_dims]),
-          is_training=False)
-    tf.summary.scalar('MNIST_Frechet_distance',
-                      util.mnist_frechet_distance(
-                          real_images, images, FLAGS.classifier_filename))
-    tf.summary.scalar('MNIST_Classifier_score',
-                      util.mnist_score(images, FLAGS.classifier_filename))
-    if FLAGS.num_images_generated >= 100 and FLAGS.write_to_disk:
-      reshaped_images = tfgan.eval.image_reshaper(
-          images[:100, ...], num_cols=10)
-      uint8_images = data_provider.float_image_to_uint8(reshaped_images)
-      image_write_ops = tf.write_file(
-          '%s/%s'% (FLAGS.eval_dir, 'unconditional_gan.png'),
-          tf.image.encode_png(uint8_images[0]))
+    image_write_ops = None
+    if FLAGS.eval_real_images:
+        tf.summary.scalar('MNIST_Classifier_score',
+                          util.mnist_score(real_images, FLAGS.classifier_filename))
+    else:
+        # In order for variables to load, use the same variable scope as in the
+        # train job.
+        with tf.variable_scope('Generator'):
+            images = networks.unconditional_generator(
+                tf.random_normal([FLAGS.num_images_generated, FLAGS.noise_dims]),
+                is_training=False)
+        tf.summary.scalar('MNIST_Frechet_distance',
+                          util.mnist_frechet_distance(
+                              real_images, images, FLAGS.classifier_filename))
+        tf.summary.scalar('MNIST_Classifier_score',
+                          util.mnist_score(images, FLAGS.classifier_filename))
+        if FLAGS.num_images_generated >= 100 and FLAGS.write_to_disk:
+            reshaped_images = tfgan.eval.image_reshaper(
+                images[:100, ...], num_cols=10)
+            uint8_images = data_provider.float_image_to_uint8(reshaped_images)
+            image_write_ops = tf.write_file(
+                '%s/%s' % (FLAGS.eval_dir, 'unconditional_gan.png'),
+                tf.image.encode_png(uint8_images[0]))
 
-  # For unit testing, use `run_eval_loop=False`.
-  if not run_eval_loop: return
-  tf.contrib.training.evaluate_repeatedly(
-      FLAGS.checkpoint_dir,
-      hooks=[tf.contrib.training.SummaryAtEndHook(FLAGS.eval_dir),
-             tf.contrib.training.StopAfterNEvalsHook(1)],
-      eval_ops=image_write_ops,
-      max_number_of_evaluations=FLAGS.max_number_of_evaluations)
+    # For unit testing, use `run_eval_loop=False`.
+    if not run_eval_loop: return
+    tf.contrib.training.evaluate_repeatedly(
+        FLAGS.checkpoint_dir,
+        hooks=[tf.contrib.training.SummaryAtEndHook(FLAGS.eval_dir),
+               tf.contrib.training.StopAfterNEvalsHook(1)],
+        eval_ops=image_write_ops,
+        max_number_of_evaluations=FLAGS.max_number_of_evaluations)
 
 
 if __name__ == '__main__':
-  app.run(main)
+    app.run(main)

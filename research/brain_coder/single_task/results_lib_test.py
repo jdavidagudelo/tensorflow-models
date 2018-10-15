@@ -11,7 +11,7 @@ import tempfile
 from six.moves import xrange
 import tensorflow as tf
 
-from ..single_task import results_lib  # brain coder
+from research.brain_coder.single_task import results_lib  # brain coder
 
 
 @contextlib.contextmanager

@@ -160,7 +160,7 @@ def fc(inputs,
     with tf.variable_scope(scope, 'FC', [inputs], reuse=reuse):
         num_units_in = inputs.shape[1]
         weights_shape = [num_units_in, num_units_out]
-        unif_init_range = 1.0 / num_units_out ** (0.5)
+        unif_init_range = 1.0 / num_units_out ** 0.5
         weights_initializer = tf.random_uniform_initializer(
             -unif_init_range, unif_init_range)
         weights = variable(

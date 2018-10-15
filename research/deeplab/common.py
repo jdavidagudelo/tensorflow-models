@@ -123,16 +123,16 @@ class ModelOptions(
         'model_variant',
         'depth_multiplier',
     ])):
-  """Immutable class to hold model options."""
+    """Immutable class to hold model options."""
 
-  __slots__ = ()
+    __slots__ = ()
 
-  def __new__(cls,
-              outputs_to_num_classes,
-              crop_size=None,
-              atrous_rates=None,
-              output_stride=8):
-    """Constructor to set default values.
+    def __new__(cls,
+                outputs_to_num_classes,
+                crop_size=None,
+                atrous_rates=None,
+                output_stride=8):
+        """Constructor to set default values.
 
     Args:
       outputs_to_num_classes: A dictionary from output type to the number of
@@ -145,16 +145,16 @@ class ModelOptions(
     Returns:
       A new ModelOptions instance.
     """
-    return super(ModelOptions, cls).__new__(
-        cls, outputs_to_num_classes, crop_size, atrous_rates, output_stride,
-        FLAGS.merge_method, FLAGS.add_image_level_feature,
-        FLAGS.image_pooling_crop_size, FLAGS.aspp_with_batch_norm,
-        FLAGS.aspp_with_separable_conv, FLAGS.multi_grid,
-        FLAGS.decoder_output_stride, FLAGS.decoder_use_separable_conv,
-        FLAGS.logits_kernel_size, FLAGS.model_variant, FLAGS.depth_multiplier)
+        return super(ModelOptions, cls).__new__(
+            cls, outputs_to_num_classes, crop_size, atrous_rates, output_stride,
+            FLAGS.merge_method, FLAGS.add_image_level_feature,
+            FLAGS.image_pooling_crop_size, FLAGS.aspp_with_batch_norm,
+            FLAGS.aspp_with_separable_conv, FLAGS.multi_grid,
+            FLAGS.decoder_output_stride, FLAGS.decoder_use_separable_conv,
+            FLAGS.logits_kernel_size, FLAGS.model_variant, FLAGS.depth_multiplier)
 
-  def __deepcopy__(self, memo):
-    return ModelOptions(copy.deepcopy(self.outputs_to_num_classes),
-                        self.crop_size,
-                        self.atrous_rates,
-                        self.output_stride)
+    def __deepcopy__(self, memo):
+        return ModelOptions(copy.deepcopy(self.outputs_to_num_classes),
+                            self.crop_size,
+                            self.atrous_rates,
+                            self.output_stride)

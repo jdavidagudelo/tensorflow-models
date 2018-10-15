@@ -25,12 +25,14 @@ from tensorflow.python.ops import variable_scope
 # sanity global state to ensure non recursive.
 _is_variable_replacing = [False]
 
+
 def in_variable_replace_scope():
-  return _is_variable_replacing[0]
+    return _is_variable_replacing[0]
+
 
 @contextmanager
 def variable_replace(replacements, no_new=True):
-  """ A context manager that replaces variables.
+    """ A context manager that replaces variables.
 
   This is a context manager that replaces all calls to
   get_variable with the variable in replacements.
@@ -46,67 +48,68 @@ def variable_replace(replacements, no_new=True):
   Raises:
     ValueError: if a new variable or not all the replacements are used.
   """
-  # TODO(lmetz) This function is a bit scary, as it relies on monkey patching
-  # the call to get_variable. Ideally this can be done with variable_scope's
-  # custom_getter attribute, but when initially writing this that was not
-  # avalible.
+    # TODO(lmetz) This function is a bit scary, as it relies on monkey patching
+    # the call to get_variable. Ideally this can be done with variable_scope's
+    # custom_getter attribute, but when initially writing this that was not
+    # avalible.
 
-  replacements = {k: v for k, v in replacements.items() if not k == v}
+    replacements = {k: v for k, v in replacements.items() if not k == v}
 
-  init_vars = tf.trainable_variables()
-  old_get_variable = variable_scope.get_variable
-  old_tf_get_variable = tf.get_variable
+    init_vars = tf.trainable_variables()
+    old_get_variable = variable_scope.get_variable
+    old_tf_get_variable = tf.get_variable
 
-  names_replace = {}
-  has_replaced_names = []
-  tf.logging.vlog(2, "Trying to replace")
-  for k, v in replacements.items():
-    tf.logging.vlog(2, k.name + " >> " + v.name)
-  tf.logging.vlog(2, "===")
+    names_replace = {}
+    has_replaced_names = []
+    tf.logging.vlog(2, "Trying to replace")
+    for k, v in replacements.items():
+        tf.logging.vlog(2, k.name + " >> " + v.name)
+    tf.logging.vlog(2, "===")
 
-  for k, v in replacements.items():
-    strip_name = k.name.replace("/read:0", "")
-    strip_name = strip_name.replace(":0", "")
-    names_replace[strip_name] = v
-    # TODO(lmetz) is there a cleaner way to do this?
-  def new_get_variable(name, *args, **kwargs):
-    #print "Monkeypatch get variable run with name:", name
-    n = tf.get_variable_scope().name + "/" + name
-    #print "Monkeypatch get variable run with name:", n
-    if n in names_replace:
-      has_replaced_names.append(n)
-      return names_replace[n]
-    else:
-      return old_get_variable(name, *args, **kwargs)
+    for k, v in replacements.items():
+        strip_name = k.name.replace("/read:0", "")
+        strip_name = strip_name.replace(":0", "")
+        names_replace[strip_name] = v
+        # TODO(lmetz) is there a cleaner way to do this?
 
-  # perform the monkey patch
-  if _is_variable_replacing[0] == True:
-    raise ValueError("No recursive calling to variable replace allowed.")
+    def new_get_variable(name, *args, **kwargs):
+        # print "Monkeypatch get variable run with name:", name
+        n = tf.get_variable_scope().name + "/" + name
+        # print "Monkeypatch get variable run with name:", n
+        if n in names_replace:
+            has_replaced_names.append(n)
+            return names_replace[n]
+        else:
+            return old_get_variable(name, *args, **kwargs)
 
-  variable_scope.get_variable = new_get_variable
-  tf.get_variable = new_get_variable
+    # perform the monkey patch
+    if _is_variable_replacing[0] == True:
+        raise ValueError("No recursive calling to variable replace allowed.")
 
-  _is_variable_replacing[0] = True
+    variable_scope.get_variable = new_get_variable
+    tf.get_variable = new_get_variable
 
-  yield
+    _is_variable_replacing[0] = True
 
-  if set(has_replaced_names) != set(names_replace.keys()):
-    print "Didn't use all replacements"
-    print "replaced variables that are not requested??"
-    print "==="
-    for n in list(set(has_replaced_names) - set(names_replace.keys())):
-      print n
-    print "Missed replacing variables"
-    print "==="
-    for n in list(set(names_replace.keys()) - set(has_replaced_names)):
-      print n, "==>", names_replace[n].name
-    raise ValueError("Fix this -- see stderr")
+    yield
 
-  # undo the monkey patch
-  tf.get_variable = old_tf_get_variable
-  variable_scope.get_variable = old_get_variable
+    if set(has_replaced_names) != set(names_replace.keys()):
+        print("Didn't use all replacements")
+        print("replaced variables that are not requested??")
+        print("===")
+        for n in list(set(has_replaced_names) - set(names_replace.keys())):
+            print(n)
+        print("Missed replacing variables")
+        print("===")
+        for n in list(set(names_replace.keys()) - set(has_replaced_names)):
+            print(n, "==>", names_replace[n].name)
+        raise ValueError("Fix this -- see stderr")
 
-  _is_variable_replacing[0] = False
+    # undo the monkey patch
+    tf.get_variable = old_tf_get_variable
+    variable_scope.get_variable = old_get_variable
 
-  final_vars = tf.trainable_variables()
-  assert set(init_vars) == set(final_vars), "trainable variables changed"
+    _is_variable_replacing[0] = False
+
+    final_vars = tf.trainable_variables()
+    assert set(init_vars) == set(final_vars), "trainable variables changed"

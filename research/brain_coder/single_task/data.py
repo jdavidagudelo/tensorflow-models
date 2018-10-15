@@ -9,7 +9,7 @@ from collections import namedtuple
 
 from absl import logging
 
-from ..single_task import code_tasks  # brain coder
+from research.brain_coder.single_task import code_tasks  # brain coder
 
 RLBatch = namedtuple('RLBatch', ['reward_fns', 'batch_size', 'good_reward'])
 

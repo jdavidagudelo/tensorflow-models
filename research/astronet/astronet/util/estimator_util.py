@@ -22,9 +22,9 @@ import copy
 
 import tensorflow as tf
 
-from ..ops import dataset_ops
-from ..ops import metrics
-from ..ops import training
+from research.astronet.astronet.ops import dataset_ops
+from research.astronet.astronet.ops import metrics
+from research.astronet.astronet.ops import training
 
 
 def create_input_fn(file_pattern,

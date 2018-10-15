@@ -70,6 +70,7 @@ def main():
     num_examples = len(img_fn_list)
 
     n_examples_per_file = 10000
+    writer = None
     for example_idx, img_fn in enumerate(img_fn_list):
         if example_idx % n_examples_per_file == 0:
             file_out = "%s_%05d.tfrecords"

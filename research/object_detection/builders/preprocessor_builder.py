@@ -136,7 +136,7 @@ def build(preprocessor_step_config):
         step_config = _get_step_config_from_proto(preprocessor_step_config,
                                                   step_type)
         function_args = _get_dict_from_proto(step_config)
-        return (preprocessing_function, function_args)
+        return preprocessing_function, function_args
 
     if step_type == 'random_horizontal_flip':
         config = preprocessor_step_config.random_horizontal_flip
@@ -224,7 +224,7 @@ def build(preprocessor_step_config):
             kwargs['max_padded_size_ratio'] = tuple(max_padded_size_ratio)
         if pad_color:
             kwargs['pad_color'] = tuple(pad_color)
-        return (preprocessor.random_crop_pad_image, kwargs)
+        return preprocessor.random_crop_pad_image, kwargs
 
     if step_type == 'random_resize_method':
         config = preprocessor_step_config.random_resize_method
@@ -260,7 +260,7 @@ def build(preprocessor_step_config):
                         'overlap_thresh': overlap_thresh,
                         'random_coef': random_coef,
                     })
-        return (preprocessor.ssd_random_crop, {})
+        return preprocessor.ssd_random_crop, {}
 
     if step_type == 'ssd_random_crop_pad':
         config = preprocessor_step_config.ssd_random_crop_pad
@@ -288,7 +288,7 @@ def build(preprocessor_step_config):
                         'max_padded_size_ratio': max_padded_size_ratio,
                         'pad_color': pad_color,
                     })
-        return (preprocessor.ssd_random_crop_pad, {})
+        return preprocessor.ssd_random_crop_pad, {}
 
     if step_type == 'ssd_random_crop_fixed_aspect_ratio':
         config = preprocessor_step_config.ssd_random_crop_fixed_aspect_ratio
@@ -305,7 +305,7 @@ def build(preprocessor_step_config):
                         'overlap_thresh': overlap_thresh,
                         'random_coef': random_coef,
                     })
-        return (preprocessor.ssd_random_crop_fixed_aspect_ratio, {})
+        return preprocessor.ssd_random_crop_fixed_aspect_ratio, {}
 
     if step_type == 'ssd_random_crop_pad_fixed_aspect_ratio':
         config = preprocessor_step_config.ssd_random_crop_pad_fixed_aspect_ratio
@@ -332,6 +332,6 @@ def build(preprocessor_step_config):
                                     for op in config.operations]
             kwargs['overlap_thresh'] = [op.overlap_thresh for op in config.operations]
             kwargs['random_coef'] = [op.random_coef for op in config.operations]
-        return (preprocessor.ssd_random_crop_pad_fixed_aspect_ratio, kwargs)
+        return preprocessor.ssd_random_crop_pad_fixed_aspect_ratio, kwargs
 
     raise ValueError('Unknown preprocessing step.')
