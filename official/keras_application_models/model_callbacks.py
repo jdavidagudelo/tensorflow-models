@@ -51,6 +51,8 @@ class ExamplesPerSecondCallback(tf.keras.callbacks.Callback):
   """
 
     def __init__(self, batch_size, every_n_steps=1, metric_logger=None):
+        self._last_recorded_time = time.time()
+        self._train_start_time = time.time()
         self._batch_size = batch_size
         self._every_n_steps = every_n_steps
         self._logger = metric_logger or logger.BaseBenchmarkLogger()
@@ -58,8 +60,7 @@ class ExamplesPerSecondCallback(tf.keras.callbacks.Callback):
         super(ExamplesPerSecondCallback, self).__init__()
 
     def on_train_begin(self, logs=None):
-        self._train_start_time = time.time()
-        self._last_recorded_time = time.time()
+        pass
 
     def on_batch_end(self, batch, logs=None):
         """Log the examples_per_sec metric every_n_steps."""
@@ -145,14 +146,14 @@ def get_model_callbacks(name_list, **kwargs):
 
 
 def get_examples_per_second_callback(
-        every_n_steps=1, batch_size=32, metric_logger=None, **kwargs):  # pylint: disable=unused-argument
+        every_n_steps=1, batch_size=32, metric_logger=None):  # pylint: disable=unused-argument
     """Function to get ExamplesPerSecondCallback."""
     return ExamplesPerSecondCallback(
         batch_size=batch_size, every_n_steps=every_n_steps,
         metric_logger=metric_logger or logger.get_benchmark_logger())
 
 
-def get_logging_metric_callback(metric_logger=None, **kwargs):  # pylint: disable=unused-argument
+def get_logging_metric_callback(metric_logger=None):  # pylint: disable=unused-argument
     """Function to get LoggingMetricCallback."""
     return LoggingMetricCallback(
         metric_logger=metric_logger or logger.get_benchmark_logger())

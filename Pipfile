@@ -25,6 +25,7 @@ plotly = "*"
 google = "*"
 google-cloud = "*"
 gym = "*"
+nodeenv = "*"
 
 [requires]
 python_version = "3.6"
